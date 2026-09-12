@@ -206,6 +206,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
     try {
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual([
         '0001_initial.sql',
+        '0002_local_accounts.sql',
       ])
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual(
         [],

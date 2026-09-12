@@ -38,6 +38,13 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
 }
+
+.admin-signout {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
 .admin-header {
   display: flex;
   align-items: end;

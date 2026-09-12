@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import AdminDashboard from './AdminDashboard'
-import { requireIdentity } from './lib/auth'
+import LoginForm from './LoginForm'
+import { bootstrapAvailable, requireIdentity } from './lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,10 +15,7 @@ export default async function AdminHomePage() {
     return <AdminDashboard />
   } catch {
     return (
-      <main className="admin-locked">
-        <h1>Publisher Admin</h1>
-        <p>Verified administrator authentication is required.</p>
-      </main>
+      <LoginForm bootstrap={await bootstrapAvailable().catch(() => false)} />
     )
   }
 }

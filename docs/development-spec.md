@@ -23,7 +23,7 @@ private object storage, the admin, comments, or an infrastructure API.
 
 - `apps/site`: static-only public publication with crawlable content and SEO.
 - `apps/admin`: unlinked, separately deployed editor surface protected by
-  standard OIDC/JWKS.
+  application-owned accounts and revocable secure sessions.
 - PostgreSQL: normal wire-protocol connections through `DATABASE_URL` and a
   separately credentialed `COMMENTS_DATABASE_URL`.
 - Object storage: the tested S3-compatible subset through generic
@@ -43,7 +43,7 @@ contract.
 The repository contains eight checked-in pre-release fixture posts, local media,
 static article/index/feed/search output, PostgreSQL migrations and repositories,
 S3-compatible media/snapshot/artifact storage, logical backup/restore,
-incremental publication, generic OIDC, an isolated comment service, and
+incremental publication, local account authentication, an isolated comment service, and
 fail-closed `$0` preflight checks.
 
 Local integration covers PostgreSQL and S3 wire/API behavior, job idempotency,

@@ -86,9 +86,7 @@ function requiredEnvironment(mode) {
       'ADMIN_SMOKE_URL',
       'DATABASE_URL',
       'COMMENTS_DATABASE_URL',
-      'OIDC_ISSUER',
-      'OIDC_AUDIENCE',
-      'OIDC_JWKS_URL',
+      'ADMIN_BOOTSTRAP_SECRET',
     )
   return required
 }

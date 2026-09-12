@@ -12,7 +12,7 @@
 
 이 제품은 아직 출시된 적이 없다. 따라서 이전 시험 구현을 보존하는
 호환 모드나 이중 런타임을 만들지 않는다. 정식 계약은 PostgreSQL,
-검증된 S3 호환 API, 표준 OIDC/JWKS, 정적 산출물뿐이다.
+검증된 S3 호환 API, 애플리케이션 소유 계정·세션, 정적 산출물뿐이다.
 
 ## 현재 배포 가능 상태
 
@@ -23,7 +23,7 @@
 | comments DB     | 별도 `COMMENTS_DATABASE_URL` 구현·격리 시험 완료         | 별도 사용자/DB와 cross-credential deny 관찰             |
 | 이미지·snapshot | 일반 `OBJECT_STORAGE_*` S3 계약 및 이미지 검증 구현 완료 | 선택한 bucket에서 계약 시험과 외부 backup 관찰          |
 | 발행            | idempotent queue와 `publication:next` 구현 완료          | 선택한 정적 배포 adapter의 원자적 activation 관찰       |
-| 인증            | 일반 OIDC issuer/audience/JWKS 구현 완료                 | 선택한 IdP의 유효/무효 token과 역할 경계 관찰           |
+| 인증            | PostgreSQL 기반 자체 계정·세션 구현 완료                 | 첫 owner 생성, 폐기·역할 경계 관찰                      |
 | 비용            | `$0` fail-closed preflight 구현 완료                     | 30일 이내 공식 가격·결제 상태 증거                      |
 
 로컬 검증은 production 배포가 아니다. 현재 저장소 상태는 플랫폼 계약이
@@ -58,7 +58,7 @@ AI는 아래 역할을 묶어서 하나의 “Cloudflare 배포”라고 부르�
 | -------------------- | ---------------------------------------------------- | -------------------------------------------------- |
 | 정적 public host/CDN | 불변 candidate, 원자적 승격 또는 동등 보장, rollback | 파일시스템 origin, 검증된 정적 host                |
 | admin runtime        | 비밀 환경 변수를 가진 Node.js 22/Next runtime        | container 또는 관리형 Node                         |
-| JWT/OIDC identity    | issuer/audience/JWKS 검증, email claim               | 일반 OIDC IdP 또는 access proxy                    |
+| admin identity       | 자체 계정, 암호 해시, 폐기 가능한 secure session     | Publisher admin runtime                            |
 | PostgreSQL host      | 표준 connection string, transaction, logical export  | Neon Free, 다른 관리형 PostgreSQL, 자체 PostgreSQL |
 | S3 호환 object store | put/get/head/list/delete/multipart/signed URL        | MinIO 또는 계약 시험을 통과한 hosted endpoint      |
 | comments/contact     | 분리된 API, rate limit, moderation                   | 미사용 또는 별도 runtime                           |
@@ -123,8 +123,8 @@ objectStorage:
   protocol: s3-compatible
   bucketSecret: OBJECT_STORAGE_BUCKET
 identity:
-  protocol: oidc-jwks
-  issuerSecret: OIDC_ISSUER
+  protocol: local-accounts
+  bootstrapSecret: ADMIN_BOOTSTRAP_SECRET
 ```
 
 비밀은 shell trace, screenshot, commit, issue, PR, chat에 복사하지 않는다.
@@ -160,7 +160,8 @@ AI는 사용자에게 아래를 먼저 보여준다.
 
 1. 서로 다른 사용자/DB로 `DATABASE_URL`, `COMMENTS_DATABASE_URL`을 만든다.
 2. private S3 호환 bucket과 최소 권한 credential을 만든다.
-3. OIDC issuer/audience/JWKS를 구성하고 admin public origin과 분리한다.
+3. `ADMIN_BOOTSTRAP_SECRET`을 배포 비밀로 설정하고 admin public origin과
+   분리한다. 최초 owner는 배포 후 보안 화면에서 자신의 암호를 직접 입력한다.
 4. `persistence:migrate`를 두 scope에 실행한다.
 5. 빈 설치라면 `fixture:reconcile`을 실행해 8개 일반 샘플 글·1개 태그·1개
    저자·0개 media checksum을 기록한다.
@@ -201,7 +202,7 @@ AI는 로그의 “성공” 문자열만 인용하지 않고 최종 URL과 상�
 
 1. 소유자가 `free-only`와 각 플랫폼 역할을 직접 선택한다.
 2. AI가 비용과 변경 요약을 보여주고 허용 범위 안에서 설정을 수행한다.
-3. migration, fixture reconciliation, publish, static activation, OIDC,
+3. migration, fixture reconciliation, publish, static activation, 자체 계정·세션,
    cache, 장애, restore, rollback을 직접 관찰한다.
 4. 소유자가 인수인계 문서로 같은 작업을 재현할 수 있는지 확인한다.
 5. 발견한 막힘을 문서·테스트·명령에 반영하고 전체 회귀를 다시 통과한다.

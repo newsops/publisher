@@ -59,7 +59,7 @@ describe('AI-assisted deployment guide contract', () => {
     for (const topic of [
       '정적 public host/CDN',
       'admin runtime',
-      'JWT/OIDC identity',
+      'admin identity',
       'PostgreSQL host',
       'S3 호환 object store',
       'comments/contact',

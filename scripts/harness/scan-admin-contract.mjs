@@ -32,12 +32,10 @@ if (!robots.includes('disallow:')) {
   process.exit(1)
 }
 for (const marker of [
-  'OIDC_TOKEN_HEADER',
-  'OIDC_ISSUER',
-  'OIDC_AUDIENCE',
-  'OIDC_JWKS_URL',
-  'jwtVerify',
-  'ADMIN_PUBLISHERS',
+  'account_sessions',
+  'hashPassword',
+  'bootstrapOwner',
+  'SameSite=Strict',
 ]) {
   if (!auth.includes(marker)) {
     console.error(`[admin-contract] auth contract missing ${marker}`)
@@ -52,5 +50,5 @@ if (
   process.exit(1)
 }
 console.log(
-  '[admin-contract] separate admin auth, publish, noindex, and public-boundary contracts found',
+  '[admin-contract] separate local-account auth, publish, noindex, and public-boundary contracts found',
 )

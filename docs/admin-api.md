@@ -36,8 +36,8 @@ never means access to every site.
 
 Set `ADMIN_SITES_JSON` to describe additional sites. Each entry contains
 `siteId`, `name`, `canonicalOrigin`, and `themeId`; an optional
-`adminEmails` array limits the browser admin selector to those verified OIDC
-identities.
+`adminEmails` array limits the browser admin selector to those application-owned
+administrator accounts. An owner account always has access.
 
 ## Local API smoke test
 
@@ -63,8 +63,8 @@ curl --fail-with-body \
 ```
 
 The browser-oriented `/api/*` routes and the machine-oriented `/api/v1/*`
-routes are separate contracts. The machine API does not use cookies,
-`ADMIN_DEV_TOKEN`, or browser CORS.
+routes are separate contracts. The machine API does not use browser cookies or
+browser CORS.
 
 ## Endpoint and role summary
 

@@ -3,7 +3,9 @@ import {
   AdminAuthError,
   assertSameOrigin,
   enforceRateLimit,
-  requireIdentity,
+  hashPassword,
+  sessionCookieHeader,
+  verifyPassword,
 } from '../../../apps/admin/app/lib/auth.ts'
 
 async function withEnvironment(values, callback) {
@@ -24,37 +26,29 @@ async function withEnvironment(values, callback) {
 }
 
 describe('admin authentication contract', () => {
-  it('accepts a timing-safe development identity and assigns publisher role', async () => {
-    const identity = await withEnvironment(
-      {
-        NODE_ENV: 'test',
-        ADMIN_DEV_TOKEN: 'test-token',
-        ADMIN_PUBLISHERS: 'publisher@example.com',
-      },
-      () =>
-        requireIdentity(
-          new Request('http://admin.test/api/posts', {
-            headers: {
-              'x-admin-dev-token': 'test-token',
-              'x-admin-dev-email': 'publisher@example.com',
-            },
-          }),
-          'publisher',
-        ),
-    )
+  it('uses a one-way password verifier and secure opaque session cookie', async () => {
+    const stored = await hashPassword('correct horse battery staple')
+    expect(stored).toMatch(/^scrypt\$32768\$/)
+    expect(stored).not.toContain('correct horse battery staple')
+    await expect(
+      verifyPassword('correct horse battery staple', stored),
+    ).resolves.toBe(true)
+    await expect(verifyPassword('wrong password', stored)).resolves.toBe(false)
 
-    expect(identity.email).toBe('publisher@example.com')
-    expect(identity.roles).toEqual(['editor', 'publisher'])
+    const cookie = sessionCookieHeader(
+      'opaque-token',
+      new Date('2030-01-01T00:00:00Z'),
+    )
+    expect(cookie).toContain('HttpOnly')
+    expect(cookie).toContain('Secure')
+    expect(cookie).toContain('SameSite=Strict')
+    expect(cookie).not.toContain('password')
   })
 
   it('rejects a missing identity and cross-origin mutation', async () => {
     await withEnvironment(
-      { NODE_ENV: 'test', ADMIN_DEV_TOKEN: 'expected-token' },
+      { ADMIN_PUBLIC_ORIGIN: 'https://admin.test' },
       async () => {
-        await expect(
-          requireIdentity(new Request('http://admin.test/api/posts')),
-        ).rejects.toMatchObject({ status: 401 })
-
         expect(() =>
           assertSameOrigin(
             new Request('http://admin.test/api/publish', {
@@ -79,7 +73,7 @@ describe('admin authentication contract', () => {
     for (let index = 0; index < 60; index += 1)
       expect(() => enforceRateLimit(request, identity)).not.toThrow()
     expect(() => enforceRateLimit(request, identity)).toThrowError(
-      /rate limit/i,
+      /too many requests/i,
     )
   })
 })

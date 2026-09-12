@@ -55,9 +55,7 @@ function environment(files, overrides = {}) {
     DATABASE_URL: 'postgresql://admin_app:a@db.example.test/publisher',
     COMMENTS_DATABASE_URL:
       'postgresql://comments_app:b@db.example.test/publisher',
-    OIDC_ISSUER: 'https://identity.example.test',
-    OIDC_AUDIENCE: 'publisher-admin',
-    OIDC_JWKS_URL: 'https://identity.example.test/.well-known/jwks.json',
+    ADMIN_BOOTSTRAP_SECRET: 'test-bootstrap-secret',
     OBJECT_STORAGE_ENDPOINT: 'https://objects.example.test',
     OBJECT_STORAGE_REGION: 'us-east-1',
     OBJECT_STORAGE_BUCKET: 'publisher',

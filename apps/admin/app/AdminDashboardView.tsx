@@ -15,6 +15,7 @@ import ArticleVariantEditor from './ArticleVariantEditor'
 import CommentModerationPanel from './CommentModerationPanel'
 import SiteSelector from './SiteSelector'
 import PluginManagementPanel from './PluginManagementPanel'
+import AccountManagementPanel from './AccountManagementPanel'
 
 export interface DashboardState {
   posts: AdminPost[]
@@ -199,6 +200,7 @@ export default function AdminDashboardView({
         validate={actions.validatePlugin}
         setState={actions.setPluginState}
       />
+      <AccountManagementPanel />
       <DashboardGrid state={state} actions={actions} />
       <CommentModerationPanel />
     </main>

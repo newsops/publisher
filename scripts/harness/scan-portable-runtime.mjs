@@ -73,5 +73,5 @@ if (violations.length) {
   process.exit(1)
 }
 console.log(
-  '[portable-runtime] PostgreSQL, S3-compatible storage, OIDC, and generic verification are the only core runtime paths',
+  '[portable-runtime] PostgreSQL, S3-compatible storage, local accounts, and generic verification are the only core runtime paths',
 )

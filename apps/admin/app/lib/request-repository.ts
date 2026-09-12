@@ -13,7 +13,7 @@ export function repositoryForRequest(
 ) {
   const siteId = requestedSiteId(request)
   const site = getSiteCatalog().require(siteId)
-  if (!isSiteAdmin(identity.email, site))
+  if (!identity.roles.includes('owner') && !isSiteAdmin(identity.email, site))
     throw new AdminAuthError('Not authorized for this site', 403)
   return getRepositoryForSite(siteId)
 }
@@ -24,7 +24,7 @@ export function pluginRepositoryForRequest(
 ) {
   const siteId = requestedSiteId(request)
   const site = getSiteCatalog().require(siteId)
-  if (!isSiteAdmin(identity.email, site))
+  if (!identity.roles.includes('owner') && !isSiteAdmin(identity.email, site))
     throw new AdminAuthError('Not authorized for this site', 403)
   return getPluginRepositoryForSite(siteId)
 }

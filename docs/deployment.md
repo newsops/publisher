@@ -8,7 +8,7 @@ Publisher has three independent surfaces:
 | Surface            | Required contract                                               | Failure boundary                               |
 | ------------------ | --------------------------------------------------------------- | ---------------------------------------------- |
 | Public publication | immutable static HTML/assets                                    | remains readable without every private service |
-| `apps/admin`       | OIDC/JWKS, PostgreSQL, S3-compatible API                        | never shares the public origin                 |
+| `apps/admin`       | local accounts/sessions, PostgreSQL, S3-compatible API          | never shares the public origin                 |
 | `apps/comments`    | separate PostgreSQL credentials and optional human verification | never blocks article delivery                  |
 
 The application does not choose an infrastructure company. Cloudflare Free is
@@ -89,7 +89,7 @@ behavior:
 | Private object store   | tested S3-compatible subset                                     | MinIO, AWS S3-compatible endpoint, another passing service    |
 | Public static host/CDN | immutable candidate, atomic promotion or equivalent, rollback   | filesystem origin, static-host deployment product             |
 | Admin runtime          | Node.js 22-compatible Next server with private environment      | container or managed Node runtime                             |
-| Identity               | signed JWT, issuer/audience/JWKS verification, email claim      | any conforming OIDC provider or access proxy                  |
+| Identity               | application-owned accounts, password hashes, revocable sessions | Publisher admin runtime                                       |
 | Comments verification  | HTTPS form endpoint returning `{ "success": true }`             | any reviewed human-verification service                       |
 
 Neon is an onboarding example, not an SDK dependency. A user supplies its
@@ -104,11 +104,7 @@ Admin:
 ADMIN_PUBLIC_ORIGIN=https://admin.publisher.com
 ADMIN_PUBLISHERS=publisher@example.com
 DATABASE_URL=postgresql://admin_user:...@db.example/admin
-OIDC_ISSUER=https://identity.example
-OIDC_AUDIENCE=publisher-admin
-OIDC_JWKS_URL=https://identity.example/.well-known/jwks.json
-OIDC_EMAIL_CLAIM=email
-OIDC_TOKEN_HEADER=authorization
+ADMIN_BOOTSTRAP_SECRET=replace-with-a-long-random-one-time-secret
 OBJECT_STORAGE_ENDPOINT=https://objects.example
 OBJECT_STORAGE_REGION=us-east-1
 OBJECT_STORAGE_BUCKET=publisher-private
@@ -221,7 +217,7 @@ card, usage-billed subscription, or non-zero overage remains possible.
 Recovery evidence must contain matching 64-character
 `backupDataSha256`/`restoreDataSha256` values for both `admin` and `comments`.
 Preflight also rejects shared database URLs/users, a shared public/admin host,
-missing OIDC values, and incomplete generic object-storage configuration.
+missing owner-bootstrap secret, and incomplete generic object-storage configuration.
 
 The evidence files are operator-owned and intentionally untracked. Their minimal
 shape is:
@@ -355,7 +351,7 @@ Deploy `apps/admin` to a different origin such as
 `admin.publisher.com`. `corepack pnpm build:admin` produces the Node.js 22
 Next.js application. The repository deliberately ships no provider-specific
 admin runtime build: a selected host must run this same application and must
-not replace its PostgreSQL, object-store, OIDC, snapshot, or publication
+not replace its PostgreSQL, object-store, local-account, snapshot, or publication
 contracts.
 
 Set the selected Node host or its reverse proxy to reject request bodies above
@@ -370,7 +366,7 @@ Before the owner pilot is complete, record direct observations for:
 1. Public desktop/mobile rendering with JavaScript enabled and disabled.
 2. Public content during database, object-store, admin, comment, and runtime
    projection outages.
-3. Unauthenticated admin denial, valid OIDC access, role denial, and same-origin
+3. Unauthenticated admin denial, valid local-session access, role denial, and same-origin
    mutation enforcement.
 4. Admin/comment cross-credential database denial.
 5. Candidate checksum failure and stale concurrent activation rejection.

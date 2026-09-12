@@ -5,5 +5,22 @@ import useAdminDashboard from './useAdminDashboard'
 
 export default function AdminDashboard() {
   const model = useAdminDashboard()
-  return <AdminDashboardView state={model.state} actions={model.actions} />
+  async function signOut() {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'same-origin',
+    })
+    window.location.assign('/')
+  }
+  return (
+    <>
+      <button
+        className="admin-signout secondary"
+        onClick={() => void signOut()}
+      >
+        Sign out
+      </button>
+      <AdminDashboardView state={model.state} actions={model.actions} />
+    </>
+  )
 }

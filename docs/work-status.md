@@ -8,10 +8,11 @@ current active specs override their provider details.
 
 ## Active foundation
 
-| ID        | Status                 | Scope                                                                       |
-| --------- | ---------------------- | --------------------------------------------------------------------------- |
-| WEB-001   | External pilot pending | Static public site, separate admin, real DNS/auth/cache/rate-limit evidence |
-| INFRA-004 | In progress            | Separately gated advertising adapter work; user-owned changes are preserved |
+| ID        | Status                 | Scope                                                                          |
+| --------- | ---------------------- | ------------------------------------------------------------------------------ |
+| WEB-001   | External pilot pending | Static public site, separate admin, real DNS/session/cache/rate-limit evidence |
+| ADMIN-004 | In progress            | Application-owned accounts, roles, and revocable browser sessions              |
+| INFRA-004 | In progress            | Separately gated advertising adapter work; user-owned changes are preserved    |
 
 ## Completed foundation
 
@@ -34,8 +35,8 @@ current active specs override their provider details.
 - Candidate checksum/schema/SEO/link/CSP/projection/materialization/smoke gates,
   compare-and-swap activation, safe candidate retry, provider-outage static
   readability, and rebuild-free rollback.
-- Standard OIDC/JWKS admin authentication and a generic human-verification
-  boundary for optional comments.
+- Application-owned admin accounts, password hashes, and revocable secure-cookie
+  sessions; comments are independently moderated.
 - Logical PostgreSQL backup/empty-target restore checksums and checked-in fixture
   reconciliation into PostgreSQL plus a private S3-compatible store.
 - Fail-closed production preflight requiring recent `$0` billing evidence,
@@ -54,7 +55,7 @@ account setup and production DNS. Local builds cannot satisfy these checks:
 2. Real `DATABASE_URL` and separately credentialed `COMMENTS_DATABASE_URL`.
 3. A tested private S3-compatible bucket.
 4. A production static adapter with observed atomic activation and rollback.
-5. Separate public/admin domains, OIDC, TLS, cache, direct-origin, and rate-limit
+5. Separate public/admin domains, local-account session, TLS, cache, direct-origin, and rate-limit
    evidence.
 6. Provider-external backup and clean restore evidence.
 
@@ -69,7 +70,7 @@ was canceled on 2026-09-11 and is not part of the release path.
    real PostgreSQL/S3-compatible clean-room CI.
 2. Keep WEB-001 open while the owner chooses real providers and authorizes the
    external pilot.
-3. Record real billing, DNS, OIDC, isolation, activation, rollback, resilience,
+3. Record real billing, DNS, local-account bootstrap, isolation, activation, rollback, resilience,
    and restore evidence before declaring the production deployment complete.
 
 See [deployment.md](./deployment.md),

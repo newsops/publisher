@@ -121,7 +121,7 @@ describe('content safety contract', () => {
     ).toContain('immutable')
     expect(
       fs.readFileSync(path.join(root, 'apps/admin/app/lib/auth.ts'), 'utf8'),
-    ).toContain('jwtVerify')
+    ).toContain('account_sessions')
   })
 
   it('validates editorial pick ranks and resolves only registered themes', () => {
