@@ -29,6 +29,10 @@ const auth = fs.readFileSync(
 const adminPackage = JSON.parse(
   fs.readFileSync(path.join(root, 'apps/admin/package.json'), 'utf8'),
 )
+const adminConfig = fs.readFileSync(
+  path.join(root, 'apps/admin/next.config.ts'),
+  'utf8',
+)
 const publicOutput = path.join(root, 'apps/site/out')
 if (!robots.includes('disallow:')) {
   console.error('[admin-contract] robots must disallow indexing')
@@ -37,6 +41,16 @@ if (!robots.includes('disallow:')) {
 if (!adminPackage.dependencies?.sharp) {
   console.error('[admin-contract] admin runtime must declare sharp explicitly')
   process.exit(1)
+}
+for (const marker of [
+  'outputFileTracingRoot',
+  'sharp-linux-x64',
+  'sharp-libvips-linux-x64',
+]) {
+  if (!adminConfig.includes(marker)) {
+    console.error(`[admin-contract] native sharp trace is missing ${marker}`)
+    process.exit(1)
+  }
 }
 for (const marker of [
   'account_sessions',
