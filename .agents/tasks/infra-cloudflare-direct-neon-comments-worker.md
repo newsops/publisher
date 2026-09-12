@@ -18,9 +18,11 @@ proxy or Cloudflare persistence layer.
 - [x] Update Worker transport and static-boundary regression coverage.
 - [x] Document the direct Neon deployment and secret destinations without
       committing credentials or account IDs.
-- [ ] Verify local Worker/static builds, then deploy and configure production
+- [x] Verify local Worker/static builds, then deploy and configure production
       origins only with observed evidence.
-- [ ] Record observed public, comments, and moderation smoke evidence.
+- [ ] Record a real human-verified submission and authenticated moderation
+      approval cycle; public reads, CORS, invalid-token failure closure, static
+      Pages output, and production admin deployment have been observed.
 
 ## Progress
 
@@ -43,6 +45,18 @@ proxy or Cloudflare persistence layer.
 - Read-only Cloudflare API observation confirms `publisher-comments` does not
   yet exist. The existing public Pages deployment remains separate; no Worker
   or production DNS change has been made.
+- Cloudflare rejected the first production Worker deploy because its API clock
+  considered the configured `2026-09-13` compatibility date to be in the
+  future. The configuration is corrected to the observed allowed date before
+  retrying; no architecture or persistence decision changed.
+- Cloudflare Worker `publisher-comments` is deployed at its Workers HTTPS
+  origin with direct Neon secrets, Siteverify endpoint/secret, exact public
+  origin CORS, and no database binding or proxy. A read returned 200 with the
+  expected CORS origin; an invalid verification token returned 403 and created
+  no comment. The static Pages production deployment now embeds that Worker
+  origin and the public Turnstile site key with exact CSP origins. Vercel
+  production contains the matching comments origin/moderation token and its
+  redeploy is ready.
 
 ## Decisions
 
