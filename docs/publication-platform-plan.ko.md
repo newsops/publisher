@@ -96,20 +96,15 @@ release policy는 모두 같은 graph의 독립 artifact다. 어떤 공개 경�
 - 릴리스 명령은 공통 build/validate/materialize/smoke 단계와 공급자별 deploy
   어댑터를 분리한다. Cloudflare CLI가 없어도 정적 산출물과 검증 결과를
   만들 수 있어야 한다.
-- Cloudflare를 사용할 때는 Workers Free, Pages Free, Zero Trust Free 등
-  명시적으로 `$0`인 범위만 허용한다. Workers Paid, R2 Paid, 유료 WAF·Bot
-  Management처럼 사용량 또는 좌석에 따라 과금되는 기능은 필수 경로와
-  운영 전제에서 제외한다.
+- Cloudflare Pages/Workers Free만으로 가능한 역할은 우선 그 범위에서
+  사용한다. R2처럼 무료 포함량과 별도로 결제 계정이 필요한 서비스는
+  운영자가 비용 정책과 월 상한을 명시적으로 승인한 경우에만 선택한다.
 - 무료 한도에 도달했을 때 자동 유료 전환이나 조용한 과금을 허용하지 않는다.
-  배포 전 사전 검사가 유료 구독·필수 유료 capability·과금 가능 설정을
-  발견하면 실패하고, 해당 어댑터를 비활성화하거나 다른 무료/자체 호스팅
-  대상으로 전환한다.
+  배포 전 사전 검사는 선택한 비용 정책, 구독, 사용량 과금 가능 설정을
+  대조하고, 증거가 없거나 한도를 넘으면 실패한다.
 - 비용 검증은 기능 검증과 별개의 릴리스 게이트다. 공급자 콘솔의 실제 구독,
-  갱신, 사용량 과금 상태를 확인하지 못하면 무료 배포 완료로 기록하지 않는다.
-
-2026-09-11 계정 점검에서 확인된 `R2 Paid` 구독은 취소했으며 Cloudflare에
-`Ending`으로 표시된다. 현재 결제 주기 종료일인 2026-10-10까지 접근이
-남아 있더라도 신규 플랫폼의 필수 저장소나 발행 경로로 사용하지 않는다.
+  갱신, 사용량 과금 상태를 확인하지 못하면 해당 비용 정책의 배포 완료로
+  기록하지 않는다.
 
 ## 영속성 제품 결정
 
@@ -195,8 +190,7 @@ AWS S3처럼 endpoint를 SDK가 유도할 수 있는 경우에만
 Cloudflare 공식 문서는 R2 시작 전에 R2 구독을 checkout해야 하며 월 무료
 사용량을 넘으면 사용량에 따라 과금된다고 명시한다. Standard storage에는
 월 10 GB-month, Class A 100만, Class B 1,000만 요청의 무료 사용량이 있지만
-이는 결제/구독 없는 완전 무료 제품이라는 뜻이 아니다. 그러므로 취소된
-계정에서 R2는 기본값이 아니다. R2를 별도 승인으로 다시 선택하면
+이는 결제/구독 없는 완전 무료 제품이라는 뜻이 아니다. R2를 선택하면
 [R2 시작 조건](https://developers.cloudflare.com/r2/get-started/),
 [현재 가격](https://developers.cloudflare.com/r2/pricing/),
 [S3 호환 범위](https://developers.cloudflare.com/r2/api/s3/api/)를 확인하고
@@ -319,14 +313,14 @@ admin / site-scoped API
 
 ## 구현 상태
 
-| 영역                          | 상태                                             | 결과                                                                                                                                                 |
-| ----------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 정적 공개 사이트와 별도 admin | 단일 PostgreSQL/S3 계약 구현 완료, pilot 검증 중 | 공개 정적 export, 일반 OIDC, PostgreSQL, S3 호환 저장, `$0` preflight가 구현됐다. `R2 Paid` 갱신은 취소했으며 필수 경로에서 사용하지 않는다.         |
-| AI 지원 배포 온보딩           | 가이드 완료, 첫 pilot 대기                       | 선택 인터뷰, 공식 비용 검증, 권한·비밀 경계, AI 실행, 검증·인계를 한 문서로 연결했다. 저장소 소유자의 첫 실배포 전까지 `pilot-pending`이다.          |
-| 증분 정적 발행·runtime 테마   | 구현 완료, 최종 회귀 검증 중                     | 의미론적 SEO HTML, route 의존성 manifest, 전역 projection, self-hosted theme bundle, 원자적 활성화와 1,000개 기사 invalidation 회귀 시험을 구현했다. |
-| 다중 사이트 플러그인 플랫폼   | 완료                                             | typed registry, 사이트별 설치, revision-safe API/UI, public-safe snapshot, build-time CSP, 복제·비밀 격리, 장애 회복 검증을 제공한다.                |
-| Google Analytics 4            | 완료                                             | `google.analytics`는 GA4 measurement ID만 받고, 기본 동의 모델에서 승인된 consent signal 이후에만 플랫폼 소유 loader가 태그를 비동기로 추가한다.     |
-| Google AdSense                | 아키텍처 결정 대기                               | named-slot·static ads.txt 설계는 작성됐지만, Google의 현재 CSP 요구가 완전 정적 exact-origin CSP 계약과 충돌한다. 승인 없는 우회 구현은 하지 않는다. |
+| 영역                          | 상태                                             | 결과                                                                                                                                                        |
+| ----------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 정적 공개 사이트와 별도 admin | 단일 PostgreSQL/S3 계약 구현 완료, pilot 검증 중 | 공개 정적 export, 일반 OIDC, PostgreSQL, S3 호환 저장, 비용 정책별 fail-closed preflight가 구현됐다. 특정 사업자 결제 상태는 공개 저장소에 기록하지 않는다. |
+| AI 지원 배포 온보딩           | 가이드 완료, 첫 pilot 대기                       | 선택 인터뷰, 공식 비용 검증, 권한·비밀 경계, AI 실행, 검증·인계를 한 문서로 연결했다. 저장소 소유자의 첫 실배포 전까지 `pilot-pending`이다.                 |
+| 증분 정적 발행·runtime 테마   | 구현 완료, 최종 회귀 검증 중                     | 의미론적 SEO HTML, route 의존성 manifest, 전역 projection, self-hosted theme bundle, 원자적 활성화와 1,000개 기사 invalidation 회귀 시험을 구현했다.        |
+| 다중 사이트 플러그인 플랫폼   | 완료                                             | typed registry, 사이트별 설치, revision-safe API/UI, public-safe snapshot, build-time CSP, 복제·비밀 격리, 장애 회복 검증을 제공한다.                       |
+| Google Analytics 4            | 완료                                             | `google.analytics`는 GA4 measurement ID만 받고, 기본 동의 모델에서 승인된 consent signal 이후에만 플랫폼 소유 loader가 태그를 비동기로 추가한다.            |
+| Google AdSense                | 아키텍처 결정 대기                               | named-slot·static ads.txt 설계는 작성됐지만, Google의 현재 CSP 요구가 완전 정적 exact-origin CSP 계약과 충돌한다. 승인 없는 우회 구현은 하지 않는다.        |
 
 ## Google Analytics 계약
 

@@ -44,10 +44,11 @@ AI는 다음 질문을 한 번에 길게 던지지 않는다. 이미 답한 내�
   - `paid-approved`: 사용자가 명시한 월 상한 안에서 유료 상품 허용
 - 백업 보관 위치와 허용 가능한 복구 시간
 
-저장소 소유자의 첫 pilot 기본값은 `free-only`이다. 소유자 계정에서 확인된
-Cloudflare 사용량 과금형 object-storage 구독은 2026-09-11 취소했으며,
-잔여 접근 기간에도 이 배포에 사용하지 않는다. Workers Paid, 유료 WAF,
-유료 Bot 기능 등 다른 Cloudflare 유료 계획도 선택하지 않는다.
+각 pilot은 운영자가 실제 비용 정책을 명시한 뒤에만 시작한다. `free-only`는
+결제 활성화가 필요한 R2를 선택할 수 없다. R2처럼 무료 포함량은 있지만
+과금 계정이 필요한 서비스를 선택하려면 `free-allowance-with-billing` 또는
+`paid-approved`와 월 상한을 기록해야 한다. Workers Paid, 유료 WAF, 유료 Bot
+기능은 별도 명시 승인 없이는 선택하지 않는다.
 
 ### 2. 역할별 플랫폼 선택
 
