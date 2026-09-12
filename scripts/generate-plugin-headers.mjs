@@ -6,6 +6,10 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const headerPath = path.join(root, 'apps/site/out/_headers')
+const turnstileRuntimePath = path.join(
+  root,
+  'apps/site/out/site-runtime/turnstile.v1.js',
+)
 const snapshotPath = path.join(root, 'packages/content/src/data/plugins.json')
 
 const providerOrigins = {
@@ -86,6 +90,12 @@ if (verificationOrigin) {
   connects.add(verificationOrigin)
   frames.add(verificationOrigin)
 }
+if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+  const turnstileOrigin = 'https://challenges.cloudflare.com'
+  scripts.add(turnstileOrigin)
+  connects.add(turnstileOrigin)
+  frames.add(turnstileOrigin)
+} else await fs.rm(turnstileRuntimePath, { force: true })
 for (const origin of [...scripts, ...connects, ...frames])
   if (origin === '*' || origin.includes('*'))
     throw new Error('Wildcard runtime provider origins are forbidden')

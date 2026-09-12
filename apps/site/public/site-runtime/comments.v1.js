@@ -53,6 +53,12 @@
       const input = form.elements.namedItem('verificationToken')
       if (input instanceof HTMLInputElement) input.value = verificationToken
     })
+    const resetVerification = () => {
+      verificationToken = ''
+      const input = form.elements.namedItem('verificationToken')
+      if (input instanceof HTMLInputElement) input.value = ''
+      section.dispatchEvent(new CustomEvent('publisher:verification-reset'))
+    }
     form.addEventListener('submit', (event) => {
       event.preventDefault()
       const formData = new FormData(form)
@@ -78,10 +84,12 @@
         .then((response) => {
           if (!response.ok) throw new Error()
           form.reset()
+          resetVerification()
           if (submitStatus)
             submitStatus.textContent = 'Submitted for moderation.'
         })
         .catch(() => {
+          resetVerification()
           if (submitStatus)
             submitStatus.textContent = 'Comment submission failed. Try again.'
         })

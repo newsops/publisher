@@ -10,9 +10,10 @@ const publicOrigin =
   process.env.PUBLIC_BROWSER_ORIGIN ?? 'http://127.0.0.1:3000'
 const adminOrigin = process.env.ADMIN_BROWSER_ORIGIN ?? 'http://127.0.0.1:3101'
 const adminToken = process.env.ADMIN_DEV_TOKEN
+const publicBrowserOnly = process.env.PUBLIC_BROWSER_ONLY === '1'
 const checkCommentOutage = process.env.CHECK_COMMENT_OUTAGE === '1'
 const checkGoogleAnalytics = process.env.CHECK_GOOGLE_ANALYTICS === '1'
-if (!adminToken)
+if (!adminToken && !publicBrowserOnly)
   throw new Error('ADMIN_DEV_TOKEN is required for admin browser checks')
 
 const profile = await mkdtemp(path.join(os.tmpdir(), 'xrtn-chrome-'))
@@ -290,10 +291,12 @@ async function inspect(
 
 try {
   await waitForChrome()
-  const adminHeaders = {
-    'x-admin-dev-token': adminToken,
-    'x-admin-dev-email': 'browser-check@localhost',
-  }
+  const adminHeaders = adminToken
+    ? {
+        'x-admin-dev-token': adminToken,
+        'x-admin-dev-email': 'browser-check@localhost',
+      }
+    : {}
   const results = []
   results.push(
     await inspect('public-desktop', `${publicOrigin}/`, 1440, 1000),
@@ -407,20 +410,37 @@ try {
       404,
       false,
     ),
-    await inspect('admin-desktop', `${adminOrigin}/`, 1440, 1200, adminHeaders),
-    await inspect('admin-mobile', `${adminOrigin}/`, 390, 844, adminHeaders),
+    ...(publicBrowserOnly
+      ? []
+      : [
+          await inspect(
+            'admin-desktop',
+            `${adminOrigin}/`,
+            1440,
+            1200,
+            adminHeaders,
+          ),
+          await inspect(
+            'admin-mobile',
+            `${adminOrigin}/`,
+            390,
+            844,
+            adminHeaders,
+          ),
+        ]),
   )
   if (!results.find((result) => result.name === 'article-desktop')?.authorLink)
     throw new Error('Article author link is missing')
-  for (const name of ['admin-desktop', 'admin-mobile'])
-    if (
-      !results.find((result) => result.name === name)?.settingsPanel ||
-      !results.find((result) => result.name === name)?.pluginPanel ||
-      !results.find((result) => result.name === name)?.postCount
-    )
-      throw new Error(
-        `${name} did not finish loading authenticated content: ${JSON.stringify(results.find((result) => result.name === name))}`,
+  if (!publicBrowserOnly)
+    for (const name of ['admin-desktop', 'admin-mobile'])
+      if (
+        !results.find((result) => result.name === name)?.settingsPanel ||
+        !results.find((result) => result.name === name)?.pluginPanel ||
+        !results.find((result) => result.name === name)?.postCount
       )
+        throw new Error(
+          `${name} did not finish loading authenticated content: ${JSON.stringify(results.find((result) => result.name === name))}`,
+        )
   const publicLinks = [
     ...new Set(
       results

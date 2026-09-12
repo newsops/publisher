@@ -90,6 +90,11 @@ private object storage의 필수 제공자로 간주하지 않으며 저장소�
 
 - 댓글을 지금 켤지, 읽기만 켤지, 완전히 끌지
 - human verification 사업자와 개인정보·보존 정책
+- Turnstile을 선택할 경우 정적 사이트의 공개 `NEXT_PUBLIC_TURNSTILE_SITE_KEY`,
+  comments Worker의 `HUMAN_VERIFICATION_URL`(Siteverify), Worker Secret
+  `HUMAN_VERIFICATION_SECRET`를 각각 분리한다. site key가 없으면 Turnstile
+  script·CSP origin·댓글 쓰기 form은 산출하지 않는다. 이는 선택형 adapter이며
+  Cloudflare 계정·유료 플랜을 이 솔루션 사용자에게 요구하는 제품 계약이 아니다.
 - 인기글을 켤지: 집계 source, window, timestamp, privacy 승인 없이는
   “인기글”을 표시하지 않고 편집자 추천만 사용
 - 정적 댓글 SEO embedding을 켤지: 승인된 댓글만 한 기사 단위로 반영

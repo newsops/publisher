@@ -136,7 +136,9 @@ wire contract. It has no Hyperdrive, D1, database binding, or proxy layer.
    the admin application. Run `corepack pnpm persistence:migrate -- --scope
 comments` with that role before serving traffic.
 2. Set `PUBLIC_ORIGIN`, `HUMAN_VERIFICATION_URL`, and rate-limit values as
-   non-secret Worker variables. Set `COMMENTS_DATABASE_URL`,
+   non-secret Worker variables. For an operator-selected Turnstile integration,
+   set `HUMAN_VERIFICATION_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify`.
+   Set `COMMENTS_DATABASE_URL`,
    `COMMENTS_MODERATION_TOKEN`, and `HUMAN_VERIFICATION_SECRET` only as Worker
    secrets. The database URL is the dedicated Neon comments URL. Set the same
    moderation origin/token only in the admin runtime's secret store as
@@ -166,9 +168,35 @@ NEXT_PUBLIC_COMMENT_ORIGIN=https://comments.publisher.com
 NEXT_PUBLIC_COMMENT_SUBMISSION_ENABLED=true
 ```
 
-The verification widget or application integrates with the static comment form
-by dispatching `publisher:verification-token` on the article comment section.
-No third-party challenge script is present in the baseline public bundle.
+### Optional Turnstile comment verification
+
+Turnstile is an operator-selected human-verification adapter, not a Publisher
+application dependency. It is suitable for this pilot only after the operator
+has evaluated its own billing, privacy, and availability requirements; neither
+this repository nor a project consumer requires a Cloudflare paid plan or a
+Cloudflare account to use comments with a different verifier.
+
+For the Turnstile adapter, set this additional **public build-time** variable
+on the static-site host:
+
+```text
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-public-turnstile-site-key
+```
+
+The site key is public and is deliberately emitted into static HTML. It is not
+an authentication secret. Keep `HUMAN_VERIFICATION_SECRET` only in the
+comments Worker secret store, never in Pages/Vercel public build variables,
+source control, browser logs, or the static artifact. When the public site key
+is omitted, the static output emits no Turnstile script, frame, CSP origin, or
+comment-submission form; approved-comment reads remain available. When it is
+present with comment submissions enabled, the build adds the exact
+`https://challenges.cloudflare.com` CSP origins and the browser adapter obtains
+a token before the existing generic comment API submits it.
+
+Other verification providers can integrate by delivering a token through the
+documented `publisher:verification-token` event on the article comment section.
+The generic Worker verifier still receives only a verification endpoint and its
+secret; no provider-specific persistence, proxy, or database service is added.
 
 The bundled Node comment adapter discards any inbound `X-Client-IP` value and
 sets it from the TCP peer address. If a reverse proxy is placed in front, it

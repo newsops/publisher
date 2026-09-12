@@ -58,6 +58,8 @@ describe('COMMENT-001 isolated comment contract', () => {
     expect(component).toContain('NEXT_PUBLIC_COMMENT_SUBMISSION_ENABLED')
     expect(runtime).toContain('publisher:verification-token')
     expect(runtime).toContain('verificationToken')
+    expect(component).toContain('NEXT_PUBLIC_TURNSTILE_SITE_KEY')
+    expect(component).toContain('/site-runtime/turnstile.v1.js')
     expect(runtime).not.toMatch(/challenges\.cloudflare\.com/i)
     expect(headers).toContain('Content-Security-Policy:')
     expect(headers).toContain("connect-src 'self'")
