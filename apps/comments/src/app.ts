@@ -1,4 +1,5 @@
 import { PostgresCommentStore, PostgresRateLimiter } from './postgres-db'
+import type { PostgresPool } from '@publisher/persistence/postgres'
 import {
   DEFAULT_BODY_LIMIT,
   MAX_AUTHOR_NAME_LENGTH,
@@ -283,13 +284,14 @@ export function createCommentHandler(
 export function handlerDependencies(
   env: CommentEnv,
   cache?: CommentCache,
+  pool?: PostgresPool,
 ): CommentHandlerDependencies {
   const connectionString = env.COMMENTS_DATABASE_URL?.trim()
   if (!connectionString)
     throw new Error('COMMENTS_DATABASE_URL is required for comment persistence')
   return {
-    store: new PostgresCommentStore(connectionString),
-    limiter: new PostgresRateLimiter(connectionString),
+    store: new PostgresCommentStore(connectionString, pool),
+    limiter: new PostgresRateLimiter(connectionString, pool),
     verifier: createHumanVerifier(
       env.HUMAN_VERIFICATION_URL,
       env.HUMAN_VERIFICATION_SECRET,

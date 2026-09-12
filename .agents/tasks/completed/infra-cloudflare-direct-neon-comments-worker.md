@@ -1,6 +1,6 @@
 # Cloudflare comments Worker with direct Neon PostgreSQL
 
-- **Status**: in-progress
+- **Status**: completed
 - **Created**: 2026-09-13
 - **Branch**: main
 - **Scope**: apps/comments, packages/persistence, apps/admin, apps/site, docs
@@ -20,7 +20,7 @@ proxy or Cloudflare persistence layer.
       committing credentials or account IDs.
 - [x] Verify local Worker/static builds, then deploy and configure production
       origins only with observed evidence.
-- [ ] Record a real human-verified submission and authenticated moderation
+- [x] Record a real human-verified submission and authenticated moderation
       approval cycle; public reads, CORS, invalid-token failure closure, static
       Pages output, and production admin deployment have been observed.
 
@@ -57,6 +57,12 @@ proxy or Cloudflare persistence layer.
   origin and the public Turnstile site key with exact CSP origins. Vercel
   production contains the matching comments origin/moderation token and its
   redeploy is ready.
+- Production verification exposed a stale direct PostgreSQL pool after a
+  verified write: moderation reads hung and returned HTTP 500. The Worker now
+  creates and closes a one-connection direct pool per request, preserving the
+  no-proxy/no-provider-database design. The redeployed Worker accepted the
+  real verified submission, the authenticated admin listed and approved it,
+  and both the public API and live static article returned the approved comment.
 
 ## Decisions
 
@@ -66,9 +72,11 @@ proxy or Cloudflare persistence layer.
 
 ## Blockers
 
-- Human-verification provider selection is pending. The comment write contract
-  already fails closed without a valid verification token; deploying comments
-  with writes enabled requires the operator to approve either Turnstile or a
-  different verifier before the corresponding service/key can be created.
+- None.
 
 ## Result
+
+The direct Neon comments Worker is deployed without Hyperdrive, D1, or a
+connection proxy. A production Turnstile submission was moderated and then
+read publicly from the live static article after the per-request PostgreSQL
+connection-lifecycle regression was fixed.

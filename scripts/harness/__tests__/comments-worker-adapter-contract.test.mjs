@@ -93,6 +93,17 @@ describe('INFRA-001 Cloudflare Worker adapter', () => {
     expect(configuration.vars).not.toHaveProperty('HUMAN_VERIFICATION_SECRET')
   })
 
+  it('uses a bounded direct PostgreSQL connection only for one production request', async () => {
+    const fs = await import('node:fs/promises')
+    const source = await fs.readFile(
+      new URL('../../../apps/comments/src/worker.ts', import.meta.url),
+      'utf8',
+    )
+    expect(source).toContain('createPostgresPool(connectionString, { max: 1 })')
+    expect(source).toContain('finally')
+    expect(source).toContain('await pool.end()')
+  })
+
   it('removes caller-controlled client IP without consuming provider headers', () => {
     const normalized = requestWithoutCallerClientIp(
       request('/v1/threads/article-slug', {

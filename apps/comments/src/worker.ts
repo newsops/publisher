@@ -3,7 +3,9 @@ import {
   handlerDependencies,
   type CommentHandlerDependencies,
 } from './app'
+import { createPostgresPool } from '@publisher/persistence/postgres'
 import type { CommentEnv } from './types'
+import type { PostgresPool } from '@publisher/persistence/postgres'
 
 export type WorkerCommentEnv = CommentEnv & {
   readonly COMMENTS_DATABASE_URL: string
@@ -40,9 +42,24 @@ export function createWorkerFetchHandler(
   env: WorkerCommentEnv,
   dependencies?: CommentHandlerDependencies,
 ): (request: Request) => Promise<Response> {
-  const handler = createWorkerCommentHandler(env, dependencies)
-  return (request: Request): Promise<Response> =>
-    handler(requestWithoutCallerClientIp(request))
+  if (dependencies) {
+    const handler = createWorkerCommentHandler(env, dependencies)
+    return (request: Request): Promise<Response> =>
+      handler(requestWithoutCallerClientIp(request))
+  }
+
+  return async (request: Request): Promise<Response> => {
+    const connectionString = env.COMMENTS_DATABASE_URL.trim()
+    const pool: PostgresPool = createPostgresPool(connectionString, { max: 1 })
+    const handler = createCommentHandler(
+      handlerDependencies(commentEnvironment(env), undefined, pool),
+    )
+    try {
+      return await handler(requestWithoutCallerClientIp(request))
+    } finally {
+      await pool.end()
+    }
+  }
 }
 
 export default {
