@@ -36,6 +36,13 @@ proxy or Cloudflare persistence layer.
   secret scan.
 - The local shell runs Node 24 while the repository declares Node 22; all
   checks above passed with the existing engine warning.
+- Pushed direct-Neon Worker implementation and regression coverage to
+  `origin/main` as `5333913` after the repository pre-push gate passed:
+  typecheck, static build, 126 harness tests, portability scans, and secret
+  scan.
+- Read-only Cloudflare API observation confirms `publisher-comments` does not
+  yet exist. The existing public Pages deployment remains separate; no Worker
+  or production DNS change has been made.
 
 ## Decisions
 
