@@ -26,9 +26,16 @@ const auth = fs.readFileSync(
   path.join(root, 'apps/admin/app/lib/auth.ts'),
   'utf8',
 )
+const adminPackage = JSON.parse(
+  fs.readFileSync(path.join(root, 'apps/admin/package.json'), 'utf8'),
+)
 const publicOutput = path.join(root, 'apps/site/out')
 if (!robots.includes('disallow:')) {
   console.error('[admin-contract] robots must disallow indexing')
+  process.exit(1)
+}
+if (!adminPackage.dependencies?.sharp) {
+  console.error('[admin-contract] admin runtime must declare sharp explicitly')
   process.exit(1)
 }
 for (const marker of [
