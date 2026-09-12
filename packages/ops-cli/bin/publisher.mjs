@@ -24,6 +24,10 @@ function config() {
   }
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
 async function request(path, init = {}) {
   const { origin, token } = config()
   if (!origin || !token) return undefined
@@ -58,7 +62,18 @@ async function main() {
     return emit(
       response.ok,
       response.ok ? 'READY' : 'REMOTE_ERROR',
-      { status: response.status, state: body },
+      {
+        status: response.status,
+        state: response.ok
+          ? {
+              kind: 'site',
+              status: 'ready',
+              terminal: false,
+              retryable: false,
+              site: body,
+            }
+          : body,
+      },
       response.ok ? 0 : 30,
     )
   }
@@ -129,6 +144,21 @@ async function main() {
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ client_id: clientId }),
     }).then((response) => response.json())
+    const interval = Math.max(1, Number(device.interval) || 5)
+    let pollAttempted = false
+    if (discovery.token_endpoint && device.device_code) {
+      await wait(interval * 1_000)
+      pollAttempted = true
+      await fetch(discovery.token_endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+          device_code: device.device_code,
+          client_id: clientId,
+        }),
+      }).then((response) => response.json())
+    }
     return emit(
       false,
       'AUTHORITY_REQUIRED',
@@ -136,7 +166,8 @@ async function main() {
         verificationUri:
           device.verification_uri_complete ?? device.verification_uri,
         userCode: device.user_code,
-        interval: device.interval ?? 5,
+        interval,
+        pollAttempted,
         tokenPersisted: false,
       },
       40,
