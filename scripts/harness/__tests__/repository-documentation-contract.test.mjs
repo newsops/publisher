@@ -104,6 +104,22 @@ describe('repository handoff documentation contract', () => {
       expect(content).toContain(required)
   })
 
+  it('documents portable managed static-host activation evidence', () => {
+    const content = [
+      read('docs/deployment.md'),
+      read('docs/ai-assisted-deployment.ko.md'),
+    ].join('\n')
+    for (const required of [
+      'managed-static-host',
+      'STATIC_HOSTING_EVIDENCE_PATH',
+      'candidateVerifiedAt',
+      'activationObservedAt',
+      'rollbackObservedAt',
+      'Cloudflare Pages',
+    ])
+      expect(content).toContain(required)
+  })
+
   it('keeps the agent-first direction and human authority boundary explicit', () => {
     const plan = read('docs/publication-platform-plan.ko.md')
     for (const required of [

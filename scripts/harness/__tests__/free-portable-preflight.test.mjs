@@ -10,6 +10,7 @@ async function evidenceFiles(overrides = {}) {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'preflight-'))
   const billingPath = path.join(directory, 'billing.json')
   const recoveryPath = path.join(directory, 'recovery.json')
+  const staticHostingPath = path.join(directory, 'static-hosting.json')
   await writeFile(
     billingPath,
     JSON.stringify({
@@ -44,7 +45,19 @@ async function evidenceFiles(overrides = {}) {
       ...overrides.recovery,
     }),
   )
-  return { directory, billingPath, recoveryPath }
+  await writeFile(
+    staticHostingPath,
+    JSON.stringify({
+      verifiedAt: '2026-09-11T00:00:00.000Z',
+      publicOrigin: 'https://www.example.test',
+      deploymentId: 'managed-deployment-123',
+      candidateVerifiedAt: '2026-09-11T00:00:00.000Z',
+      activationObservedAt: '2026-09-11T00:00:00.000Z',
+      rollbackObservedAt: '2026-09-11T00:00:00.000Z',
+      ...overrides.staticHosting,
+    }),
+  )
+  return { directory, billingPath, recoveryPath, staticHostingPath }
 }
 
 function environment(files, overrides = {}) {
@@ -268,6 +281,94 @@ describe('INFRA-005 fail-closed free and recovery preflight', () => {
         now,
       })
       expect(result.missing.join('\n')).toContain('unsupported static adapter')
+    } finally {
+      await rm(files.directory, { recursive: true, force: true })
+    }
+  })
+
+  it('accepts fresh managed static-host activation evidence', async () => {
+    const files = await evidenceFiles()
+    try {
+      expect(
+        evaluatePreflight({
+          environment: environment(files, {
+            STATIC_DEPLOYMENT_ADAPTER: 'managed-static-host',
+            STATIC_HOSTING_EVIDENCE_PATH: files.staticHostingPath,
+          }),
+          production: true,
+          mode: 'platform',
+          now,
+        }).missing,
+      ).toEqual([])
+    } finally {
+      await rm(files.directory, { recursive: true, force: true })
+    }
+  })
+
+  it('preserves filesystem adapter absolute-root validation', async () => {
+    const files = await evidenceFiles()
+    try {
+      const result = evaluatePreflight({
+        environment: environment(files, {
+          STATIC_DEPLOYMENT_ROOT: 'relative-root',
+        }),
+        production: true,
+        mode: 'platform',
+        now,
+      })
+      expect(result.missing).toContain(
+        'deployment topology: STATIC_DEPLOYMENT_ROOT must be absolute',
+      )
+    } finally {
+      await rm(files.directory, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects incomplete, stale, and mismatched managed static-host evidence', async () => {
+    const cases = [
+      undefined,
+      { deploymentId: '' },
+      { publicOrigin: 'https://other.example.test' },
+      { candidateVerifiedAt: 'not-a-timestamp' },
+      { rollbackObservedAt: '2026-07-01T00:00:00.000Z' },
+    ]
+    for (const staticHosting of cases) {
+      const files = await evidenceFiles({ staticHosting: staticHosting ?? {} })
+      try {
+        const result = evaluatePreflight({
+          environment: environment(files, {
+            STATIC_DEPLOYMENT_ADAPTER: 'managed-static-host',
+            ...(staticHosting === undefined
+              ? { STATIC_HOSTING_EVIDENCE_PATH: '' }
+              : { STATIC_HOSTING_EVIDENCE_PATH: files.staticHostingPath }),
+          }),
+          production: true,
+          mode: 'platform',
+          now,
+        })
+        expect(result.missing).not.toEqual([])
+      } finally {
+        await rm(files.directory, { recursive: true, force: true })
+      }
+    }
+
+    const files = await evidenceFiles()
+    try {
+      const result = evaluatePreflight({
+        environment: environment(files, {
+          STATIC_DEPLOYMENT_ADAPTER: 'managed-static-host',
+          STATIC_HOSTING_EVIDENCE_PATH: path.join(
+            files.directory,
+            'absent.json',
+          ),
+        }),
+        production: true,
+        mode: 'platform',
+        now,
+      })
+      expect(result.missing.join('\n')).toContain(
+        'unreadable static-hosting activation file',
+      )
     } finally {
       await rm(files.directory, { recursive: true, force: true })
     }

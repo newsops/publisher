@@ -267,8 +267,8 @@ Production preflight is fail-closed:
 ```bash
 export BILLING_ATTESTATION_PATH=/secure-evidence/billing.json
 export RECOVERY_EVIDENCE_PATH=/secure-evidence/recovery.json
-export STATIC_DEPLOYMENT_ADAPTER=filesystem
-export STATIC_DEPLOYMENT_ROOT=/srv/publisher-static
+export STATIC_DEPLOYMENT_ADAPTER=managed-static-host
+export STATIC_HOSTING_EVIDENCE_PATH=/secure-evidence/static-hosting.json
 corepack pnpm deploy:preflight
 ```
 
@@ -284,6 +284,14 @@ Recovery evidence must contain matching 64-character
 `backupDataSha256`/`restoreDataSha256` values for both `admin` and `comments`.
 Preflight also rejects shared database URLs/users, a shared public/admin host,
 missing owner-bootstrap secret, and incomplete generic object-storage configuration.
+
+`STATIC_DEPLOYMENT_ADAPTER=filesystem` remains available for an operator-owned
+origin and requires an absolute `STATIC_DEPLOYMENT_ROOT`. A managed CDN/static
+host instead uses `STATIC_DEPLOYMENT_ADAPTER=managed-static-host` and must
+provide recent, non-secret activation evidence. This keeps the static host an
+operator choice: Cloudflare Pages is one suitable mapping because its native
+deployment promotion and rollback can be observed, but Publisher neither
+imports its SDK nor receives a Pages credential.
 
 The evidence files are operator-owned and intentionally untracked. Their minimal
 shape is:
@@ -318,6 +326,24 @@ production selection. R2 Standard does not require a paid application runtime,
 but its included monthly usage can be exceeded. The operator must review current
 provider billing before every production release and retain the evidence outside
 the repository.
+
+For a managed static host, retain a separate evidence record after the host has
+received a verified candidate, activated it, and completed a rollback smoke:
+
+```json
+{
+  "verifiedAt": "2026-09-13T00:00:00.000Z",
+  "publicOrigin": "https://www.example.com",
+  "deploymentId": "host-observed-deployment-id",
+  "candidateVerifiedAt": "2026-09-13T00:00:00.000Z",
+  "activationObservedAt": "2026-09-13T00:00:00.000Z",
+  "rollbackObservedAt": "2026-09-13T00:00:00.000Z"
+}
+```
+
+`publicOrigin` must exactly match `PUBLIC_SMOKE_URL`'s origin. The deployment
+identifier is an operator observation, not a credential; the record must not
+contain a provider token, account identifier, bucket name, or private endpoint.
 
 ```json
 {

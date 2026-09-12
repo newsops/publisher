@@ -6,12 +6,6 @@ A feature is completed only after every criterion is checked and its spec has a
 passing `GATE-COMPLETE` entry. Earlier completed specs remain decision records;
 current active specs override their provider details.
 
-## Active foundation
-
-| ID        | Status      | Scope                                                                   |
-| --------- | ----------- | ----------------------------------------------------------------------- |
-| INFRA-002 | In progress | Truthful included-usage billing attestation for the selected R2 adapter |
-
 ## Completed foundation
 
 | ID        | Status   | Scope                                                                                               |
@@ -19,6 +13,7 @@ current active specs override their provider details.
 | INFRA-005 | Complete | PostgreSQL, S3-compatible object storage, media, recovery, `$0` preflight, clean-room onboarding    |
 | WEB-008   | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation |
 | WEB-001   | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision     |
+| INFRA-003 | Complete | Provider-neutral managed static-host activation evidence                                            |
 
 ## Completed implementation
 
@@ -54,7 +49,8 @@ account setup and production DNS. Local builds cannot satisfy these checks:
    static hosting with the selected cost policy.
 2. Real `DATABASE_URL` and separately credentialed `COMMENTS_DATABASE_URL`.
 3. A tested private S3-compatible bucket.
-4. A production static adapter with observed atomic activation and rollback.
+4. A production static adapter with observed atomic activation and rollback;
+   `managed-static-host` records these observations without a provider SDK.
 5. Separate public/admin domains, local-account session, TLS, cache, direct-origin, and rate-limit
    evidence.
 6. Provider-external backup and clean restore evidence.
@@ -68,8 +64,7 @@ The admin remains a provider-neutral Node.js 22 application.
 
 1. Keep the completed INFRA-005 and WEB-008 contracts green on Node.js 22 and
    real PostgreSQL/S3-compatible clean-room CI.
-2. Complete INFRA-002's truthful R2 included-usage attestation contract.
-3. Record real billing, DNS, local-account bootstrap, isolation, activation, rollback, resilience,
+2. Record real billing, DNS, local-account bootstrap, isolation, activation, rollback, resilience,
    and restore evidence before declaring the production deployment complete.
 
 See [deployment.md](./deployment.md),

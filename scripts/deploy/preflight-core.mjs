@@ -112,7 +112,7 @@ function requiredEnvironment(mode) {
   return required
 }
 
-function inspectDeploymentTopology(environment, missing) {
+function inspectDeploymentTopology(environment, missing, now) {
   if (environment.PUBLIC_SMOKE_URL && environment.ADMIN_SMOKE_URL) {
     try {
       if (
@@ -131,10 +131,65 @@ function inspectDeploymentTopology(environment, missing) {
       missing.push(
         'deployment topology: STATIC_DEPLOYMENT_ROOT must be absolute',
       )
+  } else if (environment.STATIC_DEPLOYMENT_ADAPTER === 'managed-static-host') {
+    inspectManagedStaticHost(
+      readEvidence(
+        environment.STATIC_HOSTING_EVIDENCE_PATH,
+        'static-hosting activation',
+        missing,
+      ),
+      environment.PUBLIC_SMOKE_URL,
+      missing,
+      now,
+    )
   } else if (environment.STATIC_DEPLOYMENT_ADAPTER)
     missing.push(
       `deployment topology: unsupported static adapter ${environment.STATIC_DEPLOYMENT_ADAPTER}`,
     )
+}
+
+function inspectManagedStaticHost(evidence, publicSmokeUrl, missing, now) {
+  if (!evidence) return
+  inspectRequiredTimestamp(
+    evidence.verifiedAt,
+    'static-hosting activation',
+    missing,
+    now,
+  )
+  if (
+    typeof evidence.deploymentId !== 'string' ||
+    !evidence.deploymentId.trim()
+  )
+    missing.push('static-hosting activation: deploymentId')
+  for (const field of [
+    'candidateVerifiedAt',
+    'activationObservedAt',
+    'rollbackObservedAt',
+  ])
+    inspectRequiredTimestamp(
+      evidence[field],
+      `static-hosting activation ${field}`,
+      missing,
+      now,
+    )
+  try {
+    if (
+      new URL(evidence.publicOrigin).origin !== new URL(publicSmokeUrl).origin
+    )
+      missing.push(
+        'static-hosting activation: publicOrigin must match PUBLIC_SMOKE_URL',
+      )
+  } catch {
+    missing.push('static-hosting activation: publicOrigin must be a valid URL')
+  }
+}
+
+function inspectRequiredTimestamp(value, label, missing, now) {
+  if (typeof value !== 'string' || !value.trim()) {
+    missing.push(`evidence: ${label} verifiedAt`)
+    return
+  }
+  recentTimestamp(value, label, missing, now)
 }
 
 function inspectEvidence(environment, missing, now) {
@@ -165,7 +220,7 @@ export function evaluatePreflight({
   if (!production) return { missing, warnings }
   for (const name of requiredEnvironment(mode))
     if (!environment[name]?.trim()) missing.push(`environment: ${name}`)
-  inspectDeploymentTopology(environment, missing)
+  inspectDeploymentTopology(environment, missing, now)
   if (environment.DATABASE_URL && environment.COMMENTS_DATABASE_URL)
     inspectDatabaseIsolation(environment, missing)
   inspectEvidence(environment, missing, now)

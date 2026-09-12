@@ -129,7 +129,7 @@ export/삭제 문서를 열어 다음을 기록한다.
 ```yaml
 policy: free-allowance-with-billing
 publicHost:
-  adapter: filesystem
+  adapter: managed-static-host
   origin: https://www.example.com
 database:
   engine: postgresql
@@ -190,6 +190,8 @@ AI는 사용자에게 아래를 먼저 보여준다.
 2. admin publish의 `202`, snapshot checksum, idempotent job을 확인한다.
 3. `publication:next`로 candidate를 생성·검증·activation한다.
 4. 선택한 static host에는 검증된 release directory만 전달한다.
+   `managed-static-host`를 선택했다면 host의 deployment ID, 후보 검증,
+   activation, rollback 관찰 시각을 비밀 없는 별도 evidence에 기록한다.
 5. public/admin 분리, direct-origin deny, cache, TLS, rate limit을 직접 관찰한다.
 6. JS enabled/disabled와 runtime projection 차단 상태를 모두 확인한다.
 7. DB/object store 차단 상태의 정적 페이지를 확인한다.
