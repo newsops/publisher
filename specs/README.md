@@ -3,7 +3,7 @@
 Feature and platform specs live under `.agents/spec-docs/` so their lifecycle
 can be checked by the harness. The folder reflects the current lifecycle state:
 
-- [WEB-001 platform foundation](../.agents/spec-docs/active/WEB-001-static-public-site-and-admin.md) — active; local baseline is complete, but production is held for portable persistence and real deployment evidence.
+- [WEB-001 platform foundation](../.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md) — completed portable static-first decision record; each new deployment change requires its own gated specification.
 
 Historical completion records and operational task logs are intentionally
 excluded from this public repository. Runnable contracts and deployment guides

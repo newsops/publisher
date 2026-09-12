@@ -50,7 +50,7 @@ describe('repository handoff documentation contract', () => {
       'docs/admin-api.md',
       'docs/admin-api.openapi.yaml',
       'docs/deployment.md',
-      '.agents/spec-docs/active/WEB-001-static-public-site-and-admin.md',
+      '.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md',
     ]
     for (const file of files) requireFile(file)
 
@@ -58,9 +58,6 @@ describe('repository handoff documentation contract', () => {
     expect(read('specs/README.md')).not.toContain('.agents/spec-docs/draft/')
     expect(read('docs/development-spec.md')).not.toContain(
       '.agents/spec-docs/draft/',
-    )
-    expect(read('docs/development-spec.md')).not.toContain(
-      '.agents/spec-docs/done/',
     )
   })
 

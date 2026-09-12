@@ -12,7 +12,7 @@ const required = [
   'apps/site/app/search/label/[label]/page.tsx',
   'apps/admin/app/page.tsx',
   'packages/content/src/types.ts',
-  '.agents/spec-docs/active/WEB-001-static-public-site-and-admin.md',
+  '.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md',
 ]
 
 const missing = required.filter((file) => !fs.existsSync(path.join(root, file)))

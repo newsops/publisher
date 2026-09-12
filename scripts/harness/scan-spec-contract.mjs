@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const file = path.join(
   root,
-  '.agents/spec-docs/active/WEB-001-static-public-site-and-admin.md',
+  '.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md',
 )
 const spec = fs.readFileSync(file, 'utf8')
 const criteria = [...spec.matchAll(/^- \[[ x]\] (TC-\d+):/gm)].map(

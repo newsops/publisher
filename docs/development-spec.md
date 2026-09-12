@@ -3,7 +3,7 @@
 The Korean product architecture is
 [publication-platform-plan.ko.md](./publication-platform-plan.ko.md). Active
 implementation agreement is
-[WEB-001](../.agents/spec-docs/active/WEB-001-static-public-site-and-admin.md).
+[WEB-001](../.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md).
 The spec index is [specs/README.md](../specs/README.md).
 
 Every cloned-repository deployment starts with the
