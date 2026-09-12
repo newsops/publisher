@@ -42,6 +42,15 @@ if (!adminPackage.dependencies?.sharp) {
   console.error('[admin-contract] admin runtime must declare sharp explicitly')
   process.exit(1)
 }
+for (const packageName of [
+  '@img/sharp-linux-x64',
+  '@img/sharp-libvips-linux-x64',
+]) {
+  if (!adminPackage.dependencies?.[packageName]) {
+    console.error(`[admin-contract] admin runtime must declare ${packageName}`)
+    process.exit(1)
+  }
+}
 for (const marker of [
   'outputFileTracingRoot',
   'sharp-linux-x64',
