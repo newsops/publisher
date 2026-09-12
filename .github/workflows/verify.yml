@@ -1,0 +1,49 @@
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm typecheck
+      - run: corepack pnpm test
+      - run: corepack pnpm build
+      - run: corepack pnpm build:admin
+      - run: corepack pnpm build:comments
+      - run: corepack pnpm harness:scan
+
+  clean-room:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: docker compose -f infra/local/compose.yml up -d --wait postgres object-storage
+      - run: docker compose -f infra/local/compose.yml run --rm object-storage-init
+      - run: corepack pnpm clean-room:smoke
+        env:
+          DATABASE_URL: postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin
+          COMMENTS_DATABASE_URL: postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments
+          RESTORE_DATABASE_URL: postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin_restore
+          COMMENTS_RESTORE_DATABASE_URL: postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments_restore
+          OBJECT_STORAGE_ENDPOINT: http://127.0.0.1:59000
+          OBJECT_STORAGE_REGION: us-east-1
+          OBJECT_STORAGE_BUCKET: publisher-fixture
+          OBJECT_STORAGE_ACCESS_KEY_ID: publisher-local
+          OBJECT_STORAGE_SECRET_ACCESS_KEY: publisher-local-secret
+          OBJECT_STORAGE_FORCE_PATH_STYLE: 'true'
+      - if: always()
+        run: docker compose -f infra/local/compose.yml down -v

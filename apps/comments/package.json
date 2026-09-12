@@ -1,0 +1,22 @@
+{
+  "name": "@publisher/comments",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx src/node.ts",
+    "build": "esbuild src/node.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/node.mjs",
+    "start": "node dist/node.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "@publisher/persistence": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.0.0"
+  }
+}

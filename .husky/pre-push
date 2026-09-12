@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+set -e
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm harness:scan
+sh scripts/check-secrets.sh

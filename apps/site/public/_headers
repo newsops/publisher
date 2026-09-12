@@ -1,0 +1,59 @@
+# Static hosts that consume the conventional `_headers` file may merge matching
+# rules. Keep Cache-Control rules non-overlapping and security headers in the
+# catch-all.
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/media/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.html
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/page/*
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/search/*
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/author/*
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/feed.xml
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/feeds/*
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/sitemap.xml
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/robots.txt
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/llms.txt
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/search-index.json
+  Cache-Control: public, max-age=60, s-maxage=300, stale-if-error=86400
+
+/data/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/theme-runtime/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/site-runtime/*
+  Cache-Control: public, max-age=300, must-revalidate
+
+/.well-known/publisher/runtime.json
+  Cache-Control: no-cache
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'

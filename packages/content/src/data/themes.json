@@ -1,0 +1,14 @@
+[
+  {
+    "id": "editorial",
+    "name": "Editorial",
+    "version": "1",
+    "css": ":root { --paper: #ffffff; --wash: #f5f6f7; --ink: #15181d; --body: #3a4048; --prose: #23272e; --meta: #737b85; --rule: #dfe3e8; --rule-soft: #e9ecef; --accent: #c0102c; --serif: Georgia, 'Times New Roman', serif; --sans: system-ui, -apple-system, Arial, sans-serif; }"
+  },
+  {
+    "id": "signal",
+    "name": "Signal",
+    "version": "1",
+    "css": ":root { --paper: #fbfaf5; --wash: #f0eee4; --ink: #17231d; --body: #405047; --prose: #25352c; --meta: #6b7b70; --rule: #d4ddd4; --rule-soft: #e4ebe3; --accent: #087f5b; --serif: Georgia, 'Times New Roman', serif; --sans: system-ui, -apple-system, Arial, sans-serif; }"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "theme": {
+    "id": "editorial",
+    "version": "1",
+    "css": "/theme-runtime/editorial.a64e23cc3b38624fa311277e2556d4b8c4e6611d8d6103fb4bc38ef9f08b8bbb.css"
+  },
+  "projections": {
+    "recent": "/data/recent.local.json"
+  }
+}

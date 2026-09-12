@@ -1,0 +1,10 @@
+{
+  "name": "Publisher",
+  "shortName": "Publisher",
+  "description": "A generic, self-hostable publishing platform.",
+  "canonicalOrigin": "https://www.publisher.com",
+  "language": "en",
+  "locale": "en-US",
+  "publisherName": "Publisher",
+  "themeId": "editorial"
+}
