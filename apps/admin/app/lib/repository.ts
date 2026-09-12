@@ -14,6 +14,7 @@ import { FileContentRepository } from './file-content-repository'
 import { PostgresArticleRepository } from './postgres-article-repository'
 import { PostgresContentRepository } from './postgres-content-repository'
 import type { ContentRepository, PublishResult } from './repository-contract'
+import type { BuildJob } from '@publisher/publication'
 import { assertKnownSite } from './site-catalog'
 
 class RuntimeContentRepository implements ContentRepository {
@@ -85,6 +86,9 @@ class RuntimeContentRepository implements ContentRepository {
   }
   async publish(idempotencyKey?: string): Promise<PublishResult> {
     return (await this.active()).publish(idempotencyKey)
+  }
+  async getBuildJob(jobId: string): Promise<BuildJob | undefined> {
+    return (await this.active()).getBuildJob(jobId)
   }
 }
 

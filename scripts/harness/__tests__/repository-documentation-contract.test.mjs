@@ -92,4 +92,17 @@ describe('repository handoff documentation contract', () => {
     ])
       expect(deployment).toContain(required)
   })
+
+  it('keeps the agent-first direction and human authority boundary explicit', () => {
+    const plan = read('docs/publication-platform-plan.ko.md')
+    for (const required of [
+      '에이전트 우선 운영 방향',
+      'schema version',
+      'idempotency key',
+      'operation ID',
+      'AUTHORITY_REQUIRED',
+      'Device Authorization Grant',
+    ])
+      expect(plan).toContain(required)
+  })
 })

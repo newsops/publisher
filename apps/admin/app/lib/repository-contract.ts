@@ -10,7 +10,7 @@ import type {
   TaxonomyTermInput,
 } from '@publisher/content'
 import type { PublishDelivery } from './publisher'
-import type { BuildJobStatus } from '@publisher/publication'
+import type { BuildJob, BuildJobStatus } from '@publisher/publication'
 
 export interface SiteContext {
   readonly siteId: string
@@ -48,4 +48,5 @@ export interface ContentRepository {
   ): Promise<ManagedAuthorProfile>
   removeAuthor(slug: string): Promise<ManagedAuthorProfile>
   publish(idempotencyKey?: string): Promise<PublishResult>
+  getBuildJob(jobId: string): Promise<BuildJob | undefined>
 }

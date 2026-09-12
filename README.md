@@ -120,6 +120,13 @@ The common application setup is documented in
 [docs/deployment.md](./docs/deployment.md). Provider instructions are adapters
 to that contract, not product architecture.
 
+## Agent operations
+
+Autonomous operators use the provider-neutral [`publisher` CLI](./docs/agent-operations.md)
+and the authenticated admin API. JSON results are versioned, mutations require
+idempotency keys, and user-only decisions return `AUTHORITY_REQUIRED` rather
+than being silently executed.
+
 ## Security and deployment boundaries
 
 - `apps/site` builds without secrets, runtime database access, or admin routes.

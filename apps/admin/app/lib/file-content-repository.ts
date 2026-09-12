@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto'
+import type { BuildJob } from '@publisher/publication'
+import { FileBuildJobRepository } from './build-job-repository'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import {
@@ -261,5 +263,9 @@ export class FileContentRepository implements ContentRepository {
       idempotencyKey,
       writeState: (next) => this.writeState(next),
     })
+  }
+
+  async getBuildJob(jobId: string): Promise<BuildJob | undefined> {
+    return new FileBuildJobRepository(this.directory).get(jobId)
   }
 }

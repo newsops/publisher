@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto'
+import type { BuildJob } from '@publisher/publication'
+import { PostgresBuildJobRepository } from './build-job-repository'
 import {
   ContentValidationError,
   type AuthorProfileInput,
@@ -265,5 +267,9 @@ export class PostgresContentRepository implements ContentRepository {
 
   async publish(idempotencyKey: string = randomUUID()): Promise<PublishResult> {
     return publishPostgresContent(this.siteId, this.pool, idempotencyKey)
+  }
+
+  async getBuildJob(jobId: string): Promise<BuildJob | undefined> {
+    return new PostgresBuildJobRepository(this.pool).get(jobId)
   }
 }
