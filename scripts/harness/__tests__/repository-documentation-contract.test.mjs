@@ -90,6 +90,20 @@ describe('repository handoff documentation contract', () => {
       expect(deployment).toContain(required)
   })
 
+  it('documents honest included-usage billing without a fictitious R2 hard cap', () => {
+    const content = [
+      read('docs/deployment.md'),
+      read('docs/ai-assisted-deployment.ko.md'),
+    ].join('\n')
+    for (const required of [
+      'billingMode: "included-usage"',
+      'overagePossible',
+      'operatorAcknowledgedAt',
+      'free-allowance-with-billing',
+    ])
+      expect(content).toContain(required)
+  })
+
   it('keeps the agent-first direction and human authority boundary explicit', () => {
     const plan = read('docs/publication-platform-plan.ko.md')
     for (const required of [

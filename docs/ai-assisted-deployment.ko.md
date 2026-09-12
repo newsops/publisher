@@ -40,15 +40,18 @@ AI는 다음 질문을 한 번에 길게 던지지 않는다. 이미 답한 내�
 - 관리자 사용 인원과 댓글 사용 여부
 - 운영자가 선택할 비용 정책:
   - `free-only`: 카드·사용량 과금·유료 기능 없이 검증된 월 상한 `$0`
-  - `free-allowance-with-billing`: 무료 사용량이 있지만 결제 계정이 필요한 상품 허용
+  - `free-allowance-with-billing`: 무료 사용량이 있지만 결제 계정과 초과 과금
+    가능성을 소유자가 확인한 상품 허용
   - `paid-approved`: 사용자가 명시한 월 상한 안에서 유료 상품 허용
 - 백업 보관 위치와 허용 가능한 복구 시간
 
 각 pilot은 운영자가 실제 비용 정책을 명시한 뒤에만 시작한다. `free-only`는
 결제 활성화가 필요한 R2를 선택할 수 없다. R2처럼 무료 포함량은 있지만
 과금 계정이 필요한 서비스를 선택하려면 `free-allowance-with-billing` 또는
-`paid-approved`와 월 상한을 기록해야 한다. Workers Paid, 유료 WAF, 유료 Bot
-기능은 별도 명시 승인 없이는 선택하지 않는다.
+`paid-approved`를 기록하고, 포함량·초과 과금 가능성·소유자 확인 시각을
+attestation에 남긴다. 이 기록은 Cloudflare가 제공하지 않는 하드 월 상한을
+꾸며내지 않는다. Workers Paid, 유료 WAF, 유료 Bot 기능은 별도 명시 승인
+없이는 선택하지 않는다.
 
 ### 2. 역할별 플랫폼 선택
 
@@ -124,7 +127,7 @@ export/삭제 문서를 열어 다음을 기록한다.
 기록한다. 값은 각 secret manager에 둔다.
 
 ```yaml
-policy: free-only
+policy: free-allowance-with-billing
 publicHost:
   adapter: filesystem
   origin: https://www.example.com
@@ -213,7 +216,8 @@ AI는 로그의 “성공” 문자열만 인용하지 않고 최종 URL과 상�
 최초 고객은 이 흐름을 요청한 저장소 소유자다. `owner-first pilot`은 다음
 조건을 모두 실제 계정에서 통과해야 한다.
 
-1. 소유자가 `free-only`와 각 플랫폼 역할을 직접 선택한다.
+1. 소유자가 비용 정책과 각 플랫폼 역할을 직접 선택한다. 포함 사용량 과금
+   정책이면 R2의 초과 과금 가능성을 명시적으로 확인한다.
 2. AI가 비용과 변경 요약을 보여주고 허용 범위 안에서 설정을 수행한다.
 3. migration, fixture reconciliation, publish, static activation, 자체 계정·세션,
    cache, 장애, restore, rollback을 직접 관찰한다.

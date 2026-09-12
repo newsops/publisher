@@ -272,10 +272,13 @@ export STATIC_DEPLOYMENT_ROOT=/srv/publisher-static
 corepack pnpm deploy:preflight
 ```
 
-Billing evidence must be verified within 30 days and contain a provider, plan,
-and `monthlyCapUsd: 0` for `database`, `objectStorage`, and `staticHosting`, plus
-an empty `paidFeaturesEnabled` array. “Free allowance” is insufficient when a
-card, usage-billed subscription, or non-zero overage remains possible.
+Billing evidence must be verified within 30 days and contain a provider and
+plan for `database`, `objectStorage`, and `staticHosting`, plus an empty
+`paidFeaturesEnabled` array. A hard-zero record uses `monthlyCapUsd: 0`. An
+included-usage record instead sets `billingMode: "included-usage"`, records the
+observed storage, Class A, and Class B allowances, sets `overagePossible: true`,
+and records the owner's acknowledgement timestamp. It must never misrepresent a
+free allowance as a provider-enforced spending cap.
 
 Recovery evidence must contain matching 64-character
 `backupDataSha256`/`restoreDataSha256` values for both `admin` and `comments`.
@@ -290,9 +293,16 @@ shape is:
   "verifiedAt": "2026-09-11T00:00:00.000Z",
   "database": { "provider": "chosen-db", "plan": "free", "monthlyCapUsd": 0 },
   "objectStorage": {
-    "provider": "chosen-store",
-    "plan": "free",
-    "monthlyCapUsd": 0
+    "provider": "cloudflare-r2",
+    "plan": "standard",
+    "billingMode": "included-usage",
+    "includedUsage": {
+      "storageGbMonth": 10,
+      "classAOperations": 1000000,
+      "classBOperations": 10000000
+    },
+    "overagePossible": true,
+    "operatorAcknowledgedAt": "2026-09-13T00:00:00.000Z"
   },
   "staticHosting": {
     "provider": "chosen-host",
@@ -302,6 +312,12 @@ shape is:
   "paidFeaturesEnabled": []
 }
 ```
+
+The R2 fields above are an example of an operator attestation, not a committed
+production selection. R2 Standard does not require a paid application runtime,
+but its included monthly usage can be exceeded. The operator must review current
+provider billing before every production release and retain the evidence outside
+the repository.
 
 ```json
 {

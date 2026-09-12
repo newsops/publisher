@@ -2,6 +2,25 @@ import fs from 'node:fs'
 
 const ZERO_COST_COMPONENTS = ['database', 'objectStorage', 'staticHosting']
 
+function hasPositiveNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0
+}
+
+function inspectIncludedUsage(record, component, missing) {
+  const prefix = `billing: ${component}`
+  const usage = record?.includedUsage
+  if (
+    !hasPositiveNumber(usage?.storageGbMonth) ||
+    !hasPositiveNumber(usage?.classAOperations) ||
+    !hasPositiveNumber(usage?.classBOperations)
+  )
+    missing.push(`${prefix} included usage allowances`)
+  if (record?.overagePossible !== true)
+    missing.push(`${prefix} must disclose possible overage`)
+  if (!Number.isFinite(Date.parse(record?.operatorAcknowledgedAt ?? '')))
+    missing.push(`${prefix} owner acknowledgement timestamp`)
+}
+
 function readEvidence(filePath, label, missing) {
   if (!filePath) {
     missing.push(`evidence: ${label} path`)
@@ -32,7 +51,9 @@ function inspectBilling(evidence, missing, now) {
     const record = evidence[component]
     if (!record?.provider || !record?.plan)
       missing.push(`billing: ${component} provider and plan`)
-    if (record?.monthlyCapUsd !== 0)
+    if (record?.billingMode === 'included-usage')
+      inspectIncludedUsage(record, component, missing)
+    else if (record?.monthlyCapUsd !== 0)
       missing.push(`billing: ${component} must have a verified $0 monthly cap`)
   }
   if (!Array.isArray(evidence.paidFeaturesEnabled))
@@ -149,8 +170,9 @@ export function evaluatePreflight({
     inspectDatabaseIsolation(environment, missing)
   inspectEvidence(environment, missing, now)
   if (
+    environment.OBJECT_STORAGE_ACCESS_KEY_ID &&
     environment.OBJECT_STORAGE_ACCESS_KEY_ID ===
-    environment.OBJECT_STORAGE_SECRET_ACCESS_KEY
+      environment.OBJECT_STORAGE_SECRET_ACCESS_KEY
   )
     warnings.push('object-storage access key and secret are identical')
   return { missing: [...new Set(missing)], warnings: [...new Set(warnings)] }

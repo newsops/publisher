@@ -87,6 +87,118 @@ describe('INFRA-005 fail-closed free and recovery preflight', () => {
     }
   })
 
+  it('accepts an acknowledged R2 included-usage record without inventing a hard cap', async () => {
+    const files = await evidenceFiles({
+      billing: {
+        objectStorage: {
+          provider: 'cloudflare-r2',
+          plan: 'standard',
+          billingMode: 'included-usage',
+          includedUsage: {
+            storageGbMonth: 10,
+            classAOperations: 1_000_000,
+            classBOperations: 10_000_000,
+          },
+          overagePossible: true,
+          operatorAcknowledgedAt: '2026-09-11T00:00:00.000Z',
+        },
+      },
+    })
+    try {
+      expect(
+        evaluatePreflight({
+          environment: environment(files),
+          production: true,
+          mode: 'platform',
+          now,
+        }).missing,
+      ).toEqual([])
+    } finally {
+      await rm(files.directory, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects unacknowledged, incomplete, false, and stale included-usage records', async () => {
+    const invalidRecords = [
+      {
+        provider: 'cloudflare-r2',
+        plan: 'standard',
+        billingMode: 'included-usage',
+        includedUsage: {
+          storageGbMonth: 10,
+          classAOperations: 1_000_000,
+          classBOperations: 10_000_000,
+        },
+        overagePossible: true,
+      },
+      {
+        provider: 'cloudflare-r2',
+        plan: 'standard',
+        billingMode: 'included-usage',
+        includedUsage: { storageGbMonth: 10 },
+        overagePossible: true,
+        operatorAcknowledgedAt: '2026-09-11T00:00:00.000Z',
+      },
+      {
+        provider: 'cloudflare-r2',
+        plan: 'standard',
+        billingMode: 'included-usage',
+        includedUsage: {
+          storageGbMonth: 10,
+          classAOperations: 1_000_000,
+          classBOperations: 10_000_000,
+        },
+        overagePossible: false,
+        operatorAcknowledgedAt: '2026-09-11T00:00:00.000Z',
+      },
+    ]
+    for (const objectStorage of invalidRecords) {
+      const files = await evidenceFiles({ billing: { objectStorage } })
+      try {
+        expect(
+          evaluatePreflight({
+            environment: environment(files),
+            production: true,
+            mode: 'platform',
+            now,
+          }).missing,
+        ).not.toEqual([])
+      } finally {
+        await rm(files.directory, { recursive: true, force: true })
+      }
+    }
+
+    const stale = await evidenceFiles({
+      billing: {
+        verifiedAt: '2026-07-01T00:00:00.000Z',
+        objectStorage: {
+          provider: 'cloudflare-r2',
+          plan: 'standard',
+          billingMode: 'included-usage',
+          includedUsage: {
+            storageGbMonth: 10,
+            classAOperations: 1_000_000,
+            classBOperations: 10_000_000,
+          },
+          overagePossible: true,
+          operatorAcknowledgedAt: '2026-09-11T00:00:00.000Z',
+        },
+      },
+    })
+    try {
+      expect(
+        evaluatePreflight({
+          environment: environment(stale),
+          production: true,
+          mode: 'platform',
+          now,
+        }).missing.join('\n'),
+      ).toContain('billing is older than 30 days')
+    } finally {
+      await rm(stale.directory, { recursive: true, force: true })
+    }
+  })
+
   it('rejects chargeable, unverifiable, shared-credential, and missing-recovery states', async () => {
     const files = await evidenceFiles({
       billing: {
@@ -131,6 +243,17 @@ describe('INFRA-005 fail-closed free and recovery preflight', () => {
     })
     expect(result.missing.join('\n')).toContain('billing attestation path')
     expect(result.missing.join('\n')).toContain('recovery exercise path')
+  })
+
+  it('does not report identical object-storage credentials when both are absent', () => {
+    expect(
+      evaluatePreflight({
+        environment: {},
+        production: true,
+        mode: 'platform',
+        now,
+      }).warnings,
+    ).toEqual([])
   })
 
   it('rejects an unimplemented static deployment adapter', async () => {

@@ -1,6 +1,6 @@
 # Work status
 
-Last reconciled: 2026-09-12
+Last reconciled: 2026-09-13
 
 A feature is completed only after every criterion is checked and its spec has a
 passing `GATE-COMPLETE` entry. Earlier completed specs remain decision records;
@@ -8,11 +8,9 @@ current active specs override their provider details.
 
 ## Active foundation
 
-| ID        | Status                 | Scope                                                                          |
-| --------- | ---------------------- | ------------------------------------------------------------------------------ |
-| WEB-001   | External pilot pending | Static public site, separate admin, real DNS/session/cache/rate-limit evidence |
-| ADMIN-004 | In progress            | Application-owned accounts, roles, and revocable browser sessions              |
-| INFRA-004 | In progress            | Separately gated advertising adapter work; user-owned changes are preserved    |
+| ID        | Status      | Scope                                                                   |
+| --------- | ----------- | ----------------------------------------------------------------------- |
+| INFRA-002 | In progress | Truthful included-usage billing attestation for the selected R2 adapter |
 
 ## Completed foundation
 
@@ -20,6 +18,7 @@ current active specs override their provider details.
 | --------- | -------- | --------------------------------------------------------------------------------------------------- |
 | INFRA-005 | Complete | PostgreSQL, S3-compatible object storage, media, recovery, `$0` preflight, clean-room onboarding    |
 | WEB-008   | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation |
+| WEB-001   | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision     |
 
 ## Completed implementation
 
@@ -39,11 +38,12 @@ current active specs override their provider details.
   sessions; comments are independently moderated.
 - Logical PostgreSQL backup/empty-target restore checksums and checked-in fixture
   reconciliation into PostgreSQL plus a private S3-compatible store.
-- Fail-closed production preflight requiring recent `$0` billing evidence,
-  separate credentials, recovery evidence, and an implemented static adapter.
+- Fail-closed production preflight requiring recent hard-zero or acknowledged
+  included-usage billing evidence, separate credentials, recovery evidence,
+  and an implemented static adapter.
 
-The product has never been released. Only the checked-in fixture is imported;
-no alternate database, bucket binding, importer, or runtime fallback is shipped.
+The checked-in fixture is generic starter content; no alternate database, bucket
+binding, importer, or runtime fallback is shipped.
 
 ## External pilot blocker
 
@@ -59,17 +59,16 @@ account setup and production DNS. Local builds cannot satisfy these checks:
    evidence.
 6. Provider-external backup and clean restore evidence.
 
-Cloudflare Free may be selected for public DNS/CDN/static hosting after its
-current `$0` terms are verified. The admin remains the provider-neutral Node.js
-22 application. The owner account's usage-billed object-storage subscription
-was canceled on 2026-09-11 and is not part of the release path.
+Cloudflare may be selected for public DNS/CDN/static hosting after the current
+terms are verified. R2 Standard is an S3-compatible operator choice with
+included usage and possible overage, not a paid application runtime dependency.
+The admin remains a provider-neutral Node.js 22 application.
 
 ## Current release sequence
 
 1. Keep the completed INFRA-005 and WEB-008 contracts green on Node.js 22 and
    real PostgreSQL/S3-compatible clean-room CI.
-2. Keep WEB-001 open while the owner chooses real providers and authorizes the
-   external pilot.
+2. Complete INFRA-002's truthful R2 included-usage attestation contract.
 3. Record real billing, DNS, local-account bootstrap, isolation, activation, rollback, resilience,
    and restore evidence before declaring the production deployment complete.
 
