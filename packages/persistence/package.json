@@ -9,6 +9,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "require": "./src/index.ts"
+    },
+    "./postgres": {
+      "types": "./src/postgres.ts",
+      "import": "./src/postgres.ts",
+      "require": "./src/postgres.ts"
     }
   },
   "scripts": {

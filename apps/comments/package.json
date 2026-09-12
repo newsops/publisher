@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "tsx src/node.ts",
     "build": "esbuild src/node.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/node.mjs",
+    "build:worker": "wrangler deploy --dry-run --config wrangler.jsonc",
     "start": "node dist/node.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

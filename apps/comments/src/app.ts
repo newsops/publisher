@@ -45,6 +45,17 @@ function json(body: unknown, status = 200, cacheControl = NO_STORE): Response {
   })
 }
 
+function empty(status: 204, cacheControl = NO_STORE): Response {
+  return new Response(null, {
+    status,
+    headers: {
+      'Cache-Control': cacheControl,
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+  })
+}
+
 function withCors(response: Response, publicOrigin?: string): Response {
   if (publicOrigin) {
     response.headers.set('Access-Control-Allow-Origin', publicOrigin)
@@ -150,20 +161,23 @@ async function commentRateAllowed(
   dependencies: CommentHandlerDependencies,
 ): Promise<boolean> {
   const windowSeconds = dependencies.rateLimitWindowSeconds ?? 900
-  const ip = requestIp(request) ?? 'anonymous'
-  const [ipAllowed, threadAllowed] = await Promise.all([
-    dependencies.limiter.consume(
-      `ip:${ip}`,
-      dependencies.rateLimitPerIp ?? 5,
-      windowSeconds,
-    ),
-    dependencies.limiter.consume(
-      `thread:${slug}`,
-      dependencies.rateLimitPerThread ?? 20,
-      windowSeconds,
-    ),
+  const ip = requestIp(request)
+  const threadAllowed = dependencies.limiter.consume(
+    `thread:${slug}`,
+    dependencies.rateLimitPerThread ?? 20,
+    windowSeconds,
+  )
+  if (!ip) return threadAllowed
+  const ipAllowed = dependencies.limiter.consume(
+    `ip:${ip}`,
+    dependencies.rateLimitPerIp ?? 5,
+    windowSeconds,
+  )
+  const [resolvedIpAllowed, resolvedThreadAllowed] = await Promise.all([
+    ipAllowed,
+    threadAllowed,
   ])
-  return ipAllowed && threadAllowed
+  return resolvedIpAllowed && resolvedThreadAllowed
 }
 
 async function handleWrite(
@@ -247,7 +261,7 @@ export function createCommentHandler(
 ): (request: Request) => Promise<Response> {
   return async (request) => {
     let response: Response
-    if (request.method === 'OPTIONS') response = json(null, 204)
+    if (request.method === 'OPTIONS') response = empty(204)
     else {
       const moderation = moderationPath(request)
       if (moderation)

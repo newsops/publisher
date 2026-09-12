@@ -1,4 +1,7 @@
-import { postgresPool, type PostgresPool } from '@publisher/persistence'
+import {
+  postgresPool,
+  type PostgresPool,
+} from '@publisher/persistence/postgres'
 import type {
   CommentRecord,
   CommentStatus,

@@ -73,6 +73,14 @@ Object storage도 특정 제품명이 계약이 아니다. 후보가 S3 호환 �
 통과하고 비용 정책을 만족할 때만 일반 환경 변수로 연결한다. public 문서에는
 사업자 console URL이나 bucket 식별자가 들어가지 않는다.
 
+Cloudflare를 comments runtime으로 선택하는 경우에는 `apps/comments`의
+Worker adapter가 Worker secret의 `COMMENTS_DATABASE_URL`로 Neon PostgreSQL에
+직접 연결한다. Hyperdrive·D1·별도 연결 프록시는 기본 설계에 포함하지
+않는다. AI는 배포 직전에 admin과 분리된 comments DB 사용자·데이터베이스,
+Worker secret, Worker hostname, 정적 site 재빌드를 각각 검증한다. 새로운
+런타임 계층·프록시·캐시·큐 또는 외부 관리형 서비스를 추가하려면, AI는
+목적·비용·대안을 제시하고 구현 전에 운영자의 명시 승인을 받아야 한다.
+
 소유자의 `free-only` pilot에서 Cloudflare는 공식 `$0` 조건을 다시 확인한
 public DNS/CDN/정적 호스팅 후보일 뿐이다. admin Node runtime, PostgreSQL,
 private object storage의 필수 제공자로 간주하지 않으며 저장소에는 Cloudflare

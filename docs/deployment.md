@@ -124,6 +124,41 @@ HUMAN_VERIFICATION_SECRET=...
 PUBLIC_ORIGIN=https://www.publisher.com
 ```
 
+### Cloudflare Worker + direct Neon comments adapter
+
+When the operator selects Cloudflare for comments, deploy
+`apps/comments/src/worker.ts` as a separate Worker. This is a deployment
+adapter: the application connects directly to Neon over the standard PostgreSQL
+wire contract. It has no Hyperdrive, D1, database binding, or proxy layer.
+
+1. In Neon, create a dedicated comments role and database (or an equivalently
+   isolated database/user). It must not be the `DATABASE_URL` principal used by
+   the admin application. Run `corepack pnpm persistence:migrate -- --scope
+comments` with that role before serving traffic.
+2. Set `PUBLIC_ORIGIN`, `HUMAN_VERIFICATION_URL`, and rate-limit values as
+   non-secret Worker variables. Set `COMMENTS_DATABASE_URL`,
+   `COMMENTS_MODERATION_TOKEN`, and `HUMAN_VERIFICATION_SECRET` only as Worker
+   secrets. The database URL is the dedicated Neon comments URL. Set the same
+   moderation origin/token only in the admin runtime's secret store as
+   `COMMENTS_ORIGIN` and `COMMENTS_MODERATION_TOKEN`.
+3. Run `corepack pnpm --filter @publisher/comments build:worker` before
+   deployment. It is a dry run and requires neither the Neon URL nor an account
+   ID in source control. Deploy a preview first, verify preflight, reads,
+   pending submission, moderation, and outage behavior, then bind the
+   production comment hostname.
+4. Only after the Worker hostname responds correctly, rebuild the static site
+   with `NEXT_PUBLIC_COMMENT_ORIGIN` set to that HTTPS origin and
+   `NEXT_PUBLIC_COMMENT_SUBMISSION_ENABLED=true`. These are public build-time
+   values; no database or moderation secret is included in the static bundle.
+
+The Worker removes any inbound `X-Client-IP` and does not consume a
+provider-specific forwarding header. The Node adapter instead uses the direct
+TCP peer. A Worker therefore enforces the article-wide rate limit and mandatory
+human verification, while the Node adapter additionally enforces an IP bucket.
+Do not put a second Worker or proxy in this path; if one is later proposed, it
+requires an explicit architecture decision and an operator approval before
+implementation.
+
 Public build, only when comments are enabled:
 
 ```text

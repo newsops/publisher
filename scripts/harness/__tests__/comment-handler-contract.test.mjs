@@ -267,6 +267,36 @@ describe('COMMENT-001 handler behavior', () => {
     expect(second.status).toBe(429)
   })
 
+  it('does not turn absent client addresses into one shared IP bucket', async () => {
+    const store = new MemoryCommentStore()
+    const handler = createCommentHandler(
+      dependencies({
+        store,
+        rateLimitPerIp: 1,
+        rateLimitPerThread: 3,
+      }),
+    )
+    const body = JSON.stringify({
+      authorName: 'Reader',
+      body: 'Verified comment',
+      verificationToken: 'valid-token',
+    })
+    const first = await handler(
+      request('/v1/threads/article-slug', {
+        method: 'POST',
+        body,
+      }),
+    )
+    const second = await handler(
+      request('/v1/threads/article-slug', {
+        method: 'POST',
+        body,
+      }),
+    )
+    expect(first.status).toBe(202)
+    expect(second.status).toBe(202)
+  })
+
   it('protects moderation reads and status changes with a bearer token', async () => {
     const store = new MemoryCommentStore()
     const deletedCacheKeys = []
