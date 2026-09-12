@@ -161,8 +161,8 @@ AI는 사용자에게 아래를 먼저 보여준다.
 2. private S3 호환 bucket과 최소 권한 credential을 만든다.
 3. OIDC issuer/audience/JWKS를 구성하고 admin public origin과 분리한다.
 4. `persistence:migrate`를 두 scope에 실행한다.
-5. 빈 설치라면 `fixture:reconcile`을 실행해 8개 글·4개 태그·1개 저자·
-   17개 media checksum을 기록한다.
+5. 빈 설치라면 `fixture:reconcile`을 실행해 8개 일반 샘플 글·1개 태그·1개
+   저자·0개 media checksum을 기록한다.
 6. 외부 backup과 빈 target restore를 수행한다.
 7. billing/recovery evidence를 만든 뒤 `deploy:preflight`를 통과시킨다.
 
