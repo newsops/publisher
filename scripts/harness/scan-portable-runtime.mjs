@@ -5,6 +5,10 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+const mediaSource = fs.readFileSync(
+  path.join(root, 'packages/persistence/src/media.ts'),
+  'utf8',
+)
 const targets = [
   'apps/admin/app',
   'apps/admin/.env.example',
@@ -69,6 +73,15 @@ for (const target of targets) visit(path.join(root, target))
 if (violations.length) {
   console.error(
     `[portable-runtime] forbidden compatibility path: ${violations.join(', ')}`,
+  )
+  process.exit(1)
+}
+if (
+  /import\s+sharp\s+from\s+['"]sharp['"]/.test(mediaSource) ||
+  !mediaSource.includes("await import('sharp')")
+) {
+  console.error(
+    '[portable-runtime] native media processing must be loaded only by media operations',
   )
   process.exit(1)
 }

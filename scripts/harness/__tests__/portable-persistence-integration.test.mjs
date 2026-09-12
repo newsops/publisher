@@ -65,6 +65,7 @@ async function postgresFixture() {
     url: `postgresql://postgres:postgres@127.0.0.1:${port}/postgres?sslmode=disable`,
     async close() {
       await pool.end()
+      await new Promise((resolve) => setImmediate(resolve))
       await server.stop()
       await database.close()
     },

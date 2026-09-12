@@ -1,12 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto'
 import path from 'node:path'
-import sharp from 'sharp'
 import {
   postgresPool,
   runPostgresTransaction,
   type PostgresPool,
   type PostgresQueryable,
 } from './postgres'
+
+async function imageProcessor() {
+  const { default: sharp } = await import('sharp')
+  return sharp
+}
 
 const allowedTypes = new Map([
   ['image/jpeg', { extension: '.jpg', formats: new Set(['jpeg']) }],
@@ -134,6 +138,7 @@ export async function validateImageUpload({
   const sha256 = createHash('sha256').update(body).digest('hex')
   if (declaredSha256 && declaredSha256.toLowerCase() !== sha256)
     throw new Error('Image checksum does not match the uploaded bytes')
+  const sharp = await imageProcessor()
   const image = sharp(body, {
     failOn: 'error',
     limitInputPixels: maximumPixels,
@@ -163,6 +168,7 @@ export async function createImageVariants(
   siteId: string,
   originalSha256: string,
 ): Promise<readonly { body: Uint8Array; metadata: MediaVariant }[]> {
+  const sharp = await imageProcessor()
   const specifications = [
     { format: 'webp' as const, mimeType: 'image/webp' as const, width: 1600 },
     { format: 'avif' as const, mimeType: 'image/avif' as const, width: 1200 },
