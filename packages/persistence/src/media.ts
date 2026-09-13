@@ -233,7 +233,15 @@ export class PostgresMediaRepository {
   }
 
   async get(id: string, siteId: string): Promise<MediaMetadata | undefined> {
-    const result = await this.pool.query<MediaRow>(
+    return this.getUsing(this.pool, id, siteId)
+  }
+
+  async getUsing(
+    database: PostgresQueryable,
+    id: string,
+    siteId: string,
+  ): Promise<MediaMetadata | undefined> {
+    const result = await database.query<MediaRow>(
       'SELECT * FROM publisher_admin.media WHERE id = $1::uuid AND site_id = $2',
       [id, siteId],
     )

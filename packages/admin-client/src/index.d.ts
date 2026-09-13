@@ -21,6 +21,24 @@ export interface PublisherAdminClient {
   getStatus(): Promise<PublisherApiReply<unknown>>
   getOperation(id: string): Promise<PublisherApiReply<unknown>>
   publish(idempotencyKey: string): Promise<PublisherApiReply<unknown>>
+  uploadMedia(
+    siteId: string,
+    input: {
+      fileName: string
+      mimeType: string
+      sha256: string
+      body: Uint8Array
+    },
+  ): Promise<PublisherApiReply<unknown>>
+  approveMedia(
+    siteId: string,
+    mediaId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  restoreContent(
+    siteId: string,
+    input: unknown,
+    idempotencyKey: string,
+  ): Promise<PublisherApiReply<unknown>>
 }
 
 export function createPublisherAdminClient(

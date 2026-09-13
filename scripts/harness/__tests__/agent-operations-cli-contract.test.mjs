@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { spawn, spawnSync } from 'node:child_process'
+import { mkdtemp, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -56,6 +58,64 @@ async function withServer(handler, callback) {
 }
 
 describe('agent operations CLI contract', () => {
+  it('inspects a generic archive without emitting its local path or article body', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'publisher-archive-'),
+    )
+    await writeFile(
+      path.join(directory, 'archive.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        settings: {
+          name: 'Generic News',
+          shortName: 'Generic',
+          description: 'A generic archive fixture.',
+          canonicalOrigin: 'https://archive.example.test',
+          language: 'en',
+          locale: 'en-US',
+          publisherName: 'Generic News',
+          themeId: 'editorial',
+        },
+        authors: [{ slug: 'editor', name: 'Editor', bio: 'Fixture editor.' }],
+        tags: [{ slug: 'General', name: 'General' }],
+        media: [],
+        posts: [
+          {
+            sourceId: 'archive-1',
+            slug: 'archive-story',
+            title: 'Archive story title',
+            excerpt: 'Generic archive summary.',
+            bodyHtml: '<p>private archive body sentinel</p>',
+            author: 'Editor',
+            authorSlug: 'editor',
+            seoTitle: 'Archive story title',
+            seoDescription: 'Generic archive summary.',
+            publishedAt: '2026-09-13T00:00:00.000Z',
+            categories: ['General'],
+          },
+        ],
+      }),
+    )
+    const result = run([
+      'content',
+      'inspect',
+      '--archive',
+      directory,
+      '--json',
+      '--non-interactive',
+    ])
+    expect(result.status).toBe(0)
+    expect(result.body).toMatchObject({
+      schemaVersion: 1,
+      ok: true,
+      code: 'ARCHIVE_INSPECTED',
+      counts: { authors: 1, tags: 1, posts: 1, media: 0 },
+      nonInteractive: true,
+    })
+    expect(JSON.stringify(result.body)).not.toContain(directory)
+    expect(JSON.stringify(result.body)).not.toContain('private archive body')
+  })
+
   it('returns a versioned redacted configuration result without prompting', () => {
     const result = run(['doctor', '--json', '--non-interactive'], {
       PUBLISHER_ADMIN_ORIGIN: '',
@@ -86,6 +146,98 @@ describe('agent operations CLI contract', () => {
       code: 'AUTHORITY_REQUIRED',
       mutationAttempted: false,
     })
+  })
+
+  it('restores only through the scoped Admin API and redacts archive content', async () => {
+    const directory = await mkdtemp(
+      path.join(os.tmpdir(), 'publisher-restore-'),
+    )
+    await writeFile(
+      path.join(directory, 'archive.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        settings: {
+          name: 'Generic News',
+          shortName: 'Generic',
+          description: 'Generic restore fixture.',
+          canonicalOrigin: 'https://archive.example.test',
+          language: 'en',
+          locale: 'en-US',
+          publisherName: 'Generic News',
+          themeId: 'editorial',
+        },
+        authors: [{ slug: 'editor', name: 'Editor', bio: 'Fixture editor.' }],
+        tags: [{ slug: 'General', name: 'General' }],
+        media: [],
+        posts: [
+          {
+            sourceId: 'archive-1',
+            slug: 'archive-story',
+            title: 'Archive story',
+            excerpt: 'Generic archive summary.',
+            bodyHtml: '<p>private archive body sentinel</p>',
+            author: 'Editor',
+            authorSlug: 'editor',
+            seoTitle: 'Archive story',
+            seoDescription: 'Generic archive summary.',
+            publishedAt: '2026-09-13T00:00:00.000Z',
+            categories: ['General'],
+          },
+        ],
+      }),
+    )
+    await withServer(
+      async (request, response) => {
+        expect(request.method).toBe('POST')
+        expect(request.url).toBe('/api/v2/sites/default/content-restore')
+        expect(request.headers.authorization).toBe('Bearer test-token')
+        expect(request.headers['idempotency-key']).toBe('restore-request-001')
+        response.statusCode = 202
+        response.setHeader('content-type', 'application/json')
+        response.end(
+          JSON.stringify({
+            operation: {
+              operationId: 'restore-op-1',
+              siteId: 'default',
+              revision: 2,
+              counts: { authors: 1, tags: 1, posts: 1, media: 0 },
+            },
+          }),
+        )
+      },
+      async (origin) => {
+        const result = await runAsync(
+          [
+            'content',
+            'restore',
+            '--archive',
+            directory,
+            '--site',
+            'default',
+            '--expected-revision',
+            '1',
+            '--idempotency-key',
+            'restore-request-001',
+            '--non-interactive',
+            '--json',
+          ],
+          {
+            PUBLISHER_ADMIN_ORIGIN: origin,
+            PUBLISHER_API_TOKEN: 'test-token',
+          },
+        )
+        expect(result.status).toBe(0)
+        expect(result.body).toMatchObject({
+          ok: true,
+          code: 'ARCHIVE_RESTORE_ACCEPTED',
+          operationId: 'restore-op-1',
+        })
+        expect(JSON.stringify(result.body)).not.toContain(directory)
+        expect(JSON.stringify(result.body)).not.toContain(
+          'private archive body',
+        )
+      },
+    )
   })
 
   it('returns authenticated site and operation states with stable remote metadata', async () => {

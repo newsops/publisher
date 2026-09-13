@@ -34,6 +34,7 @@ import {
   PostgresRateLimiter,
 } from '../../../apps/comments/src/postgres-db.ts'
 import { runNextPublicationJob } from '../../../scripts/deploy/publication-worker.ts'
+import { restoreArchive } from '../../../apps/admin/app/lib/archive-restore.ts'
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -205,6 +206,105 @@ describe('INFRA-005 PostgreSQL integration', () => {
     }
   }, 30_000)
 
+  it('restores an archive exactly once from the untouched starter fixture', async () => {
+    const database = await postgresFixture()
+    try {
+      await applyMigrations(database.url, 'admin', database.pool)
+      await seedCheckedInPostgresFixture(database.pool, 'default')
+      const archive = {
+        schemaVersion: 1,
+        settings: {
+          name: 'Restored News',
+          shortName: 'Restored',
+          description: 'Generic archive restore fixture.',
+          canonicalOrigin: 'https://restore.example.test',
+          language: 'en',
+          locale: 'en-US',
+          publisherName: 'Restored News',
+          themeId: 'editorial',
+        },
+        authors: [{ slug: 'editor', name: 'Editor', bio: 'Archive editor.' }],
+        tags: [{ slug: 'General', name: 'General' }],
+        media: [],
+        posts: [
+          {
+            sourceId: 'restore-1',
+            slug: 'restore-story',
+            title: 'Restore story',
+            excerpt: 'A generic restored article.',
+            bodyHtml: '<p>Restored through the API contract.</p>',
+            author: 'Editor',
+            authorSlug: 'editor',
+            seoTitle: 'Restore story',
+            seoDescription: 'A generic restored article.',
+            publishedAt: '2026-09-13T00:00:00.000Z',
+            categories: ['General'],
+          },
+        ],
+      }
+      const input = {
+        archive,
+        expectedRevision: 1,
+        idempotencyKey: 'restore-fixture-001',
+        media: {},
+      }
+      const first = await restoreArchive('default', input, database.pool)
+      const replay = await restoreArchive('default', input, database.pool)
+      expect(replay).toEqual(first)
+      expect(first.counts).toEqual({ authors: 1, tags: 1, posts: 1, media: 0 })
+      const state = await database.pool.query(
+        'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
+      )
+      expect(state.rows[0].revision).toBe('2')
+      expect(state.rows[0].state.posts).toHaveLength(1)
+      expect(state.rows[0].state.snapshots).toEqual([])
+      expect(
+        await database.pool.query(
+          'SELECT id FROM publisher_admin.articles WHERE site_id = $1',
+          ['default'],
+        ),
+      ).toMatchObject({ rowCount: 1 })
+      const beforeRejectedRestore = await database.pool.query(
+        'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
+      )
+      await expect(
+        restoreArchive(
+          'default',
+          {
+            ...input,
+            expectedRevision: 2,
+            idempotencyKey: 'restore-fixture-002',
+          },
+          database.pool,
+        ),
+      ).rejects.toThrow('untouched starter fixture')
+      await expect(
+        restoreArchive(
+          'default',
+          {
+            ...input,
+            archive: {
+              ...archive,
+              settings: { ...archive.settings, name: 'Different' },
+            },
+          },
+          database.pool,
+        ),
+      ).rejects.toThrow('different archive content')
+      const afterRejectedRestore = await database.pool.query(
+        'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
+      )
+      expect(afterRejectedRestore.rows[0]).toEqual(
+        beforeRejectedRestore.rows[0],
+      )
+    } finally {
+      await database.close()
+    }
+  }, 30_000)
+
   it('migrates, publishes idempotently, and restores admin data by checksum', async () => {
     const source = await postgresFixture()
     const target = await postgresFixture()
@@ -214,6 +314,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual([
         '0001_initial.sql',
         '0002_local_accounts.sql',
+        '0003_archive_restore_operations.sql',
       ])
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual(
         [],
@@ -551,6 +652,76 @@ describe('INFRA-005 S3-compatible and image integration', () => {
       )
       expect(preview).toMatchObject({ mimeType: first.mimeType })
       expect(preview?.body.byteLength).toBeGreaterThan(0)
+      expect(createHash('sha256').update(preview.body).digest('hex')).toBe(
+        first.sha256,
+      )
+
+      await seedCheckedInPostgresFixture(database.pool, 'default')
+      await restoreArchive(
+        'default',
+        {
+          archive: {
+            schemaVersion: 1,
+            settings: {
+              name: 'Media Restore',
+              shortName: 'Media',
+              description: 'Generic media restore fixture.',
+              canonicalOrigin: 'https://media-restore.example.test',
+              language: 'en',
+              locale: 'en-US',
+              publisherName: 'Media Restore',
+              themeId: 'editorial',
+            },
+            authors: [
+              { slug: 'editor', name: 'Editor', bio: 'Fixture editor.' },
+            ],
+            tags: [{ slug: 'General', name: 'General' }],
+            media: [
+              {
+                assetPath: 'media/pixel.png',
+                sha256: pending.sha256,
+                mimeType: 'image/png',
+                byteSize: png.byteLength,
+              },
+            ],
+            posts: [
+              {
+                sourceId: 'media-restore-1',
+                slug: 'media-restore-story',
+                title: 'Media restore story',
+                excerpt: 'A generic media restore fixture.',
+                bodyHtml: '<p>Media restore fixture.</p>',
+                author: 'Editor',
+                authorSlug: 'editor',
+                seoTitle: 'Media restore story',
+                seoDescription: 'A generic media restore fixture.',
+                publishedAt: '2026-09-13T00:00:00.000Z',
+                categories: ['General'],
+                imageAsset: 'media/pixel.png',
+              },
+            ],
+          },
+          expectedRevision: 1,
+          idempotencyKey: 'media-restore-fixture-001',
+          media: {
+            'media/pixel.png': {
+              mediaId: approved.id,
+              variantSha256: first.sha256,
+            },
+          },
+        },
+        database.pool,
+      )
+      const published = await new PostgresContentRepository(
+        'default',
+        database.pool,
+      ).publish('media-restore-publication-001')
+      expect(published.snapshot.media).toContainEqual(
+        expect.objectContaining({
+          sha256: first.sha256,
+          publicPath: first.publicPath,
+        }),
+      )
     } finally {
       await closePostgresPools()
       for (const [key, value] of Object.entries(previous)) {

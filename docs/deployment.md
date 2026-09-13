@@ -361,6 +361,35 @@ contain a provider token, account identifier, bucket name, or private endpoint.
 
 ## Publish and incremental generation
 
+## Private archive recovery
+
+Before replacing the generic starter fixture with a private archive, create a
+logical admin backup outside the repository and retain its checksum evidence.
+An autonomous operator uses the authenticated CLI/API contract; it never
+opens the browser editor, connects to PostgreSQL, or uses a hosting-provider
+control plane directly.
+
+```bash
+publisher content inspect --archive /secure/archive --json --non-interactive
+publisher content restore --archive /secure/archive --site default \
+  --expected-revision <observed-state-revision> \
+  --idempotency-key restore-<unique-id> --non-interactive --json
+```
+
+The restore API accepts only an untouched checked-in starter fixture and an
+exact expected state revision. It verifies the versioned archive, binds the
+idempotency key to a canonical archive digest, uses approved checksum-addressed
+media variants, replaces state and articles in one PostgreSQL transaction, and
+does not publish or activate a public release. Replay of the same key and
+digest returns the original operation; reuse with different archive content,
+stale revisions, or any already-edited/published target fail closed.
+
+Only after a successful restore should the operator send the normal publish
+request, materialize the verified candidate, and pass that directory to the
+chosen static-host CLI. This is an existing-production-data overwrite boundary:
+the operator must give an immediate, narrowly scoped confirmation before the
+real command is run.
+
 An authorized publisher sends an idempotency key:
 
 ```http

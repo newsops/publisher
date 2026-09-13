@@ -54,6 +54,18 @@ export type {
 } from './editor'
 export type { ArchiveMonth } from './seed'
 export {
+  archiveCanonicalJson,
+  archiveSummary,
+  validateEditorialArchive,
+} from './archive'
+export type {
+  ArchiveAuthorEntry,
+  ArchiveMediaEntry,
+  ArchivePostEntry,
+  ArchiveTagEntry,
+  EditorialArchive,
+} from './archive'
+export {
   assertValidPluginInstallation,
   createPluginInstallation,
   createPluginRegistry,

@@ -74,5 +74,49 @@ export function createPublisherAdminClient(options) {
       headers: { 'idempotency-key': idempotencyKey },
     })
 
-  return Object.freeze({ getStatus, getOperation, publish })
+  /**
+   * @param {string} siteId
+   * @param {{ fileName: string, mimeType: string, sha256: string, body: Uint8Array }} input
+   */
+  const uploadMedia = (siteId, input) => {
+    const form = new FormData()
+    form.set(
+      'file',
+      new Blob([new Uint8Array(input.body)], { type: input.mimeType }),
+      input.fileName,
+    )
+    form.set('sha256', input.sha256)
+    return request(`/api/v2/sites/${encodeURIComponent(siteId)}/media`, {
+      method: 'POST',
+      body: form,
+    })
+  }
+
+  /** @param {string} siteId @param {string} mediaId */
+  const approveMedia = (siteId, mediaId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/media`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mediaId }),
+    })
+
+  /** @param {string} siteId @param {unknown} input @param {string} idempotencyKey */
+  const restoreContent = (siteId, input, idempotencyKey) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/content-restore`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': idempotencyKey,
+      },
+      body: JSON.stringify(input),
+    })
+
+  return Object.freeze({
+    getStatus,
+    getOperation,
+    publish,
+    uploadMedia,
+    approveMedia,
+    restoreContent,
+  })
 }

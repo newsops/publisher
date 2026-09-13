@@ -168,6 +168,9 @@ importers:
       '@publisher/admin-client':
         specifier: workspace:*
         version: link:../admin-client
+      tsx:
+        specifier: ^4.20.5
+        version: 4.23.13
 
   packages/persistence:
     dependencies:

@@ -24,6 +24,42 @@ publisher operation get <operation-id> --json
 publisher auth login --device --json
 ```
 
+## Archive recovery
+
+`content restore` is the agent-first recovery path for a private archive kept
+outside this repository. It is not a database client and it is not browser
+automation. The archive directory contains `archive.json` plus only the
+relative media files declared by its checksum. The CLI validates the manifest,
+paths, byte sizes, and SHA-256 values locally; its inspection result exposes
+only counts and an archive digest.
+
+```bash
+publisher content inspect --archive /secure/archive --json --non-interactive
+publisher content restore --archive /secure/archive --site default \
+  --expected-revision 1 --idempotency-key restore-20260913-01 \
+  --non-interactive --json
+```
+
+Before the restore command, create and retain a logical PostgreSQL backup
+outside the repository. Obtain the `expectedRevision` from an observed admin
+state, and use a new idempotency key for distinct content. The server accepts
+this initial restore mode only for an unchanged generic starter fixture; a
+changed state, stale revision, missing approved media binding, or a replay key
+bound to different archive content is rejected without activating a release.
+
+For each declared image, the CLI uses the scoped Admin API to upload and
+approve a checksum-addressed variant, then sends only the resulting media IDs
+and variant hashes with the archive request. The archive's paths never reach
+the server. The response has a durable restore operation ID and safe counts;
+it does not print article bodies, local paths, asset bytes, credentials, or
+private object keys.
+
+After a successful restore, publish with a separate idempotency key, process
+the immutable snapshot into a verified candidate directory, and use the
+operator-selected static-host CLI to upload that directory. A browser remains
+the parallel human editorial surface and the final public-result check; it is
+not a required automation interface.
+
 `AUTHORITY_REQUIRED` is a successful safety boundary, not an invitation to
 retry with more privilege. A person must approve billing, production DNS,
 destructive deletion, or a device authorization user code. The CLI reports
