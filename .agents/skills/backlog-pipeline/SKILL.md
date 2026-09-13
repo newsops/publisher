@@ -106,6 +106,11 @@ find .agents/spec-docs -name "<ID>*.md" -not -path "*/rejected/*"
 3. 두 단계는 원자적. 둘 다 완료 전에는 성공으로 보고하지 않음.
 4. 사용자에게 확인: "게이트 X 통과. 상태: `<다음상태>`. `<다음단계>/`로 이동됨."
 
+`GATE-APPROVAL`은 `.agents/rules/authority-delegation.md`를 따른다.
+`authority: delegated`와 완성된 Architecture Review는 standing delegation으로
+충분하며 항목별 재승인을 요청하지 않는다. `confirmation-required` 또는 실제
+외부 실행 예외만 사용자 확인을 요구한다.
+
 **PASS (GATE-VERIFY — 폴더 이동 없음):**
 
 1. 파일에서 frontmatter `status: verifying` 업데이트 (active/ 유지)
@@ -160,7 +165,7 @@ find .agents/spec-docs -name "<ID>*.md" -not -path "*/rejected/*"
 | 안티패턴                                                 | 올바른 동작                                                                                                         |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Evidence Log 항목 없이 다음 게이트로 이동                | STOP. NON-COMPLIANCE 기록.                                                                                          |
-| "명백해서" GATE-APPROVAL 건너뜀                          | STOP. 사용자 명시 승인 필수. 인용 필요.                                                                             |
+| `delegated` spec에 항목별 재승인을 반복 요구             | STOP. standing delegation을 Evidence에 기록해 승인 처리; 실행 시점 예외만 재확인.                                   |
 | guard를 서브에이전트 대신 인라인으로 실행                | 항상 Agent 서브에이전트로 생성.                                                                                     |
 | 실질적 FAIL(기준 미충족·구현 결함)을 수정 후 즉시 재실행 | 사용자에게 실패 알림 후 지시 대기. 보완형 FAIL은 완주 사전 승인 + Evidence 기록 + 최종 보고 조건에서만 재실행 가능. |
 | GATE-COMPLETE 전 status를 done으로 설정                  | status 변경은 게이트 PASS 결과만 따름.                                                                              |

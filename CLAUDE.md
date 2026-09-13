@@ -13,6 +13,9 @@ Publisher is a static-first news publication with a separately deployed admin su
   read `docs/ai-assisted-deployment.ko.md` before provider-specific docs or
   commands. Preserve its user-choice, billing, authority, secret, owner-first
   pilot, and observed-evidence gates.
+- Apply `.agents/rules/authority-delegation.md`: a complete recommendation is
+  sufficient for ordinary implementation; request confirmation only for its
+  listed material decisions and irreversible production actions.
 - PostgreSQL, the tested S3-compatible API subset, and standard OIDC are the only
   production contracts. Do not add provider-specific storage or identity paths.
   Free allowance does not imply that billing activation is absent.

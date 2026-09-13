@@ -68,6 +68,7 @@ spec-docs 단일 게이트 검증기. 하나의 게이트를 확인하고 Eviden
 - [ ] `status: draft` 존재
 - [ ] `type:`이 11개 prefix 중 정확히 하나: SCREEN · API · FLOW · BEHAVIOR · DATA · RULE · AGREEMENT · INFRA · PERF · SECURITY · OBSERVABILITY
 - [ ] `tags:` 필드 존재 (빈 배열 `[]` 허용)
+- [ ] `authority:`가 `delegated` 또는 `confirmation-required` 중 하나
 
 **Problem 섹션:**
 
@@ -108,14 +109,31 @@ spec-docs 단일 게이트 검증기. 하나의 게이트를 확인하고 Eviden
 
 ### GATE-APPROVAL `review-ready → approved`
 
-- [ ] 사용자가 현재 대화에서 명시적 승인 제공
-- [ ] 승인이 이 spec 문서에 직접, 모호하지 않게 향함
-- [ ] 승인 후 Architecture Review 또는 frontmatter type/tags 수정 없음
+- [ ] `authority: delegated`이면 `.agents/rules/authority-delegation.md`의
+      standing delegation과 완성된 Architecture Review를 확인한다. 이 경우
+      현재 turn의 항목별 재승인은 요구하지 않는다.
+- [ ] `authority: confirmation-required`이면 사용자가 현재 대화에서 이 spec에
+      직접·명시적으로, Architecture Review 이후 승인했다.
+- [ ] 승인/위임 근거 뒤 Architecture Review 또는 frontmatter type/tags/authority
+      수정 없음
+
+**실행 시점 예외:** delegated spec도 비용·결제, production DNS, 기존
+production 데이터 삭제/덮어쓰기, 외부 메시지, 계정 생성/폐쇄, 비밀 공개, 새
+외부 runtime/proxy/queue/cache/managed service의 최종 실행을 승인하지 않는다.
+그 행동 바로 전에 좁은 범위의 확인을 받는다. 이 예외는 구현 코드를 작성하는
+GATE-APPROVAL의 재승인 사유가 아니다.
 
 **명시적 승인으로 인정되는 것:**
 
 - "승인", "진행해", "맞아 진행해", "ok 시작해", "끝까지 책임지고 작업해"
 - 설계를 명확히 확인하고 구현을 승인하는 모든 진술
+
+**위임 승인으로 인정되는 것:**
+
+- frontmatter `authority: delegated`와 완료된 Architecture Review가 있고,
+  `.agents/rules/authority-delegation.md`가 standing delegation을 선언한다.
+- Evidence에는 delegated authority와 문서 경로를 명시하고, 실제 실행 시점
+  예외가 여전히 적용됨을 기록한다.
 
 **인정되지 않는 것:**
 
@@ -123,7 +141,9 @@ spec-docs 단일 게이트 검증기. 하나의 게이트를 확인하고 Eviden
 - 침묵 또는 이의 없음
 - 같은 대화의 다른 항목에 대한 승인
 
-**PASS 시 기록할 증거:** 정확한 사용자 진술을 verbatim으로 인용하고 날짜 기록.
+**PASS 시 기록할 증거:** confirmation-required면 정확한 사용자 진술을 verbatim
+으로 인용하고 날짜 기록. delegated면 authority field, rule 경로, Architecture
+Review 완료, 그리고 실행 시점 예외 유지 사실을 기록.
 
 **NON-COMPLIANCE 트리거:** 이 게이트 실행 전에 구현 작업 (파일 편집, 코드 커밋) 시작.
 

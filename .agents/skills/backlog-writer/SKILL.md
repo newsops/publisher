@@ -46,6 +46,7 @@ spec-docs 파일 작성 가이드. 이 스킬은 GATE-WRITE 준비가 된 올바
 status: draft
 type: <11개 prefix 중 하나 — 아래 분류표 참조>
 tags: [<tag>, <tag>]
+authority: delegated | confirmation-required
 ---
 
 # <ID>: <제목>
@@ -111,6 +112,14 @@ tags: [<tag>, <tag>]
 | `PERF`          | 성능 계약 (레이턴시, 처리량)      |
 | `SECURITY`      | 인증, 위협 경계, 데이터 보호      |
 | `OBSERVABILITY` | 로그, 메트릭, 트레이스            |
+
+## `authority` 분류표
+
+기본값은 `delegated`다. Architecture Review가 추천안·대안·범위·검증 계획을
+완성하면 소유자의 standing delegation으로 GATE-APPROVAL을 통과한다.
+`confirmation-required`는 제품 방향, 아키텍처 경계, 비용 모델, provider role을
+새로 선택하는 경우에만 사용한다. 어떤 값도 비용·DNS·운영 데이터 파기·외부
+메시지·계정 폐쇄·비밀 공개·새 외부 계층의 **실행 시점** 승인을 대체하지 않는다.
 
 ## `tags` 분류표
 
