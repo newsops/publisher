@@ -40,11 +40,12 @@ project, so the native runtime payload is not reliably included.
 ### Decision
 
 Choose alternative 1. Keep the existing Node image-processing contract and
-trace the admin application's direct `sharp` and Linux `@img` package payloads.
-The output trace root remains the monorepo root, while include patterns remain
-relative to the admin project. Add a regression assertion that makes a missing
-native payload observable before deployment. This is an implementation-level
-deployment correction, not a new provider or runtime boundary.
+trace both the admin application's direct `sharp`/Linux `@img` package payloads
+and their resolved pnpm workspace package locations. The output trace root
+remains the monorepo root, while include patterns remain relative to the admin
+project. Add a regression assertion that makes a missing native payload
+observable before deployment. This is an implementation-level deployment
+correction, not a new provider or runtime boundary.
 
 ### Architecture Review Checklist
 
@@ -59,9 +60,10 @@ deployment correction, not a new provider or runtime boundary.
 Make the tracing paths point to the admin project's direct dependencies and
 cover every admin route that imports the image processor: interactive media
 upload and archive restore. Each route includes the `sharp`, Linux native
-binding, and `libvips` package payload used by the Node runtime. Because the
-keys are picomatch route globs, their dynamic `[siteId]` segments are escaped
-so that both literal route paths match. Preserve the public static site's database- and
+binding, and `libvips` package payload from both direct dependency links and
+the resolved pnpm workspace locations used by the deployment. Because the keys
+are picomatch route globs, their dynamic `[siteId]` segments are escaped so
+that both literal route paths match. Preserve the public static site's database- and
 secret-independence. Verify the generated production artifact locally and the
 deployed API by uploading archive media through the existing authenticated CLI.
 
@@ -85,12 +87,12 @@ deployed API by uploading archive media through the existing authenticated CLI.
 
 ## Test Plan
 
-| TC-ID | Test Type        | Tool / Approach                                                                                                                       | Notes                                                                                                                                  |
-| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` plus Linux CI/deployment artifact inspection                                                   | Local macOS build proves configuration syntax; the production Linux deployment is the required platform-specific precondition.         |
-| TC-02 | regression       | Node test reads `apps/admin/next.config.ts` and asserts both image-processing routes include the three direct native tracing patterns | The test is configuration-level because macOS dependency installation does not carry Linux binary files.                               |
-| TC-03 | HTTP integration | Existing authenticated `publisher content restore` CLI with the private archive                                                       | Requires the owner-provided archive, valid API token, deployed production admin, and R2/Neon configuration; no archive body is logged. |
-| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                                                                                    | Runs after implementation; no production data is required.                                                                             |
+| TC-ID | Test Type        | Tool / Approach                                                                                                                                    | Notes                                                                                                                                  |
+| ----- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` plus Linux CI/deployment artifact inspection                                                                | Local macOS build proves configuration syntax; the production Linux deployment is the required platform-specific precondition.         |
+| TC-02 | regression       | Node test reads `apps/admin/next.config.ts` and asserts both image-processing routes include direct and resolved-workspace native tracing patterns | The test is configuration-level because macOS dependency installation does not carry Linux binary files.                               |
+| TC-03 | HTTP integration | Existing authenticated `publisher content restore` CLI with the private archive                                                                    | Requires the owner-provided archive, valid API token, deployed production admin, and R2/Neon configuration; no archive body is logged. |
+| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                                                                                                 | Runs after implementation; no production data is required.                                                                             |
 
 ## Tasks
 

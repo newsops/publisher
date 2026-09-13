@@ -1,21 +1,22 @@
 import type { NextConfig } from 'next'
 import path from 'node:path'
 
+const nativeImageRuntimePaths = [
+  'node_modules/sharp/**/*',
+  'node_modules/@img/sharp-linux-x64/**/*',
+  'node_modules/@img/sharp-libvips-linux-x64/**/*',
+  '../../node_modules/.pnpm/sharp@*/node_modules/sharp/**/*',
+  '../../node_modules/.pnpm/@img+sharp-linux-x64@*/node_modules/@img/sharp-linux-x64/**/*',
+  '../../node_modules/.pnpm/@img+sharp-libvips-linux-x64@*/node_modules/@img/sharp-libvips-linux-x64/**/*',
+]
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   outputFileTracingRoot: path.join(process.cwd(), '../../'),
   outputFileTracingIncludes: {
-    '/api/v2/sites/\\[siteId\\]/media': [
-      'node_modules/sharp/**/*',
-      'node_modules/@img/sharp-linux-x64/**/*',
-      'node_modules/@img/sharp-libvips-linux-x64/**/*',
-    ],
-    '/api/v2/sites/\\[siteId\\]/content-restore': [
-      'node_modules/sharp/**/*',
-      'node_modules/@img/sharp-linux-x64/**/*',
-      'node_modules/@img/sharp-libvips-linux-x64/**/*',
-    ],
+    '/api/v2/sites/\\[siteId\\]/media': nativeImageRuntimePaths,
+    '/api/v2/sites/\\[siteId\\]/content-restore': nativeImageRuntimePaths,
   },
   async headers() {
     return [

@@ -26,5 +26,7 @@
   media route. Runtime diagnosis established that archive restore imports the
   same image processor from `/api/v2/sites/[siteId]/content-restore`; both
   routes now explicitly include the direct `sharp` and Linux payloads. The
-  dynamic route segments are escaped for picomatch. Linux runtime validation
+  dynamic route segments are escaped for picomatch. Physical pnpm workspace
+  package paths are included alongside direct dependency paths so the runtime
+  artifact does not depend on a symbolic-link layout. Linux runtime validation
   remains pending the resulting production deployment.
