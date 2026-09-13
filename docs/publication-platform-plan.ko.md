@@ -312,6 +312,11 @@ SEO metadata를 생성할 권한이 없다. markup/필수 slot 변경이 필요�
 시각 테마가 아니라 semantic template version 변경으로 취급해 영향 route를
 명시적으로 다시 만든다.
 
+각 배포 가능한 theme bundle은 토큰 선언만이 아니라 공통 semantic slot의 실제
+시각 규칙(본문, header/nav, index/list, article, media, sidebar/comment와 좁은
+viewport layout)을 포함해야 한다. baseline은 기능적 읽기와 focus를 위한 작은
+fallback이고, 제품의 완성된 시각 표현을 대신하지 않는다.
+
 기본 runtime/theme/projection은 모두 self-hosted이고 exact CSP에서 `'self'`만
 사용한다. versioned bundle은 장기 immutable cache, 작은 runtime pointer는 짧은
 재검증 대상으로 분리하며, 새 bundle 업로드와 검증을 끝낸 후 pointer를 마지막에

@@ -1,4 +1,7 @@
+import presentationData from './data/theme-presentation.json'
 import themeData from './data/themes.json'
+
+const presentationCss = presentationData.rules.join('\n')
 
 export interface ThemeDefinition {
   readonly id: string
@@ -8,7 +11,10 @@ export interface ThemeDefinition {
 }
 
 export const themes = Object.fromEntries(
-  themeData.map((theme) => [theme.id, theme]),
+  themeData.map((theme) => [
+    theme.id,
+    { ...theme, css: `${theme.css}\n${presentationCss}` },
+  ]),
 ) as Readonly<Record<string, ThemeDefinition>>
 
 export function getTheme(themeId: string): ThemeDefinition {

@@ -19,6 +19,7 @@ import {
   validatePopularityProjection,
   assertBuildJobTransition,
 } from '../../../packages/publication/src/index.ts'
+import { getTheme } from '../../../packages/content/src/index.ts'
 
 class MemoryArtifactStore {
   objects = new Map()
@@ -251,6 +252,28 @@ describe('WEB-008 incremental publication contract', () => {
     ).toBe(false)
     expect(article.dependencyKeys).not.toContain('projection:recent')
     expect(article.dependencyKeys).not.toContain('projection:popular')
+  })
+
+  it('emits a complete responsive selected-theme artifact outside article dependencies', () => {
+    const graph = createPublicationRecipes(
+      inputs({ theme: getTheme('editorial') }),
+    )
+    const theme = graph.recipes.find(
+      (recipe) =>
+        recipe.kind === 'theme' &&
+        recipe.path.startsWith('/theme-runtime/editorial.'),
+    )
+    expect(theme).toBeDefined()
+    const css = theme.render((key) => graph.dependencies[key])
+    expect(css).toMatch(/body\s*\{/)
+    expect(css).toMatch(/header\s*\{/)
+    expect(css).toMatch(/main\s*\{/)
+    expect(css).toMatch(/article\s*\{/)
+    expect(css).toMatch(/@media\s*\(max-width:\s*600px\)/)
+    const article = graph.recipes.find(
+      (recipe) => recipe.kind === 'article-html',
+    )
+    expect(article?.dependencyKeys).not.toContain('theme:editorial:1')
   })
 
   it('renders crawlable semantic article content and metadata without JavaScript', async () => {

@@ -13,16 +13,32 @@ const themes = JSON.parse(
     'utf8',
   ),
 )
+const presentation = JSON.parse(
+  await fs.readFile(
+    path.join(root, 'packages/content/src/data/theme-presentation.json'),
+    'utf8',
+  ),
+)
 const publication = JSON.parse(
   await fs.readFile(
     path.join(root, 'packages/content/src/data/publication.json'),
     'utf8',
   ),
 )
-const selected =
+const selectedTheme =
   themes.find((theme) => theme.id === publication.themeId) ?? themes[0]
-if (!selected?.id || !selected?.version || !selected?.css)
+if (
+  !selectedTheme?.id ||
+  !selectedTheme?.version ||
+  !selectedTheme?.css ||
+  !Array.isArray(presentation.rules) ||
+  !presentation.rules.every((rule) => typeof rule === 'string')
+)
   throw new Error('Theme registry has no valid fallback theme')
+const selected = {
+  ...selectedTheme,
+  css: `${selectedTheme.css}\n${presentation.rules.join('\n')}`,
+}
 const checksum = createHash('sha256').update(selected.css).digest('hex')
 const themePath = `/theme-runtime/${selected.id}.${checksum}.css`
 const releaseId = (
