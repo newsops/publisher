@@ -27,6 +27,8 @@ export interface ArchiveTagEntry {
 export interface ArchivePostEntry extends Omit<PostDraftInput, 'sourceId'> {
   readonly sourceId: string
   readonly imageAsset?: string
+  /** Exact body `/media/...` reference to declared archive media asset. */
+  readonly bodyMediaAssets?: Readonly<Record<string, string>>
 }
 
 export interface EditorialArchive {
@@ -69,6 +71,58 @@ function relativeAsset(value: unknown, label: string): string {
   )
     fail(`${label} must be a relative non-traversing path`)
   return assetPath
+}
+
+function bodyMediaReferences(bodyHtml: string): readonly string[] {
+  const references = new Set<string>()
+  for (const match of bodyHtml.matchAll(
+    /\b(?:src|href)\s*=\s*["']([^"']+)["']/gi,
+  )) {
+    const reference = match[1]
+    if (reference.startsWith('/media/')) references.add(reference)
+  }
+  return [...references]
+}
+
+function bodyMediaAssets(
+  value: unknown,
+  bodyHtml: string,
+  mediaPaths: ReadonlySet<string>,
+  label: string,
+): Readonly<Record<string, string>> | undefined {
+  const references = bodyMediaReferences(bodyHtml)
+  if (value === undefined) {
+    if (references.length > 0)
+      fail(`${label} is required for body media references`)
+    return undefined
+  }
+  const bindings = record(value, label)
+  const normalized: Record<string, string> = {}
+  for (const [reference, asset] of Object.entries(bindings)) {
+    if (
+      !reference.startsWith('/media/') ||
+      reference.startsWith('//') ||
+      reference.includes('\\') ||
+      reference.includes('?') ||
+      reference.includes('#') ||
+      reference
+        .slice(1)
+        .split('/')
+        .some((segment) => !segment || segment === '.' || segment === '..')
+    )
+      fail(`${label} key must be a root-relative media path`)
+    if (!references.includes(reference))
+      fail(`${label} key must occur in bodyHtml`)
+    const assetPath = relativeAsset(asset, `${label}.${reference}`)
+    if (!mediaPaths.has(assetPath))
+      fail(`${label}.${reference} references unknown media`)
+    normalized[reference] = assetPath
+  }
+  for (const reference of references) {
+    if (!Object.hasOwn(normalized, reference))
+      fail(`${label} must bind every body media reference`)
+  }
+  return normalized
 }
 
 function safeHttpsOrigin(value: unknown): string {
@@ -202,6 +256,13 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
         : relativeAsset(post.imageAsset, `posts[${index}].imageAsset`)
     if (imageAsset && !mediaPaths.has(imageAsset))
       fail(`posts[${index}].imageAsset references unknown media`)
+    const bodyHtml = safeText(post.bodyHtml, `posts[${index}].bodyHtml`)
+    const inlineMediaAssets = bodyMediaAssets(
+      post.bodyMediaAssets,
+      bodyHtml,
+      mediaPaths,
+      `posts[${index}].bodyMediaAssets`,
+    )
     const sourceUrl =
       post.sourceUrl === undefined
         ? undefined
@@ -227,7 +288,7 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
       slug: string(post.slug, `posts[${index}].slug`),
       title: safeText(post.title, `posts[${index}].title`),
       excerpt: safeText(post.excerpt, `posts[${index}].excerpt`),
-      bodyHtml: safeText(post.bodyHtml, `posts[${index}].bodyHtml`),
+      bodyHtml,
       author: safeText(post.author, `posts[${index}].author`),
       authorSlug,
       seoTitle: safeText(post.seoTitle, `posts[${index}].seoTitle`),
@@ -244,6 +305,7 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
         : {}),
       ...(sourceUrl ? { sourceUrl } : {}),
       ...(imageAsset ? { imageAsset } : {}),
+      ...(inlineMediaAssets ? { bodyMediaAssets: inlineMediaAssets } : {}),
     }
   })
   unique(

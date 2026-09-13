@@ -146,6 +146,7 @@ function managedPosts(
       {
         ...post,
         imageUrl: post.imageAsset ? mediaPaths.get(post.imageAsset) : undefined,
+        bodyHtml: rewriteBodyMediaReferences(post, mediaPaths),
       },
       tags.map((tag) => tag.slug),
       authors.map((author) => author.slug),
@@ -154,6 +155,22 @@ function managedPosts(
   )
   assertUniqueFeaturedRanks(posts)
   return posts
+}
+
+function rewriteBodyMediaReferences(
+  post: EditorialArchive['posts'][number],
+  mediaPaths: ReadonlyMap<string, string>,
+): string {
+  let bodyHtml = post.bodyHtml
+  for (const [reference, assetPath] of Object.entries(
+    post.bodyMediaAssets ?? {},
+  )) {
+    const publicPath = mediaPaths.get(assetPath)
+    if (!publicPath)
+      throw new Error(`Approved media is unavailable: ${assetPath}`)
+    bodyHtml = bodyHtml.split(reference).join(publicPath)
+  }
+  return bodyHtml
 }
 
 async function approvedMediaPaths(

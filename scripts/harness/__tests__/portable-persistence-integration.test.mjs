@@ -690,7 +690,8 @@ describe('INFRA-005 S3-compatible and image integration', () => {
                 slug: 'media-restore-story',
                 title: 'Media restore story',
                 excerpt: 'A generic media restore fixture.',
-                bodyHtml: '<p>Media restore fixture.</p>',
+                bodyHtml:
+                  '<p>Media restore fixture.</p><img src="/media/pixel.png" alt="Fixture pixel">',
                 author: 'Editor',
                 authorSlug: 'editor',
                 seoTitle: 'Media restore story',
@@ -698,6 +699,9 @@ describe('INFRA-005 S3-compatible and image integration', () => {
                 publishedAt: '2026-09-13T00:00:00.000Z',
                 categories: ['General'],
                 imageAsset: 'media/pixel.png',
+                bodyMediaAssets: {
+                  '/media/pixel.png': 'media/pixel.png',
+                },
               },
             ],
           },
@@ -711,6 +715,16 @@ describe('INFRA-005 S3-compatible and image integration', () => {
           },
         },
         database.pool,
+      )
+      const restoredState = await database.pool.query(
+        'SELECT state FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
+      )
+      expect(restoredState.rows[0].state.posts[0].bodyHtml).toContain(
+        first.publicPath,
+      )
+      expect(restoredState.rows[0].state.posts[0].bodyHtml).not.toContain(
+        '/media/pixel.png',
       )
       const published = await new PostgresContentRepository(
         'default',

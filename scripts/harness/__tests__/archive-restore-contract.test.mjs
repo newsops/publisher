@@ -78,4 +78,54 @@ describe('archive restore contract', () => {
     mutate(value)
     expect(() => validateEditorialArchive(value)).toThrow('Invalid archive')
   })
+
+  it.each([
+    [
+      'an unbound body media reference',
+      (value) =>
+        (value.posts[0].bodyHtml =
+          '<p><img src="/media/pixel.png" alt=""></p>'),
+    ],
+    [
+      'a binding for a missing reference',
+      (value) =>
+        (value.posts[0].bodyMediaAssets = {
+          '/media/pixel.png': 'media/pixel.png',
+        }),
+    ],
+    [
+      'a binding to unknown media',
+      (value) => {
+        value.posts[0].bodyHtml = '<p><img src="/media/pixel.png" alt=""></p>'
+        value.posts[0].bodyMediaAssets = {
+          '/media/pixel.png': 'media/unknown.png',
+        }
+      },
+    ],
+    [
+      'an unsafe body media reference',
+      (value) => {
+        value.posts[0].bodyHtml =
+          '<p><img src="/media/../pixel.png" alt=""></p>'
+        value.posts[0].bodyMediaAssets = {
+          '/media/../pixel.png': 'media/pixel.png',
+        }
+      },
+    ],
+  ])('rejects %s', (_name, mutate) => {
+    const value = fixture()
+    mutate(value)
+    expect(() => validateEditorialArchive(value)).toThrow('Invalid archive')
+  })
+
+  it('retains complete exact body media bindings', () => {
+    const value = fixture()
+    value.posts[0].bodyHtml = '<p><img src="/media/pixel.png" alt=""></p>'
+    value.posts[0].bodyMediaAssets = {
+      '/media/pixel.png': 'media/pixel.png',
+    }
+    expect(validateEditorialArchive(value).posts[0].bodyMediaAssets).toEqual(
+      value.posts[0].bodyMediaAssets,
+    )
+  })
 })
