@@ -10,13 +10,7 @@ The package does not persist private credentials, authorize administrators, exec
 
 ## Architecture overview
 
-Typed editorial entities are validated before they become managed records. A
-private archive restore may project a historical non-empty SEO title to the
-same 70-character bound before invoking this validation; ordinary editor and
-API writes remain strict. A publish operation projects managed editorial and
-plugin-installation data into an immutable public snapshot. Plugin definitions
-are code-installed manifests that validate configuration and produce typed
-public tokens; they are not runtime callbacks.
+Typed editorial entities are validated before they become managed records. A publish operation projects managed editorial and plugin-installation data into an immutable public snapshot. Plugin definitions are code-installed manifests that validate configuration and produce typed public tokens; they are not runtime callbacks.
 
 ## Type ownership
 
