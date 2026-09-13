@@ -6,12 +6,12 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   outputFileTracingRoot: path.join(process.cwd(), '../../'),
   outputFileTracingIncludes: {
-    '/api/v2/sites/[siteId]/media': [
+    '/api/v2/sites/\\[siteId\\]/media': [
       'node_modules/sharp/**/*',
       'node_modules/@img/sharp-linux-x64/**/*',
       'node_modules/@img/sharp-libvips-linux-x64/**/*',
     ],
-    '/api/v2/sites/[siteId]/content-restore': [
+    '/api/v2/sites/\\[siteId\\]/content-restore': [
       'node_modules/sharp/**/*',
       'node_modules/@img/sharp-linux-x64/**/*',
       'node_modules/@img/sharp-libvips-linux-x64/**/*',

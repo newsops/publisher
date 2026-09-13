@@ -12,8 +12,8 @@ describe('native image runtime tracing', () => {
       'utf8',
     )
 
-    expect(config).toContain("'/api/v2/sites/[siteId]/media'")
-    expect(config).toContain("'/api/v2/sites/[siteId]/content-restore'")
+    expect(config).toContain("'/api/v2/sites/\\\\[siteId\\\\]/media'")
+    expect(config).toContain("'/api/v2/sites/\\\\[siteId\\\\]/content-restore'")
     expect(config).toContain('node_modules/sharp/**/*')
     expect(config).toContain('node_modules/@img/sharp-linux-x64/**/*')
     expect(config).toContain('node_modules/@img/sharp-libvips-linux-x64/**/*')

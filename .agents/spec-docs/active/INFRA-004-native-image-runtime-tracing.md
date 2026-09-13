@@ -59,7 +59,9 @@ deployment correction, not a new provider or runtime boundary.
 Make the tracing paths point to the admin project's direct dependencies and
 cover every admin route that imports the image processor: interactive media
 upload and archive restore. Each route includes the `sharp`, Linux native
-binding, and `libvips` package payload used by the Node runtime. Preserve the public static site's database- and
+binding, and `libvips` package payload used by the Node runtime. Because the
+keys are picomatch route globs, their dynamic `[siteId]` segments are escaped
+so that both literal route paths match. Preserve the public static site's database- and
 secret-independence. Verify the generated production artifact locally and the
 deployed API by uploading archive media through the existing authenticated CLI.
 

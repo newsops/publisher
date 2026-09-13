@@ -25,5 +25,6 @@
 - 2026-09-13 — The deployment correction initially covered only the interactive
   media route. Runtime diagnosis established that archive restore imports the
   same image processor from `/api/v2/sites/[siteId]/content-restore`; both
-  routes now explicitly include the direct `sharp` and Linux payloads. Linux
-  runtime validation remains pending the resulting production deployment.
+  routes now explicitly include the direct `sharp` and Linux payloads. The
+  dynamic route segments are escaped for picomatch. Linux runtime validation
+  remains pending the resulting production deployment.
