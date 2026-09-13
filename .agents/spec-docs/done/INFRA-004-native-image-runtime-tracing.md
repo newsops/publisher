@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: done
 type: INFRA
 tags: [web, typescript]
 authority: delegated
@@ -76,27 +76,27 @@ deployed API by uploading archive media through the existing authenticated CLI.
 
 ## Completion Criteria
 
-- [ ] TC-01: `pnpm --filter @publisher/admin build` → exit 0 and the traced
+- [x] TC-01: `pnpm --filter @publisher/admin build` → exit 0 and the traced
       server artifact includes the Linux `sharp` binding and `libvips` payload when
       built on Linux.
-- [ ] TC-02: the native-runtime regression test → exit 0 and fails if either
+- [x] TC-02: the native-runtime regression test → exit 0 and fails if either
       Linux payload path is omitted from the tracing configuration.
-- [ ] TC-03: authenticated archive media upload against the new production
+- [x] TC-03: authenticated archive media upload against the new production
       admin deployment → HTTP success rather than a `sharp` module-load HTTP 500.
-- [ ] TC-04: `pnpm typecheck && pnpm test && pnpm harness:scan` → exit 0.
+- [x] TC-04: `pnpm typecheck && pnpm test && pnpm harness:scan` → exit 0.
 
 ## Test Plan
 
-| TC-ID | Test Type        | Tool / Approach                                                                                                                                    | Notes                                                                                                                                  |
-| ----- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` plus Linux CI/deployment artifact inspection                                                                | Local macOS build proves configuration syntax; the production Linux deployment is the required platform-specific precondition.         |
-| TC-02 | regression       | Node test reads `apps/admin/next.config.ts` and asserts both image-processing routes include direct and resolved-workspace native tracing patterns | The test is configuration-level because macOS dependency installation does not carry Linux binary files.                               |
-| TC-03 | HTTP integration | Existing authenticated `publisher content restore` CLI with the private archive                                                                    | Requires the owner-provided archive, valid API token, deployed production admin, and R2/Neon configuration; no archive body is logged. |
-| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                                                                                                 | Runs after implementation; no production data is required.                                                                             |
+| TC-ID | Test Type        | Tool / Approach                                                     | Notes                                                                                                                      |
+| ----- | ---------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` and production Linux restore | Admin build passed; production's 17 successful image operations prove the traced Linux binding and `libvips` payload load. |
+| TC-02 | regression       | `native-image-runtime-tracing.test.mjs`                             | The focused test passed and asserts both routes contain direct and resolved pnpm native payload patterns.                  |
+| TC-03 | HTTP integration | Authenticated archive restore API                                   | Production accepted 17 image uploads/variant approvals and the restore returned HTTP 202; no archive body was emitted.     |
+| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                  | All passed after the correction; test suite reported 167 tests and harness reported six scans.                             |
 
 ## Tasks
 
-- [ ] `.agents/tasks/INFRA-004.md` — active implementation record.
+- [x] `.agents/tasks/completed/INFRA-004.md` — completed implementation record.
 
 ## Evidence Log
 
@@ -123,3 +123,39 @@ The approval applies directly to INFRA-004's production archive-restore native-i
 Task record exists at `.agents/tasks/INFRA-004.md` and is linked from `## Tasks`.
 The task record contains one unchecked implementation task for each Completion Criterion: TC-01 build/Linux artifact, TC-02 tracing regression, TC-03 authenticated production upload, and TC-04 repository verification suite.
 The actual worktree history is `68a902a`, `2cc08ed`, `3df70af`, `752eb2b`, and `c0aecd4`; it contains no INFRA-004 implementation commit, so the prior non-compliance claim based on commits outside this worktree is not applicable.
+
+### [GATE-VERIFY] — ✅ PASS | 2026-09-13
+
+**Status upgrade:** in-progress → verifying
+All four TC-mapped tasks in `.agents/tasks/INFRA-004.md` are marked complete, with no blocked or deferred task recorded.
+`pnpm --filter @publisher/site build` exited 0; `pnpm --filter @publisher/site test` exited 0; and `pnpm --filter @publisher/admin build` exited 0, producing both image-processing routes in the admin build manifest.
+The tracing regression is covered by `scripts/harness/__tests__/native-image-runtime-tracing.test.mjs`; the completed repository suite reported 167 passing tests and verifies every direct and resolved pnpm `sharp`/Linux `libvips` tracing pattern for both media-processing routes.
+Production Linux integration evidence in `.agents/tasks/INFRA-004.md` records that the deployed admin accepted all 17 authenticated archive image uploads, generated and approved their variants, and returned HTTP 202 from archive restore—direct evidence that the deployed `sharp` binding and `libvips` payload load successfully.
+`pnpm typecheck`, `pnpm test`, and `pnpm harness:scan` exited 0; the harness reported all six scans passing.
+
+### [GATE-COMPLETE: TC-01] — ✅ PASS | 2026-09-13
+
+**Status upgrade:** verifying → done
+`pnpm --filter @publisher/admin build` exited 0; the Linux Vercel deployment then completed 17 successful image-processing operations, which observed the traced `sharp` Linux binding and `libvips` payload loading in the deployed artifact.
+Test reference: Test Plan TC-01 records the admin-build artifact action and its production-Linux restore verification.
+
+### [GATE-COMPLETE: TC-02] — ✅ PASS | 2026-09-13
+
+`pnpm test -- native-image-runtime-tracing.test.mjs` exited 0 for `scripts/harness/__tests__/native-image-runtime-tracing.test.mjs`, `describe('native image runtime tracing')` / `it('traces sharp and its Linux binary payload for every image-processing route')`; it verifies both routes and every direct and resolved pnpm `sharp`/Linux payload pattern.
+Test reference: `scripts/harness/__tests__/native-image-runtime-tracing.test.mjs` — `traces sharp and its Linux binary payload for every image-processing route`.
+
+### [GATE-COMPLETE: TC-03] — ✅ PASS | 2026-09-13
+
+Authenticated production archive-restore API actions uploaded 17 images, generated and approved their variants, and returned HTTP 202 rather than a `sharp` module-load HTTP 500; no archive body was emitted.
+Test reference: Test Plan TC-03 records the authenticated archive restore API integration action and observed result.
+
+### [GATE-COMPLETE: TC-04] — ✅ PASS | 2026-09-13
+
+`pnpm typecheck && pnpm test && pnpm harness:scan` exited 0; `pnpm test` reported 167 passing tests and the harness reported all six scans passed.
+Test reference: Test Plan TC-04 records the repository regression command and its observed 167-test/six-scan result.
+
+### [GATE-COMPLETE] — ✅ PASS | 2026-09-13
+
+**Status upgrade:** verifying → done
+TC-01 through TC-04 are all checked and each has a concrete `GATE-COMPLETE` evidence entry with its verification action/result and Test Plan reference.
+All Test Plan rows contain a validation reference, and the completed task record is archived at `.agents/tasks/completed/INFRA-004.md`, which is the path linked from `## Tasks`.
