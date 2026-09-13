@@ -57,8 +57,9 @@ deployment correction, not a new provider or runtime boundary.
 ## Solution
 
 Make the tracing paths point to the admin project's direct dependencies and
-cover the `sharp`, Linux native binding, and `libvips` package payload used by
-the Node runtime. Preserve the public static site's database- and
+cover every admin route that imports the image processor: interactive media
+upload and archive restore. Each route includes the `sharp`, Linux native
+binding, and `libvips` package payload used by the Node runtime. Preserve the public static site's database- and
 secret-independence. Verify the generated production artifact locally and the
 deployed API by uploading archive media through the existing authenticated CLI.
 
@@ -82,12 +83,12 @@ deployed API by uploading archive media through the existing authenticated CLI.
 
 ## Test Plan
 
-| TC-ID | Test Type        | Tool / Approach                                                                                             | Notes                                                                                                                                  |
-| ----- | ---------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` plus Linux CI/deployment artifact inspection                         | Local macOS build proves configuration syntax; the production Linux deployment is the required platform-specific precondition.         |
-| TC-02 | regression       | Node test reads `apps/admin/next.config.ts` and asserts the three monorepo-relative native tracing patterns | The test is configuration-level because macOS dependency installation does not carry Linux binary files.                               |
-| TC-03 | HTTP integration | Existing authenticated `publisher content restore` CLI with the private archive                             | Requires the owner-provided archive, valid API token, deployed production admin, and R2/Neon configuration; no archive body is logged. |
-| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                                                          | Runs after implementation; no production data is required.                                                                             |
+| TC-ID | Test Type        | Tool / Approach                                                                                                                       | Notes                                                                                                                                  |
+| ----- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| TC-01 | build artifact   | `pnpm --filter @publisher/admin build` plus Linux CI/deployment artifact inspection                                                   | Local macOS build proves configuration syntax; the production Linux deployment is the required platform-specific precondition.         |
+| TC-02 | regression       | Node test reads `apps/admin/next.config.ts` and asserts both image-processing routes include the three direct native tracing patterns | The test is configuration-level because macOS dependency installation does not carry Linux binary files.                               |
+| TC-03 | HTTP integration | Existing authenticated `publisher content restore` CLI with the private archive                                                       | Requires the owner-provided archive, valid API token, deployed production admin, and R2/Neon configuration; no archive body is logged. |
+| TC-04 | regression suite | `pnpm typecheck && pnpm test && pnpm harness:scan`                                                                                    | Runs after implementation; no production data is required.                                                                             |
 
 ## Tasks
 

@@ -1,6 +1,6 @@
 # INFRA-004 — Native image runtime tracing
 
-**Spec:** `.agents/spec-docs/todo/INFRA-004-native-image-runtime-tracing.md`
+**Spec:** `.agents/spec-docs/active/INFRA-004-native-image-runtime-tracing.md`
 **Status:** in-progress
 
 ## Gate Record
@@ -22,8 +22,8 @@
 
 ## Progress
 
-- 2026-09-13 — Corrected monorepo-relative native runtime tracing; focused
-  regression test and the admin production build pass locally. The first Linux
-  deployment still missed `libvips`; corrected the includes to the documented
-  direct dependency paths. Linux runtime validation remains pending the next
-  production deployment.
+- 2026-09-13 — The deployment correction initially covered only the interactive
+  media route. Runtime diagnosis established that archive restore imports the
+  same image processor from `/api/v2/sites/[siteId]/content-restore`; both
+  routes now explicitly include the direct `sharp` and Linux payloads. Linux
+  runtime validation remains pending the resulting production deployment.
