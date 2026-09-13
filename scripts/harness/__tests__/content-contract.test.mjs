@@ -115,6 +115,23 @@ describe('content safety contract', () => {
     expect(valid.value?.sourceUrl).toContain('/stable-post.html')
   })
 
+  it('keeps the normal editorial SEO title limit strict', () => {
+    const invalid = validatePostInput({
+      slug: 'long-seo-title',
+      title: 'Article',
+      excerpt: 'Excerpt',
+      bodyHtml: '<p>Body</p>',
+      author: 'Author',
+      seoTitle: 'S'.repeat(71),
+      publishedAt: '2024-11-27T00:33:00.000Z',
+      categories: ['General'],
+    })
+    expect(invalid).toMatchObject({
+      ok: false,
+      errors: ['seoTitle must be 70 characters or fewer'],
+    })
+  })
+
   it('keeps public cache policy and private admin contracts in the repository', () => {
     expect(
       fs.readFileSync(path.join(root, 'apps/site/public/_headers'), 'utf8'),

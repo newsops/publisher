@@ -145,6 +145,7 @@ function managedPosts(
       undefined,
       {
         ...post,
+        seoTitle: normalizedArchiveSeoTitle(post.seoTitle),
         imageUrl: post.imageAsset ? mediaPaths.get(post.imageAsset) : undefined,
         bodyHtml: rewriteBodyMediaReferences(post, mediaPaths),
       },
@@ -171,6 +172,19 @@ function rewriteBodyMediaReferences(
     bodyHtml = bodyHtml.split(reference).join(publicPath)
   }
   return bodyHtml
+}
+
+function normalizedArchiveSeoTitle(
+  value: string | undefined,
+): string | undefined {
+  if (!value?.trim()) return value
+  const title = value.trim()
+  let normalized = ''
+  for (const codePoint of title) {
+    if (normalized.length + codePoint.length > 70) break
+    normalized += codePoint
+  }
+  return normalized
 }
 
 async function approvedMediaPaths(

@@ -235,7 +235,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
             bodyHtml: '<p>Restored through the API contract.</p>',
             author: 'Editor',
             authorSlug: 'editor',
-            seoTitle: 'Restore story',
+            seoTitle: 'R'.repeat(71),
             seoDescription: 'A generic restored article.',
             publishedAt: '2026-09-13T00:00:00.000Z',
             categories: ['General'],
@@ -258,6 +258,8 @@ describe('INFRA-005 PostgreSQL integration', () => {
       )
       expect(state.rows[0].revision).toBe('2')
       expect(state.rows[0].state.posts).toHaveLength(1)
+      expect(archive.posts[0].seoTitle).toHaveLength(71)
+      expect(state.rows[0].state.posts[0].seoTitle).toHaveLength(70)
       expect(state.rows[0].state.snapshots).toEqual([])
       expect(
         await database.pool.query(
