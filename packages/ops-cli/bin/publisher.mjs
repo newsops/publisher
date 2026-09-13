@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+import {
+  PublisherApiError,
+  createPublisherAdminClient,
+} from '@publisher/admin-client'
+
 const args = process.argv.slice(2)
 const json = args.includes('--json')
 const nonInteractive = args.includes('--non-interactive')
@@ -17,31 +22,27 @@ function emit(ok, code, data = {}, exitCode = ok ? 0 : 1) {
   process.exitCode = exitCode
 }
 
-function config() {
-  return {
-    origin: process.env.PUBLISHER_ADMIN_ORIGIN?.replace(/\/$/, ''),
-    token: process.env.PUBLISHER_API_TOKEN,
-  }
+function client() {
+  const origin = process.env.PUBLISHER_ADMIN_ORIGIN?.replace(/\/$/, '')
+  const token = process.env.PUBLISHER_API_TOKEN
+  if (!origin || !token) return undefined
+
+  return createPublisherAdminClient({ origin, token })
+}
+
+function missingClientConfiguration() {
+  return ['PUBLISHER_ADMIN_ORIGIN', 'PUBLISHER_API_TOKEN'].filter(
+    (name) => !process.env[name],
+  )
 }
 
 function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }
 
-async function request(path, init = {}) {
-  const { origin, token } = config()
-  if (!origin || !token) return undefined
-  return fetch(`${origin}${path}`, {
-    ...init,
-    headers: { authorization: `Bearer ${token}`, ...(init.headers ?? {}) },
-  })
-}
-
 async function main() {
   if (args[0] === 'doctor') {
-    const missing = ['PUBLISHER_ADMIN_ORIGIN', 'PUBLISHER_API_TOKEN'].filter(
-      (name) => !process.env[name],
-    )
+    const missing = missingClientConfiguration()
     return emit(
       missing.length === 0,
       missing.length ? 'CONFIGURATION_REQUIRED' : 'READY',
@@ -50,51 +51,48 @@ async function main() {
     )
   }
   if (args[0] === 'status') {
-    const response = await request('/api/v1/posts?limit=1')
-    if (!response)
+    const api = client()
+    if (!api)
       return emit(
         false,
         'CONFIGURATION_REQUIRED',
-        { missing: ['PUBLISHER_ADMIN_ORIGIN', 'PUBLISHER_API_TOKEN'] },
+        { missing: missingClientConfiguration() },
         20,
       )
-    const body = await response.json()
-    return emit(
-      response.ok,
-      response.ok ? 'READY' : 'REMOTE_ERROR',
-      {
+    try {
+      const response = await api.getStatus()
+      return emit(true, 'READY', {
         status: response.status,
-        state: response.ok
-          ? {
-              kind: 'site',
-              status: 'ready',
-              terminal: false,
-              retryable: false,
-              site: body,
-            }
-          : body,
-      },
-      response.ok ? 0 : 30,
-    )
+        state: {
+          kind: 'site',
+          status: 'ready',
+          terminal: false,
+          retryable: false,
+          site: response.data,
+        },
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
   }
   if (args[0] === 'operation' && args[1] === 'get' && args[2]) {
-    const response = await request(
-      `/api/v1/operations/${encodeURIComponent(args[2])}`,
-    )
-    if (!response)
+    const api = client()
+    if (!api)
       return emit(
         false,
         'CONFIGURATION_REQUIRED',
-        { missing: ['PUBLISHER_ADMIN_ORIGIN', 'PUBLISHER_API_TOKEN'] },
+        { missing: missingClientConfiguration() },
         20,
       )
-    const body = await response.json()
-    return emit(
-      response.ok,
-      response.ok ? 'OPERATION' : 'REMOTE_ERROR',
-      { status: response.status, state: body },
-      response.ok ? 0 : 30,
-    )
+    try {
+      const response = await api.getOperation(args[2])
+      return emit(true, 'OPERATION', {
+        status: response.status,
+        state: response.data,
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
   }
   if (args[0] === 'publish') {
     if (args.includes('--requires-authority') && nonInteractive)
@@ -107,24 +105,25 @@ async function main() {
     const key = option('--idempotency-key')
     if (!key)
       return emit(false, 'INPUT_REQUIRED', { field: '--idempotency-key' }, 10)
-    const response = await request('/api/v1/publish', {
-      method: 'POST',
-      headers: { 'idempotency-key': key },
-    })
-    if (!response)
+    const api = client()
+    if (!api)
       return emit(
         false,
         'CONFIGURATION_REQUIRED',
-        { missing: ['PUBLISHER_ADMIN_ORIGIN', 'PUBLISHER_API_TOKEN'] },
+        { missing: missingClientConfiguration() },
         20,
       )
-    const body = await response.json()
-    return emit(
-      response.ok,
-      response.ok ? 'OPERATION_ACCEPTED' : 'REMOTE_ERROR',
-      { status: response.status, operationId: body.jobId, state: body },
-      response.ok ? 0 : 30,
-    )
+    try {
+      const response = await api.publish(key)
+      const body = response.data
+      return emit(true, 'OPERATION_ACCEPTED', {
+        status: response.status,
+        operationId: body?.jobId,
+        state: body,
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
   }
   if (args[0] === 'auth' && args[1] === 'login' && args.includes('--device')) {
     const issuer = process.env.PUBLISHER_OIDC_ISSUER?.replace(/\/$/, '')
@@ -187,6 +186,11 @@ async function main() {
     },
     10,
   )
+}
+
+function apiErrorData(error) {
+  if (error instanceof PublisherApiError) return error.toJSON()
+  return { retryable: true }
 }
 
 main().catch(() => emit(false, 'REMOTE_ERROR', { retryable: true }, 30))

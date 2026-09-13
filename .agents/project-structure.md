@@ -10,6 +10,8 @@ packages/
 ├── content/    @publisher/content — content types, seed snapshot, slug rules
 ├── persistence/ @publisher/persistence — PostgreSQL, S3 API, media, recovery
 ├── publication/ @publisher/publication — incremental build and activation
+├── admin-client/ @publisher/admin-client — reusable authenticated Admin API client
+├── ops-cli/ @publisher/ops-cli — command-line adapter over admin-client
 └── config/                         — shared configuration reserved for later extraction
 
 .agents/       rules, skills, spec gates, tasks, templates
@@ -23,6 +25,12 @@ docs/          project documentation and decision records
 
 - `apps/site` may depend on `@publisher/content` and platform-neutral packages.
 - `apps/admin` may depend on `@publisher/content` and admin-only infrastructure packages.
+- `packages/admin-client` may depend only on web-standard HTTP types and has no
+  environment, browser, database, object-storage, or deployment-provider
+  dependency. `packages/ops-cli` may depend on it and owns CLI-only process I/O.
+- `apps/admin` owns API-route authentication, authorization, audit, and all
+  mutations; `packages/admin-client` is a caller and must never be imported by
+  `apps/admin`.
 - `apps/site` must not import admin code or secrets.
 - `packages/content` must not depend on Next.js, React, a database SDK, or a deployment provider.
 - The public build consumes a content snapshot; publishing creates a new snapshot and deployment.

@@ -138,6 +138,18 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  packages/admin-client:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.0
+        version: 4.1.10(@types/node@22.20.1)(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.2)(terser@5.16.9)(tsx@4.23.13)(yaml@2.9.0))
+
   packages/content:
     dependencies:
       sanitize-html:
@@ -151,7 +163,11 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
-  packages/ops-cli: {}
+  packages/ops-cli:
+    dependencies:
+      '@publisher/admin-client':
+        specifier: workspace:*
+        version: link:../admin-client
 
   packages/persistence:
     dependencies:

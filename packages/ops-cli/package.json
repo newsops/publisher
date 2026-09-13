@@ -9,5 +9,8 @@
   "scripts": {
     "typecheck": "node --check bin/publisher.mjs",
     "test": "node --check bin/publisher.mjs"
+  },
+  "dependencies": {
+    "@publisher/admin-client": "workspace:*"
   }
 }
