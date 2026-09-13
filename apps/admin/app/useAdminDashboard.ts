@@ -13,6 +13,7 @@ import {
   type AdminSettings,
   type AdminTag,
   type AdminPlugin,
+  type AdminMedia,
 } from './admin-model'
 
 export interface DashboardSetters {
@@ -21,6 +22,7 @@ export interface DashboardSetters {
   setAuthors: Dispatch<SetStateAction<AdminAuthor[]>>
   setSettings: Dispatch<SetStateAction<AdminSettings>>
   setPlugins: Dispatch<SetStateAction<AdminPlugin[]>>
+  setMedia: Dispatch<SetStateAction<AdminMedia[]>>
   setSelected: Dispatch<SetStateAction<AdminPost>>
   setNewTagName: Dispatch<SetStateAction<string>>
   setNewAuthorName: Dispatch<SetStateAction<string>>
@@ -38,6 +40,7 @@ function useDashboardState(): {
   const [authors, setAuthors] = useState<AdminAuthor[]>([])
   const [settings, setSettings] = useState<AdminSettings>(emptySettings)
   const [plugins, setPlugins] = useState<AdminPlugin[]>([])
+  const [media, setMedia] = useState<AdminMedia[]>([])
   const [selected, setSelected] = useState<AdminPost>(blankPost())
   const [newTagName, setNewTagName] = useState('')
   const [newAuthorName, setNewAuthorName] = useState('')
@@ -51,6 +54,7 @@ function useDashboardState(): {
       authors,
       settings,
       plugins,
+      media,
       selected,
       newTagName,
       newAuthorName,
@@ -64,6 +68,7 @@ function useDashboardState(): {
       setAuthors,
       setSettings,
       setPlugins,
+      setMedia,
       setSelected,
       setNewTagName,
       setNewAuthorName,
@@ -86,6 +91,7 @@ function useInitialData(setters: DashboardSetters): void {
       action.loadAuthors(setters.setAuthors, setters.setSelected),
       action.loadSettings(setters.setSettings),
       action.loadPlugins(setters.setPlugins),
+      action.loadMedia(setters.setMedia),
     ]).catch(() => {
       setters.setMessage('초기 관리자 데이터를 불러오지 못했습니다.')
     })
@@ -211,6 +217,14 @@ function dashboardActions(
         action.loadSettings(setters.setSettings),
       ),
     publish: () => publishAction.publishSnapshot(setters.setMessage),
+    uploadMedia: (file) =>
+      action.uploadMedia(file, setters.setMessage, () =>
+        action.loadMedia(setters.setMedia),
+      ),
+    approveMedia: (media) =>
+      action.approveMedia(media, setters.setMessage, () =>
+        action.loadMedia(setters.setMedia),
+      ),
   }
 }
 

@@ -7,6 +7,7 @@ import type {
   AdminSettings,
   AdminTag,
   AdminPlugin,
+  AdminMedia,
 } from './admin-model'
 import ManagementPanel from './ManagementPanel'
 import PostEditor from './PostEditor'
@@ -16,6 +17,7 @@ import CommentModerationPanel from './CommentModerationPanel'
 import SiteSelector from './SiteSelector'
 import PluginManagementPanel from './PluginManagementPanel'
 import AccountManagementPanel from './AccountManagementPanel'
+import MediaLibraryPanel from './MediaLibraryPanel'
 
 export interface DashboardState {
   posts: AdminPost[]
@@ -23,6 +25,7 @@ export interface DashboardState {
   authors: AdminAuthor[]
   settings: AdminSettings
   plugins: AdminPlugin[]
+  media: AdminMedia[]
   selected: AdminPost
   newTagName: string
   newAuthorName: string
@@ -65,6 +68,8 @@ export interface DashboardActions {
   renameTag: (tag: AdminTag) => Promise<void>
   archiveTag: (tag: AdminTag) => Promise<void>
   publish: () => Promise<void>
+  uploadMedia: (file: File) => Promise<void>
+  approveMedia: (media: AdminMedia) => Promise<void>
   setActiveLocale: Dispatch<SetStateAction<string>>
   updateVariant: (
     field: keyof AdminArticleVariant,
@@ -148,6 +153,13 @@ function DashboardGrid({
         update={actions.update}
         save={actions.savePost}
         remove={actions.removePost}
+      />
+      <MediaLibraryPanel
+        media={state.media}
+        selectedPath={state.selected.imageUrl}
+        upload={actions.uploadMedia}
+        approve={actions.approveMedia}
+        select={(imageUrl) => actions.update('imageUrl', imageUrl)}
       />
       <ArticleVariantEditor
         article={state.article}

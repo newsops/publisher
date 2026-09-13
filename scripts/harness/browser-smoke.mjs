@@ -196,7 +196,7 @@ async function inspect(
     await new Promise((resolve) => setTimeout(resolve, 600))
   }
   const result = await client.send('Runtime.evaluate', {
-    expression: `(() => { const focusable = document.querySelector('a[href], button, input, select, textarea'); focusable?.focus(); return { title: document.title, text: document.body.innerText, width: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, authorLink: Boolean(document.querySelector('a[href="/author/example-editor/"]')), settingsPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication settings')), pluginPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication plugins')), postCount: document.querySelectorAll('.post-row').length, brand: document.querySelector('.eyebrow')?.textContent, keyboardFocus: Boolean(focusable && document.activeElement === focusable), commentsUnavailable: document.querySelector('[data-comments] [data-comment-status]')?.textContent === 'Comments are temporarily unavailable.', largestContentfulPaint: window.__largestContentfulPaint ?? performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? null, resilienceState: window.__pluginResilience ?? 'not-injected', resilienceScriptCount: document.querySelectorAll('script[data-plugin-resilience]').length, analyticsTagCount: document.querySelectorAll('script[data-publisher-google-analytics]').length, analyticsRuntime: Boolean(document.querySelector('script[src="/plugin-runtime/google-analytics.js"]')), description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '', links: [...document.querySelectorAll('a[href]')].map((item) => new URL(item.href, location.href).href).filter((href) => new URL(href).origin === location.origin) } })()`,
+    expression: `(() => { const focusable = document.querySelector('a[href], button, input, select, textarea'); focusable?.focus(); return { title: document.title, text: document.body.innerText, width: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, authorLink: Boolean(document.querySelector('a[href="/author/example-editor/"]')), settingsPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication settings')), pluginPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication plugins')), mediaPanel: Boolean(document.querySelector('[aria-label="Media library"] input[type="file"]')), postCount: document.querySelectorAll('.post-row').length, brand: document.querySelector('.eyebrow')?.textContent, keyboardFocus: Boolean(focusable && document.activeElement === focusable), commentsUnavailable: document.querySelector('[data-comments] [data-comment-status]')?.textContent === 'Comments are temporarily unavailable.', largestContentfulPaint: window.__largestContentfulPaint ?? performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? null, resilienceState: window.__pluginResilience ?? 'not-injected', resilienceScriptCount: document.querySelectorAll('script[data-plugin-resilience]').length, analyticsTagCount: document.querySelectorAll('script[data-publisher-google-analytics]').length, analyticsRuntime: Boolean(document.querySelector('script[src="/plugin-runtime/google-analytics.js"]')), description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '', links: [...document.querySelectorAll('a[href]')].map((item) => new URL(item.href, location.href).href).filter((href) => new URL(href).origin === location.origin) } })()`,
     returnByValue: true,
   })
   state = result.result.value
@@ -268,6 +268,7 @@ async function inspect(
     authorLink: state.authorLink,
     settingsPanel: state.settingsPanel,
     pluginPanel: state.pluginPanel,
+    mediaPanel: state.mediaPanel,
     pluginDiagnostic,
     postCount: state.postCount,
     brand: state.brand,
@@ -436,6 +437,7 @@ try {
       if (
         !results.find((result) => result.name === name)?.settingsPanel ||
         !results.find((result) => result.name === name)?.pluginPanel ||
+        !results.find((result) => result.name === name)?.mediaPanel ||
         !results.find((result) => result.name === name)?.postCount
       )
         throw new Error(

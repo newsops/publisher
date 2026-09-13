@@ -126,9 +126,14 @@ export async function requireIdentity(
   request: Request,
   requiredRole: AdminRole = 'editor',
 ): Promise<AdminIdentity> {
-  // Harness-only identities keep route contracts testable without a shared
-  // database. They are unreachable from every deployed runtime.
-  if (process.env.NODE_ENV === 'test') {
+  // Harness-only identities keep local fixture routes testable without a shared
+  // database. The development branch additionally requires ADMIN_DATA_DIR;
+  // every production runtime still reaches the database-backed session path.
+  const allowsFixtureIdentity =
+    process.env.NODE_ENV === 'test' ||
+    (process.env.NODE_ENV === 'development' &&
+      Boolean(process.env.ADMIN_DATA_DIR))
+  if (allowsFixtureIdentity) {
     const expected = process.env.ADMIN_DEV_TOKEN
     const supplied = request.headers.get('x-admin-dev-token')
     const email = request.headers.get('x-admin-dev-email')?.trim().toLowerCase()

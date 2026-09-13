@@ -66,6 +66,21 @@ The browser-oriented `/api/*` routes and the machine-oriented `/api/v1/*`
 routes are separate contracts. The machine API does not use browser cookies or
 browser CORS.
 
+## Browser media library
+
+The authenticated human dashboard provides the browser media workflow. Its
+site-scoped `GET /api/media` response contains only verified metadata and,
+after approval, public-path variant metadata. It never returns object-store
+credentials, endpoints, original-object keys, or original bytes. The dashboard
+uploads through same-origin `POST /api/media`, explicitly generates variants
+through `POST /api/media/{id}/approve`, and streams an approved preview only
+through the authenticated `GET /api/media/{id}/preview?variant={sha256}` route.
+
+Selecting a variant changes unsaved editorial state only. Saving the post and
+creating a publication snapshot remain separate explicit actions. Agents must
+use the versioned CLI/API contract, rather than browser controls, for their
+equivalent operations.
+
 ## Endpoint and role summary
 
 | Method   | Path                    | Minimum role | Purpose                                         |

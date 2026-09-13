@@ -7,6 +7,7 @@ import {
   type AdminSettings,
   type AdminTag,
   type AdminPlugin,
+  type AdminMedia,
 } from './admin-model'
 
 type Setter<Value> = Dispatch<SetStateAction<Value>>
@@ -70,6 +71,48 @@ export async function loadPlugins(
   if (!response.ok) return
   const data = (await response.json()) as { plugins: AdminPlugin[] }
   setPlugins(data.plugins)
+}
+
+export async function loadMedia(setMedia: Setter<AdminMedia[]>): Promise<void> {
+  const response = await adminFetch('/api/media')
+  if (!response.ok) return
+  const data = (await response.json()) as { media: AdminMedia[] }
+  setMedia(data.media)
+}
+
+export async function uploadMedia(
+  file: File,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  const form = new FormData()
+  form.set('file', file)
+  const response = await adminFetch('/api/media', {
+    method: 'POST',
+    body: form,
+  })
+  setMessage(
+    response.ok
+      ? '이미지를 업로드했습니다. 승인 후 글에 선택할 수 있습니다.'
+      : `이미지 업로드 실패 (${response.status}).`,
+  )
+  if (response.ok) await reload()
+}
+
+export async function approveMedia(
+  media: AdminMedia,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  const response = await adminFetch(`/api/media/${media.id}/approve`, {
+    method: 'POST',
+  })
+  setMessage(
+    response.ok
+      ? '이미지 변형을 생성하고 승인했습니다.'
+      : `이미지 승인 실패 (${response.status}).`,
+  )
+  if (response.ok) await reload()
 }
 
 export async function configurePlugin(

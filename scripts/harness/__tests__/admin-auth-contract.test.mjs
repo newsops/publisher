@@ -4,6 +4,7 @@ import {
   assertSameOrigin,
   enforceRateLimit,
   hashPassword,
+  requireIdentity,
   sessionCookieHeader,
   verifyPassword,
 } from '../../../apps/admin/app/lib/auth.ts'
@@ -74,6 +75,44 @@ describe('admin authentication contract', () => {
       expect(() => enforceRateLimit(request, identity)).not.toThrow()
     expect(() => enforceRateLimit(request, identity)).toThrowError(
       /too many requests/i,
+    )
+  })
+
+  it('permits fixture identities only for test or isolated local development', async () => {
+    const request = new Request('http://admin.test/api/media', {
+      headers: {
+        'x-admin-dev-token': 'fixture-token',
+        'x-admin-dev-email': 'publisher@example.test',
+      },
+    })
+    await withEnvironment(
+      {
+        NODE_ENV: 'development',
+        ADMIN_DATA_DIR: '.data/test-fixture',
+        ADMIN_DEV_TOKEN: 'fixture-token',
+        ADMIN_PUBLISHERS: 'publisher@example.test',
+      },
+      async () => {
+        await expect(
+          requireIdentity(request, 'publisher'),
+        ).resolves.toMatchObject({
+          email: 'publisher@example.test',
+          roles: ['editor', 'publisher'],
+        })
+      },
+    )
+    await withEnvironment(
+      {
+        NODE_ENV: 'production',
+        ADMIN_DATA_DIR: '.data/test-fixture',
+        ADMIN_DEV_TOKEN: 'fixture-token',
+        DATABASE_URL: undefined,
+      },
+      async () => {
+        await expect(requireIdentity(request)).rejects.toMatchObject({
+          status: 401,
+        })
+      },
     )
   })
 })

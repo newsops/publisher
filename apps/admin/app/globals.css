@@ -198,7 +198,8 @@ textarea.body {
 .management-panel,
 .settings-panel,
 .moderation-panel,
-.plugin-panel {
+.plugin-panel,
+.media-panel {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -219,6 +220,63 @@ textarea.body {
   display: grid;
   gap: 16px;
   margin-top: 24px;
+}
+.media-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+}
+.media-upload {
+  display: inline-flex;
+  width: auto;
+  cursor: pointer;
+}
+.media-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.media-selection code {
+  overflow-wrap: anywhere;
+}
+.media-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.media-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.media-list li > div {
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+.media-list small {
+  color: var(--muted);
+}
+.media-variant {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.media-variant img {
+  width: 72px;
+  height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  object-fit: cover;
+}
+.selected-media {
+  outline: 2px solid var(--accent);
 }
 .plugin-summary {
   color: var(--muted);

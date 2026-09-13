@@ -76,3 +76,31 @@ export async function approveImage(
     variants.map((variant) => variant.metadata),
   )
 }
+
+export async function listMedia(
+  siteId: string,
+): Promise<readonly MediaMetadata[]> {
+  if (!process.env.DATABASE_URL)
+    throw new Error('DATABASE_URL is required for media metadata')
+  return new PostgresMediaRepository(process.env.DATABASE_URL).list(siteId)
+}
+
+export async function readApprovedMediaPreview(
+  id: string,
+  siteId: string,
+  variantSha256: string,
+): Promise<
+  { readonly body: Uint8Array; readonly mimeType: string } | undefined
+> {
+  const { store, repository } = dependencies()
+  const media = await repository.get(id, siteId)
+  if (!media || media.state !== 'approved') return undefined
+  const variant = media.variants.find(
+    (candidate) => candidate.sha256 === variantSha256,
+  )
+  if (!variant) return undefined
+  return {
+    body: await store.get(variant.objectKey),
+    mimeType: variant.mimeType,
+  }
+}

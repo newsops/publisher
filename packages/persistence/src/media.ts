@@ -263,6 +263,16 @@ export class PostgresMediaRepository {
     return this.listApprovedUsing(this.pool, siteId)
   }
 
+  async list(siteId: string): Promise<readonly MediaMetadata[]> {
+    const result = await this.pool.query<MediaRow>(
+      `SELECT * FROM publisher_admin.media
+       WHERE site_id = $1
+       ORDER BY updated_at DESC`,
+      [siteId],
+    )
+    return result.rows.map(mapMedia)
+  }
+
   async listApprovedUsing(
     database: PostgresQueryable,
     siteId: string,

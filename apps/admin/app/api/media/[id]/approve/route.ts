@@ -6,6 +6,7 @@ import {
   requireIdentity,
 } from '../../../../lib/auth'
 import { approveImage } from '../../../../lib/media-service'
+import { browserMediaView } from '../../../../lib/media-view'
 import {
   repositoryForRequest,
   requestedSiteId,
@@ -27,7 +28,7 @@ export async function POST(
       siteId: media.siteId,
       variants: media.variants.length,
     })
-    return Response.json({ media })
+    return Response.json({ media: browserMediaView(media) })
   } catch (error) {
     return authErrorResponse(error)
   }

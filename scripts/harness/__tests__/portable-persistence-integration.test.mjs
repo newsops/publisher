@@ -13,10 +13,16 @@ import {
   PostgresMediaRepository,
   applyMigrations,
   createLogicalBackup,
+  closePostgresPools,
   createPostgresPool,
   restoreLogicalBackup,
   validateImageUpload,
 } from '../../../packages/persistence/src/index.ts'
+import {
+  approveImage,
+  readApprovedMediaPreview,
+  uploadImage,
+} from '../../../apps/admin/app/lib/media-service.ts'
 import { PostgresContentRepository } from '../../../apps/admin/app/lib/postgres-content-repository.ts'
 import { PostgresArticleRepository } from '../../../apps/admin/app/lib/postgres-article-repository.ts'
 import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/postgres-publication.ts'
@@ -495,6 +501,75 @@ describe('INFRA-005 S3-compatible and image integration', () => {
       }),
     ).rejects.toThrow('size')
   })
+
+  it('keeps the human media workflow on the portable server-side storage contract', async () => {
+    const database = await postgresFixture()
+    const previous = {
+      databaseUrl: process.env.DATABASE_URL,
+      endpoint: process.env.OBJECT_STORAGE_ENDPOINT,
+      region: process.env.OBJECT_STORAGE_REGION,
+      bucket: process.env.OBJECT_STORAGE_BUCKET,
+      accessKey: process.env.OBJECT_STORAGE_ACCESS_KEY_ID,
+      secretKey: process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY,
+      forcePathStyle: process.env.OBJECT_STORAGE_FORCE_PATH_STYLE,
+    }
+    const png = Uint8Array.from(
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64',
+      ),
+    )
+    process.env.DATABASE_URL = database.url
+    process.env.OBJECT_STORAGE_ENDPOINT = endpoint
+    process.env.OBJECT_STORAGE_REGION = 'us-east-1'
+    process.env.OBJECT_STORAGE_BUCKET = 'publisher-fixture'
+    process.env.OBJECT_STORAGE_ACCESS_KEY_ID = 'S3RVER'
+    process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY = 'S3RVER'
+    process.env.OBJECT_STORAGE_FORCE_PATH_STYLE = 'true'
+    try {
+      await applyMigrations(database.url, 'admin', database.pool)
+      const pending = await uploadImage({
+        siteId: 'default',
+        fileName: 'pixel.png',
+        mimeType: 'image/png',
+        body: png,
+      })
+      expect(pending.state).toBe('pending')
+      await expect(
+        readApprovedMediaPreview(pending.id, 'default', 'a'.repeat(64)),
+      ).resolves.toBeUndefined()
+
+      const approved = await approveImage(pending.id, 'default')
+      expect(approved.state).toBe('approved')
+      expect(approved.variants).toHaveLength(2)
+      const first = approved.variants[0]
+      expect(first).toBeDefined()
+      const preview = await readApprovedMediaPreview(
+        pending.id,
+        'default',
+        first.sha256,
+      )
+      expect(preview).toMatchObject({ mimeType: first.mimeType })
+      expect(preview?.body.byteLength).toBeGreaterThan(0)
+    } finally {
+      await closePostgresPools()
+      for (const [key, value] of Object.entries(previous)) {
+        const name =
+          key === 'databaseUrl'
+            ? 'DATABASE_URL'
+            : key === 'accessKey'
+              ? 'OBJECT_STORAGE_ACCESS_KEY_ID'
+              : key === 'secretKey'
+                ? 'OBJECT_STORAGE_SECRET_ACCESS_KEY'
+                : key === 'forcePathStyle'
+                  ? 'OBJECT_STORAGE_FORCE_PATH_STYLE'
+                  : `OBJECT_STORAGE_${key.toUpperCase()}`
+        if (value === undefined) delete process.env[name]
+        else process.env[name] = value
+      }
+      await database.close()
+    }
+  }, 30_000)
 
   it('runs the publication worker and stores checksummed HTML before static activation', async () => {
     const deployment = await mkdtemp(path.join(os.tmpdir(), 'worker-output-'))

@@ -86,6 +86,27 @@ export interface AdminPlugin {
   updatedAt: string
 }
 
+export interface AdminMediaVariant {
+  publicPath: string
+  sha256: string
+  mimeType: string
+  byteSize: number
+  width: number
+  height: number
+}
+
+export interface AdminMedia {
+  id: string
+  siteId: string
+  sha256: string
+  mimeType: string
+  byteSize: number
+  width: number
+  height: number
+  state: 'pending' | 'approved' | 'rejected'
+  variants: AdminMediaVariant[]
+}
+
 export const emptySettings: AdminSettings = {
   name: 'Publication',
   shortName: 'Publication',

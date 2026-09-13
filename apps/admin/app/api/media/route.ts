@@ -5,7 +5,8 @@ import {
   enforceRateLimit,
   requireIdentity,
 } from '../../lib/auth'
-import { uploadImage } from '../../lib/media-service'
+import { listMedia, uploadImage } from '../../lib/media-service'
+import { browserMediaView } from '../../lib/media-view'
 import {
   repositoryForRequest,
   requestedSiteId,
@@ -13,9 +14,22 @@ import {
 
 const maximumBytes = 10 * 1024 * 1024
 
+export async function GET(request: Request): Promise<Response> {
+  try {
+    const identity = await requireIdentity(request, 'publisher')
+    enforceRateLimit(request, identity)
+    repositoryForRequest(request, identity)
+    return Response.json({
+      media: (await listMedia(requestedSiteId(request))).map(browserMediaView),
+    })
+  } catch (error) {
+    return authErrorResponse(error)
+  }
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
-    const identity = await requireIdentity(request)
+    const identity = await requireIdentity(request, 'publisher')
     enforceRateLimit(request, identity)
     assertSameOrigin(request)
     repositoryForRequest(request, identity)
@@ -55,7 +69,7 @@ export async function POST(request: Request): Promise<Response> {
       siteId: media.siteId,
       sha256: media.sha256,
     })
-    return Response.json({ media }, { status: 201 })
+    return Response.json({ media: browserMediaView(media) }, { status: 201 })
   } catch (error) {
     return authErrorResponse(error)
   }
