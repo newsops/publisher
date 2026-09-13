@@ -23,5 +23,7 @@
 ## Progress
 
 - 2026-09-13 — Corrected monorepo-relative native runtime tracing; focused
-  regression test and the admin production build pass locally. Linux runtime
-  validation remains pending the production deployment.
+  regression test and the admin production build pass locally. The first Linux
+  deployment still missed `libvips`; corrected the includes to the documented
+  direct dependency paths. Linux runtime validation remains pending the next
+  production deployment.

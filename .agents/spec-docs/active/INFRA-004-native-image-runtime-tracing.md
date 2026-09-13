@@ -40,8 +40,9 @@ project, so the native runtime payload is not reliably included.
 ### Decision
 
 Choose alternative 1. Keep the existing Node image-processing contract and
-trace `sharp` plus its Linux binary and `libvips` payload from the correct
-monorepo-relative paths. Add a regression assertion that makes a missing
+trace the admin application's direct `sharp` and Linux `@img` package payloads.
+The output trace root remains the monorepo root, while include patterns remain
+relative to the admin project. Add a regression assertion that makes a missing
 native payload observable before deployment. This is an implementation-level
 deployment correction, not a new provider or runtime boundary.
 
@@ -55,7 +56,7 @@ deployment correction, not a new provider or runtime boundary.
 
 ## Solution
 
-Make the tracing paths unambiguously relative to the admin project root and
+Make the tracing paths point to the admin project's direct dependencies and
 cover the `sharp`, Linux native binding, and `libvips` package payload used by
 the Node runtime. Preserve the public static site's database- and
 secret-independence. Verify the generated production artifact locally and the
