@@ -92,6 +92,15 @@ runtime, proxy, queue, cache layer, database product, bucket, or
 provider-specific application contract is added. DNS is the sole irreversible
 action and will be performed only after a narrow owner confirmation.
 
+The operating target is a free-plan or Hobby-scale budget while static public
+delivery absorbs enterprise-scale read traffic. Public page views must resolve
+to CDN-delivered immutable HTML/assets and never create database, admin-runtime,
+or private-object-store reads. PostgreSQL remains limited to authenticated
+administration, publication, audit, and comment write/moderation paths; dynamic
+projections degrade to an SEO-complete static baseline. This is a read-delivery
+capacity target, not a claim of unlimited writes, SLA, or provider-enforced
+zero spend.
+
 ### Architecture Review Checklist
 
 - [x] 영향 패키지/레이어/파일 목록 작성 완료

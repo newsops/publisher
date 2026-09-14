@@ -28,6 +28,13 @@ only after the complete multi-publication boundary is verified.
 
 ### 2026-09-14
 
+- Recorded the non-functional operating target: CDN-served static public reads
+  scale independently of PostgreSQL and remain suitable for a free/Hobby
+  budget; database work is restricted to authenticated management and comment
+  write/moderation paths.
+
+### 2026-09-14
+
 - Read-only inspection confirmed the current partial catalog and site-qualified
   persistence paths; no implementation began before GATE-APPROVAL.
 - AiTrendTimes.com resolves to Cloudflare nameservers, while no matching Pages
