@@ -401,14 +401,23 @@ describe('INFRA-005 PostgreSQL integration', () => {
       const createdAt = '2026-09-11T00:00:00.000Z'
       await store.createPending({
         id: 'a72f8263-a084-48d4-996c-f6785d6f9b6e',
+        siteId: 'default',
         slug: 'portable-postgres',
         authorName: 'Reader',
         body: 'Pending until reviewed.',
         createdAt,
       })
-      expect(await store.listApproved('portable-postgres')).toEqual([])
-      await store.setStatus('a72f8263-a084-48d4-996c-f6785d6f9b6e', 'approved')
-      expect(await store.listApproved('portable-postgres')).toHaveLength(1)
+      expect(await store.listApproved('default', 'portable-postgres')).toEqual(
+        [],
+      )
+      await store.setStatus(
+        'default',
+        'a72f8263-a084-48d4-996c-f6785d6f9b6e',
+        'approved',
+      )
+      expect(
+        await store.listApproved('default', 'portable-postgres'),
+      ).toHaveLength(1)
       expect(await limiter.consume('ip:fixture', 1, 60)).toBe(true)
       expect(await limiter.consume('ip:fixture', 1, 60)).toBe(false)
 

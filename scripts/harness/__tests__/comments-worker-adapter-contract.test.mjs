@@ -12,7 +12,10 @@ import {
 const publicOrigin = 'https://www.publication.test'
 
 function request(path, init = {}) {
-  return new Request(`https://comments.publication.test${path}`, init)
+  return new Request(
+    `https://comments.publication.test${path.replace('/v1/threads/', '/v1/sites/publication/threads/').replace('/v1/moderation/comments', '/v1/sites/publication/moderation/comments')}`,
+    init,
+  )
 }
 
 function parseJsonc(source) {
@@ -29,7 +32,7 @@ function workerEnvironment() {
     HUMAN_VERIFICATION_SECRET: 'verification-secret',
     HUMAN_VERIFICATION_URL: 'https://verification.test/siteverify',
     MAX_COMMENT_BODY_BYTES: '16384',
-    PUBLIC_ORIGIN: publicOrigin,
+    PUBLIC_ORIGINS: JSON.stringify({ publication: publicOrigin }),
     RATE_LIMIT_PER_IP: '5',
     RATE_LIMIT_PER_THREAD: '20',
     RATE_LIMIT_WINDOW_SECONDS: '900',
@@ -62,7 +65,7 @@ describe('INFRA-001 Cloudflare Worker adapter', () => {
       limiter: new MemoryRateLimiter(),
       verifier: { verify: async () => true },
       moderationToken: 'moderation-secret',
-      publicOrigin,
+      publicOrigins: { publication: publicOrigin },
     })(unsupported)
     expect(workerResponse.status).toBe(nodeResponse.status)
     expect(await workerResponse.json()).toEqual(await nodeResponse.json())

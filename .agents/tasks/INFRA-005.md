@@ -33,6 +33,12 @@ only after the complete multi-publication boundary is verified.
   budget; database work is restricted to authenticated management and comment
   write/moderation paths.
 
+### 2026-09-15
+
+- Began the final launch correction for comments: a site-qualified interactive
+  comment contract preserves static SEO baselines and keeps public article
+  delivery independent of PostgreSQL.
+
 ### 2026-09-14
 
 - Read-only inspection confirmed the current partial catalog and site-qualified

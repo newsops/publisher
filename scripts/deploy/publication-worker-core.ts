@@ -130,6 +130,24 @@ export async function publicationInputs(
   store: ObjectStore,
 ): Promise<PublicationInputs> {
   const articles = articleInputs(snapshot)
+  const commentOrigin = process.env.COMMENTS_PUBLIC_ORIGIN?.trim()
+  const commentSubmissionEnabled =
+    process.env.COMMENTS_SUBMISSION_ENABLED === 'true'
+  const humanVerificationSiteKey =
+    process.env.HUMAN_VERIFICATION_SITE_KEY?.trim()
+  const humanVerificationScriptUrl =
+    process.env.HUMAN_VERIFICATION_SCRIPT_URL?.trim()
+  const humanVerificationGlobal = process.env.HUMAN_VERIFICATION_GLOBAL?.trim()
+  if (
+    commentSubmissionEnabled &&
+    (!commentOrigin ||
+      !humanVerificationSiteKey ||
+      !humanVerificationScriptUrl ||
+      !humanVerificationGlobal)
+  )
+    throw new Error(
+      'COMMENTS_SUBMISSION_ENABLED requires COMMENTS_PUBLIC_ORIGIN and human-verification public configuration',
+    )
   return {
     siteId: snapshot.siteId,
     origin: snapshot.settings.canonicalOrigin,
@@ -145,6 +163,26 @@ export async function publicationInputs(
     },
     theme: await selectedTheme(snapshot),
     media: await materializedMedia(snapshot, store),
+    ...(commentOrigin
+      ? {
+          commentRuntime: {
+            origin: commentOrigin.replace(/\/$/, ''),
+            siteId: snapshot.siteId,
+            submissionEnabled: commentSubmissionEnabled,
+            ...(humanVerificationSiteKey &&
+            humanVerificationScriptUrl &&
+            humanVerificationGlobal
+              ? {
+                  humanVerification: {
+                    siteKey: humanVerificationSiteKey,
+                    scriptUrl: humanVerificationScriptUrl,
+                    globalName: humanVerificationGlobal,
+                  },
+                }
+              : {}),
+          },
+        }
+      : {}),
   }
 }
 

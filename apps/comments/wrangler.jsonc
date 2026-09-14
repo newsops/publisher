@@ -5,7 +5,7 @@
   "compatibility_date": "2026-09-12",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "PUBLIC_ORIGIN": "https://www.example.invalid",
+    "PUBLIC_ORIGINS": "{}",
     "HUMAN_VERIFICATION_URL": "",
     "MAX_COMMENT_BODY_BYTES": "16384",
     "RATE_LIMIT_WINDOW_SECONDS": "900",

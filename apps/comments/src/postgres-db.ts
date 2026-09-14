@@ -12,6 +12,7 @@ import type {
 
 interface CommentRow {
   readonly id: string
+  readonly site_id: string
   readonly slug: string
   readonly author_name: string
   readonly body: string
@@ -29,6 +30,7 @@ function iso(value: Date | string): string {
 function mapComment(row: CommentRow): CommentRecord {
   return {
     id: row.id,
+    siteId: row.site_id,
     slug: row.slug,
     authorName: row.author_name,
     body: row.body,
@@ -44,13 +46,16 @@ export class PostgresCommentStore implements CommentStore {
     private readonly pool: PostgresPool = postgresPool(connectionString),
   ) {}
 
-  async listApproved(slug: string): Promise<readonly CommentRecord[]> {
+  async listApproved(
+    siteId: string,
+    slug: string,
+  ): Promise<readonly CommentRecord[]> {
     const result = await this.pool.query<CommentRow>(
-      `SELECT id::text, slug, author_name, body, status, created_at, updated_at
+      `SELECT id::text, site_id, slug, author_name, body, status, created_at, updated_at
        FROM publisher_comments.comments
-       WHERE slug = $1 AND status = 'approved'
+       WHERE site_id = $1 AND slug = $2 AND status = 'approved'
        ORDER BY created_at ASC`,
-      [slug],
+      [siteId, slug],
     )
     return result.rows.map(mapComment)
   }
@@ -58,10 +63,11 @@ export class PostgresCommentStore implements CommentStore {
   async createPending(comment: NewComment): Promise<void> {
     await this.pool.query(
       `INSERT INTO publisher_comments.comments
-       (id, slug, author_name, body, status, created_at, updated_at)
-       VALUES ($1::uuid, $2, $3, $4, 'pending', $5, $5)`,
+       (id, site_id, slug, author_name, body, status, created_at, updated_at)
+       VALUES ($1::uuid, $2, $3, $4, $5, 'pending', $6, $6)`,
       [
         comment.id,
+        comment.siteId,
         comment.slug,
         comment.authorName,
         comment.body,
@@ -71,32 +77,35 @@ export class PostgresCommentStore implements CommentStore {
   }
 
   async listForModeration(
+    siteId: string,
     status?: CommentStatus,
   ): Promise<readonly CommentRecord[]> {
     const result = status
       ? await this.pool.query<CommentRow>(
-          `SELECT id::text, slug, author_name, body, status, created_at, updated_at
-           FROM publisher_comments.comments WHERE status = $1
+          `SELECT id::text, site_id, slug, author_name, body, status, created_at, updated_at
+           FROM publisher_comments.comments WHERE site_id = $1 AND status = $2
            ORDER BY created_at ASC LIMIT 100`,
-          [status],
+          [siteId, status],
         )
       : await this.pool.query<CommentRow>(
-          `SELECT id::text, slug, author_name, body, status, created_at, updated_at
-           FROM publisher_comments.comments ORDER BY created_at ASC LIMIT 100`,
+          `SELECT id::text, site_id, slug, author_name, body, status, created_at, updated_at
+           FROM publisher_comments.comments WHERE site_id = $1 ORDER BY created_at ASC LIMIT 100`,
+          [siteId],
         )
     return result.rows.map(mapComment)
   }
 
   async setStatus(
+    siteId: string,
     id: string,
     status: Exclude<CommentStatus, 'pending'>,
   ): Promise<CommentRecord | undefined> {
     const result = await this.pool.query<CommentRow>(
       `UPDATE publisher_comments.comments
-       SET status = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1::uuid
-       RETURNING id::text, slug, author_name, body, status, created_at, updated_at`,
-      [id, status],
+       SET status = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1::uuid AND site_id = $2
+       RETURNING id::text, site_id, slug, author_name, body, status, created_at, updated_at`,
+      [id, siteId, status],
     )
     return result.rows[0] ? mapComment(result.rows[0]) : undefined
   }

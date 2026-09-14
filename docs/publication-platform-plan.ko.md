@@ -335,7 +335,11 @@ PostgreSQL, admin, 댓글 API 또는 private object store가 없어도 읽고 �
 - 인기글은 ranking source, 기간, 생성 시각, 개인정보·보존 정책이 검증된 경우에만
   `/popular/`와 versioned JSON으로 만든다. 근거가 없으면 `인기글`이라 부르지 않고
   기존 편집자 추천을 유지한다.
-- 댓글은 격리된 comment service에서 지연 로드한다. 선택적으로 승인·정제된 댓글만
+- 댓글은 격리된 comment service에서 지연 로드한다. 모든 comment API와 저장 레코드는
+  `siteId + article slug`로 한정하고, 브라우저 origin은 siteId별 정확한 canonical origin
+  allowlist로 검증한다. 공개 release에는 SEO 가능한 승인 댓글 baseline을 남기되, 새 댓글
+  읽기·제출은 해당 service만 호출한다. 따라서 공개 HTML/CDN 경로는 DB 연결을 만들지
+  않으며 사이트 간 동일 slug·moderation·cache key가 섞일 수 없다. 선택적으로 승인·정제된 댓글만
   기사별 checksum-addressed projection으로 발행할 수 있다. 고정된 기사별 URL은
   짧게 재검증하는 pointer일 뿐이며 불변 projection을 가리킨다. 변경 시 pointer와
   그 projection 또는 명시적으로 static embedding한 해당 기사 한 개만 무효화한다.

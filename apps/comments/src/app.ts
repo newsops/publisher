@@ -27,7 +27,7 @@ export interface CommentHandlerDependencies {
   readonly limiter: RateLimiter
   readonly verifier: HumanVerifier
   readonly cache?: CommentCache
-  readonly publicOrigin?: string
+  readonly publicOrigins?: Readonly<Record<string, string>>
   readonly bodyLimit?: number
   readonly rateLimitWindowSeconds?: number
   readonly rateLimitPerIp?: number
@@ -69,31 +69,42 @@ function error(message: string, status: number): Response {
   return json({ error: message }, status)
 }
 
-function threadSlug(request: Request): string | undefined {
+interface SiteThread {
+  readonly siteId: string
+  readonly slug: string
+}
+
+function siteThread(request: Request): SiteThread | undefined {
   const segments = new URL(request.url).pathname.split('/').filter(Boolean)
   if (
-    segments.length !== 3 ||
+    segments.length !== 5 ||
     segments[0] !== 'v1' ||
-    segments[1] !== 'threads'
+    segments[1] !== 'sites' ||
+    segments[3] !== 'threads'
   )
     return undefined
-  const slug = decodeURIComponent(segments[2])
-  return SLUG_PATTERN.test(slug) ? slug : undefined
+  const siteId = decodeURIComponent(segments[2])
+  const slug = decodeURIComponent(segments[4])
+  return /^[a-z0-9][a-z0-9-]{0,62}$/.test(siteId) && SLUG_PATTERN.test(slug)
+    ? { siteId, slug }
+    : undefined
 }
 
 function moderationPath(
   request: Request,
-): { id?: string; list: boolean } | undefined {
+): { siteId: string; id?: string; list: boolean } | undefined {
   const segments = new URL(request.url).pathname.split('/').filter(Boolean)
   if (
     segments[0] !== 'v1' ||
-    segments[1] !== 'moderation' ||
-    segments[2] !== 'comments'
+    segments[1] !== 'sites' ||
+    !/^[a-z0-9][a-z0-9-]{0,62}$/.test(segments[2]) ||
+    segments[3] !== 'moderation' ||
+    segments[4] !== 'comments'
   )
     return undefined
-  if (segments.length === 3) return { list: true }
-  if (segments.length === 4 && /^[a-zA-Z0-9-]{1,100}$/.test(segments[3]))
-    return { id: segments[3], list: false }
+  if (segments.length === 5) return { siteId: segments[2], list: true }
+  if (segments.length === 6 && /^[a-zA-Z0-9-]{1,100}$/.test(segments[5]))
+    return { siteId: segments[2], id: segments[5], list: false }
   return undefined
 }
 
@@ -102,9 +113,16 @@ function cacheKey(request: Request): Request {
   return new Request(`${url.origin}${url.pathname}`, { method: 'GET' })
 }
 
-function threadCacheKey(request: Request, slug: string): Request {
+function threadCacheKey(
+  request: Request,
+  siteId: string,
+  slug: string,
+): Request {
   return new Request(
-    new URL(`/v1/threads/${encodeURIComponent(slug)}`, request.url),
+    new URL(
+      `/v1/sites/${encodeURIComponent(siteId)}/threads/${encodeURIComponent(slug)}`,
+      request.url,
+    ),
     { method: 'GET' },
   )
 }
@@ -144,27 +162,34 @@ async function readJson(
 
 async function handleRead(
   request: Request,
-  slug: string,
+  thread: SiteThread,
   dependencies: CommentHandlerDependencies,
 ): Promise<Response> {
   const key = cacheKey(request)
   const cached = await dependencies.cache?.match(key)
   if (cached) return cached
-  const comments = await dependencies.store.listApproved(slug)
-  const response = json({ slug, comments }, 200, READ_CACHE_CONTROL)
+  const comments = await dependencies.store.listApproved(
+    thread.siteId,
+    thread.slug,
+  )
+  const response = json(
+    { siteId: thread.siteId, slug: thread.slug, comments },
+    200,
+    READ_CACHE_CONTROL,
+  )
   if (dependencies.cache) await dependencies.cache.put(key, response.clone())
   return response
 }
 
 async function commentRateAllowed(
   request: Request,
-  slug: string,
+  thread: SiteThread,
   dependencies: CommentHandlerDependencies,
 ): Promise<boolean> {
   const windowSeconds = dependencies.rateLimitWindowSeconds ?? 900
   const ip = requestIp(request)
   const threadAllowed = dependencies.limiter.consume(
-    `thread:${slug}`,
+    `thread:${thread.siteId}:${thread.slug}`,
     dependencies.rateLimitPerThread ?? 20,
     windowSeconds,
   )
@@ -183,13 +208,11 @@ async function commentRateAllowed(
 
 async function handleWrite(
   request: Request,
-  slug: string,
+  thread: SiteThread,
   dependencies: CommentHandlerDependencies,
 ): Promise<Response> {
-  if (
-    dependencies.publicOrigin &&
-    request.headers.get('origin') !== dependencies.publicOrigin
-  )
+  const allowedOrigin = dependencies.publicOrigins?.[thread.siteId]
+  if (allowedOrigin && request.headers.get('origin') !== allowedOrigin)
     return error('Comment origin is not allowed', 403)
   const body = await readJson(
     request,
@@ -212,12 +235,13 @@ async function handleWrite(
   )
   if (!authorName || !commentBody)
     return error('Author name and comment body are required', 400)
-  if (!(await commentRateAllowed(request, slug, dependencies)))
+  if (!(await commentRateAllowed(request, thread, dependencies)))
     return error('Comment rate limit exceeded', 429)
   const createdAt = new Date().toISOString()
   await dependencies.store.createPending({
     id: crypto.randomUUID(),
-    slug,
+    siteId: thread.siteId,
+    slug: thread.slug,
     authorName,
     body: commentBody,
     createdAt,
@@ -227,7 +251,7 @@ async function handleWrite(
 
 async function handleModeration(
   request: Request,
-  route: { id?: string; list: boolean },
+  route: { siteId: string; id?: string; list: boolean },
   dependencies: CommentHandlerDependencies,
 ): Promise<Response> {
   if (!constantTimeEqual(authToken(request), dependencies.moderationToken))
@@ -241,7 +265,10 @@ async function handleModeration(
         ? statusValue
         : undefined
     return json({
-      comments: await dependencies.store.listForModeration(status),
+      comments: await dependencies.store.listForModeration(
+        route.siteId,
+        status,
+      ),
     })
   }
   if (route.id && request.method === 'PATCH') {
@@ -249,9 +276,15 @@ async function handleModeration(
     const status = body?.status
     if (status !== 'approved' && status !== 'rejected')
       return error('Moderation status must be approved or rejected', 400)
-    const comment = await dependencies.store.setStatus(route.id, status)
+    const comment = await dependencies.store.setStatus(
+      route.siteId,
+      route.id,
+      status,
+    )
     if (comment && dependencies.cache?.delete)
-      await dependencies.cache.delete(threadCacheKey(request, comment.slug))
+      await dependencies.cache.delete(
+        threadCacheKey(request, comment.siteId, comment.slug),
+      )
     return comment ? json({ comment }) : error('Comment not found', 404)
   }
   return error('Method not allowed', 405)
@@ -268,16 +301,21 @@ export function createCommentHandler(
       if (moderation)
         response = await handleModeration(request, moderation, dependencies)
       else {
-        const slug = threadSlug(request)
-        if (!slug) response = error('Not found', 404)
+        const thread = siteThread(request)
+        if (!thread) response = error('Not found', 404)
         else if (request.method === 'GET')
-          response = await handleRead(request, slug, dependencies)
+          response = await handleRead(request, thread, dependencies)
         else if (request.method === 'POST')
-          response = await handleWrite(request, slug, dependencies)
+          response = await handleWrite(request, thread, dependencies)
         else response = error('Method not allowed', 405)
       }
     }
-    return withCors(response, dependencies.publicOrigin)
+    const thread = siteThread(request)
+    const moderation = moderationPath(request)
+    return withCors(
+      response,
+      dependencies.publicOrigins?.[thread?.siteId ?? moderation?.siteId ?? ''],
+    )
   }
 }
 
@@ -297,12 +335,33 @@ export function handlerDependencies(
       env.HUMAN_VERIFICATION_SECRET,
     ),
     cache,
-    publicOrigin: env.PUBLIC_ORIGIN,
+    publicOrigins: parsePublicOrigins(env.PUBLIC_ORIGINS),
     bodyLimit: Number(env.MAX_COMMENT_BODY_BYTES) || DEFAULT_BODY_LIMIT,
     rateLimitWindowSeconds: Number(env.RATE_LIMIT_WINDOW_SECONDS) || 900,
     rateLimitPerIp: Number(env.RATE_LIMIT_PER_IP) || 5,
     rateLimitPerThread: Number(env.RATE_LIMIT_PER_THREAD) || 20,
     moderationToken: env.COMMENTS_MODERATION_TOKEN,
+  }
+}
+
+function parsePublicOrigins(
+  value: string | undefined,
+): Readonly<Record<string, string>> {
+  if (!value) return {}
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+      return {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([siteId, origin]) =>
+          /^[a-z0-9][a-z0-9-]{0,62}$/.test(siteId) &&
+          typeof origin === 'string' &&
+          /^https:\/\/[^/]+$/.test(origin),
+      ),
+    )
+  } catch {
+    return {}
   }
 }
 

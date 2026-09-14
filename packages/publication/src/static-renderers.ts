@@ -197,14 +197,30 @@ function renderCommentMarkup(
   comments: readonly ReturnType<typeof sanitizeCommentProjection>[number][],
 ): string {
   if (!comments.length) {
-    return '<p class="comments-empty">Be the first to join the conversation.</p>'
+    return '<p class="comments-empty" data-comment-status>Be the first to join the conversation.</p><ol class="comment-list" data-comment-list></ol>'
   }
-  return `<ol class="comment-list">${comments
+  return `<p data-comment-status>${comments.length} approved comment${comments.length === 1 ? '' : 's'}</p><ol class="comment-list" data-comment-list>${comments
     .map(
       (comment) =>
         `<li><strong>${escapeHtml(comment.authorName)}</strong><p>${escapeHtml(comment.body)}</p></li>`,
     )
     .join('')}</ol>`
+}
+
+function renderCommentSection(
+  input: PublicationInputs,
+  article: ArticleDocument,
+  comments: readonly ReturnType<typeof sanitizeCommentProjection>[number][],
+): string {
+  const runtime = input.commentRuntime
+  const attributes = runtime
+    ? ` data-comment-origin="${escapeHtml(runtime.origin)}" data-comment-site="${escapeHtml(runtime.siteId)}" data-comment-submission="${runtime.submissionEnabled ? 'enabled' : 'disabled'}"`
+    : ''
+  const form =
+    runtime?.submissionEnabled && runtime.humanVerification
+      ? `<form class="comment-form" data-comment-form><label>Name<input name="authorName" maxlength="80" required></label><label>Comment<textarea name="body" maxlength="2000" required></textarea></label><input type="hidden" name="verificationToken"><div data-human-verification-widget data-human-verification-site-key="${escapeHtml(runtime.humanVerification.siteKey)}" data-human-verification-script-url="${escapeHtml(runtime.humanVerification.scriptUrl)}" data-human-verification-global="${escapeHtml(runtime.humanVerification.globalName)}"></div><p class="comment-verification-note">Complete the configured verification challenge before submitting.</p><p data-human-verification-status aria-live="polite"></p><button type="submit">Submit for moderation</button><p data-comment-submit-status aria-live="polite"></p></form>`
+      : ''
+  return `<section class="comments" data-comments="${escapeHtml(article.slug)}"${attributes}><h2>Comments</h2>${renderCommentMarkup(comments)}${form}</section>`
 }
 
 export function renderArticleHtml(
@@ -234,7 +250,10 @@ export function renderArticleHtml(
   const heroImage = article.imageUrl
     ? `<figure class="article-figure"><img src="${escapeHtml(article.imageUrl)}" alt="${escapeHtml(article.imageAlt ?? '')}" fetchpriority="high" decoding="async"></figure>`
     : ''
-  return `<!doctype html><html lang="${escapeHtml(input.language)}"><head>${renderHead(input, article.seoTitle, canonical, baselinePath, article.description, article)}<script src="/site-runtime/comment-bootstrap.v1.js" defer></script><script type="application/ld+json">${jsonLd}</script></head><body><div class="site-shell" id="top">${renderSiteHeader(input, article)}<main class="container post-body"><div class="article-head"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></nav><a class="category" href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a><h1>${escapeHtml(article.title)}</h1><div class="byline"><span>By <a href="${escapeHtml(article.authorPath)}">${escapeHtml(article.authorName)}</a></span><span aria-hidden="true">·</span><span>Published <time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(longDate(article.publishedAt))}</time></span><span class="updated-time">Updated <time data-updated datetime="${escapeHtml(article.updatedAt)}">${escapeHtml(longDate(article.updatedAt))}</time></span></div></div>${heroImage}<article class="prose">${article.bodyHtml}</article><div class="article-tags"><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></div><aside class="article-related" data-runtime-projection="recent"><h2>Recent stories</h2><p><a href="/recent/">Read recent stories</a></p></aside><section class="comments" data-comments="${escapeHtml(article.slug)}"><h2>Comments</h2>${renderCommentMarkup(comments)}</section></main>${renderSiteFooter(input, article)}</div></body></html>`
+  const commentScripts = input.commentRuntime
+    ? `<script src="/site-runtime/comments.v1.js" defer></script>${input.commentRuntime.submissionEnabled && input.commentRuntime.humanVerification ? '<script src="/site-runtime/human-verification.v1.js" defer></script>' : ''}`
+    : '<script src="/site-runtime/comment-bootstrap.v1.js" defer></script>'
+  return `<!doctype html><html lang="${escapeHtml(input.language)}"><head>${renderHead(input, article.seoTitle, canonical, baselinePath, article.description, article)}${commentScripts}<script type="application/ld+json">${jsonLd}</script></head><body><div class="site-shell" id="top">${renderSiteHeader(input, article)}<main class="container post-body"><div class="article-head"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></nav><a class="category" href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a><h1>${escapeHtml(article.title)}</h1><div class="byline"><span>By <a href="${escapeHtml(article.authorPath)}">${escapeHtml(article.authorName)}</a></span><span aria-hidden="true">·</span><span>Published <time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(longDate(article.publishedAt))}</time></span><span class="updated-time">Updated <time data-updated datetime="${escapeHtml(article.updatedAt)}">${escapeHtml(longDate(article.updatedAt))}</time></span></div></div>${heroImage}<article class="prose">${article.bodyHtml}</article><div class="article-tags"><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></div><aside class="article-related" data-runtime-projection="recent"><h2>Recent stories</h2><p><a href="/recent/">Read recent stories</a></p></aside>${renderCommentSection(input, article, comments)}</main>${renderSiteFooter(input, article)}</div></body></html>`
 }
 
 export function renderProjectionPage(

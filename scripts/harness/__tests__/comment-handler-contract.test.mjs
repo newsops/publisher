@@ -11,10 +11,17 @@ import { createHumanVerifier } from '../../../apps/comments/src/human-verificati
 import { requestIp } from '../../../apps/comments/src/security.ts'
 
 function request(path, init = {}) {
-  return new Request(`https://comments.test${path}`, init)
+  return new Request(
+    `https://comments.test${path.replace('/v1/threads/', '/v1/sites/publication/threads/').replace('/v1/moderation/comments', '/v1/sites/publication/moderation/comments')}`,
+    init,
+  )
 }
 
 function dependencies(overrides = {}) {
+  if (overrides.publicOrigin) {
+    overrides.publicOrigins = { publication: overrides.publicOrigin }
+    delete overrides.publicOrigin
+  }
   return {
     store: new MemoryCommentStore(),
     limiter: new MemoryRateLimiter(),
@@ -27,6 +34,7 @@ function dependencies(overrides = {}) {
 function comment(id, status = 'pending') {
   return {
     id,
+    siteId: 'publication',
     slug: 'article-slug',
     authorName: 'Reader',
     body: 'A useful comment.',
@@ -59,7 +67,7 @@ describe('COMMENT-001 handler behavior', () => {
   it('returns approved comments and uses a path-only cache key', async () => {
     const store = new MemoryCommentStore()
     await store.createPending(comment('approved-id'))
-    await store.setStatus('approved-id', 'approved')
+    await store.setStatus('publication', 'approved-id', 'approved')
     await store.createPending({ ...comment('pending-id'), body: 'Hidden.' })
     const keys = []
     const values = new Map()
@@ -85,8 +93,8 @@ describe('COMMENT-001 handler behavior', () => {
       comments: [{ id: 'approved-id' }],
     })
     expect(keys).toEqual([
-      'https://comments.test/v1/threads/article-slug',
-      'https://comments.test/v1/threads/article-slug',
+      'https://comments.test/v1/sites/publication/threads/article-slug',
+      'https://comments.test/v1/sites/publication/threads/article-slug',
     ])
   })
 
@@ -342,7 +350,7 @@ describe('COMMENT-001 handler behavior', () => {
       comment: { id: 'moderate-me', status: 'approved' },
     })
     expect(deletedCacheKeys).toEqual([
-      'https://comments.test/v1/threads/article-slug',
+      'https://comments.test/v1/sites/publication/threads/article-slug',
     ])
   })
 })

@@ -68,6 +68,17 @@ export interface PublicationInputs {
     >
   >
   readonly embedApprovedComments?: boolean
+  /** Public-only comment runtime configuration. No credential belongs here. */
+  readonly commentRuntime?: {
+    readonly origin: string
+    readonly siteId: string
+    readonly submissionEnabled: boolean
+    readonly humanVerification?: {
+      readonly siteKey: string
+      readonly scriptUrl: string
+      readonly globalName: string
+    }
+  }
 }
 
 export interface PublicationGraph {

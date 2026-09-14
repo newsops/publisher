@@ -2,6 +2,7 @@ export type CommentStatus = 'pending' | 'approved' | 'rejected'
 
 export interface CommentRecord {
   readonly id: string
+  readonly siteId: string
   readonly slug: string
   readonly authorName: string
   readonly body: string
@@ -12,6 +13,7 @@ export interface CommentRecord {
 
 export interface NewComment {
   readonly id: string
+  readonly siteId: string
   readonly slug: string
   readonly authorName: string
   readonly body: string
@@ -19,10 +21,14 @@ export interface NewComment {
 }
 
 export interface CommentStore {
-  listApproved(slug: string): Promise<readonly CommentRecord[]>
+  listApproved(siteId: string, slug: string): Promise<readonly CommentRecord[]>
   createPending(comment: NewComment): Promise<void>
-  listForModeration(status?: CommentStatus): Promise<readonly CommentRecord[]>
+  listForModeration(
+    siteId: string,
+    status?: CommentStatus,
+  ): Promise<readonly CommentRecord[]>
   setStatus(
+    siteId: string,
     id: string,
     status: Exclude<CommentStatus, 'pending'>,
   ): Promise<CommentRecord | undefined>
@@ -41,7 +47,8 @@ export interface CommentEnv {
   readonly HUMAN_VERIFICATION_URL?: string
   readonly HUMAN_VERIFICATION_SECRET?: string
   readonly COMMENTS_MODERATION_TOKEN?: string
-  readonly PUBLIC_ORIGIN?: string
+  /** JSON object mapping a site ID to its exact canonical browser origin. */
+  readonly PUBLIC_ORIGINS?: string
   readonly MAX_COMMENT_BODY_BYTES?: string
   readonly RATE_LIMIT_WINDOW_SECONDS?: string
   readonly RATE_LIMIT_PER_IP?: string

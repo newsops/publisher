@@ -9,10 +9,16 @@ import type {
 export class MemoryCommentStore implements CommentStore {
   private readonly comments = new Map<string, CommentRecord>()
 
-  async listApproved(slug: string): Promise<readonly CommentRecord[]> {
+  async listApproved(
+    siteId: string,
+    slug: string,
+  ): Promise<readonly CommentRecord[]> {
     return [...this.comments.values()]
       .filter(
-        (comment) => comment.slug === slug && comment.status === 'approved',
+        (comment) =>
+          comment.siteId === siteId &&
+          comment.slug === slug &&
+          comment.status === 'approved',
       )
       .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
   }
@@ -27,19 +33,30 @@ export class MemoryCommentStore implements CommentStore {
   }
 
   async listForModeration(
+    siteId = 'publication',
     status?: CommentStatus,
   ): Promise<readonly CommentRecord[]> {
+    if (
+      siteId === 'pending' ||
+      siteId === 'approved' ||
+      siteId === 'rejected'
+    ) {
+      status = siteId
+      siteId = 'publication'
+    }
     return [...this.comments.values()].filter(
-      (comment) => !status || comment.status === status,
+      (comment) =>
+        comment.siteId === siteId && (!status || comment.status === status),
     )
   }
 
   async setStatus(
+    siteId: string,
     id: string,
     status: Exclude<CommentStatus, 'pending'>,
   ): Promise<CommentRecord | undefined> {
     const current = this.comments.get(id)
-    if (!current) return undefined
+    if (!current || current.siteId !== siteId) return undefined
     const updated = { ...current, status, updatedAt: new Date().toISOString() }
     this.comments.set(id, updated)
     return updated

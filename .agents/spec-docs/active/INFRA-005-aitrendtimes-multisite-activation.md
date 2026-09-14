@@ -101,6 +101,15 @@ projections degrade to an SEO-complete static baseline. This is a read-delivery
 capacity target, not a claim of unlimited writes, SLA, or provider-enforced
 zero spend.
 
+Comment threads use a mandatory `(siteId, slug)` identity. The static release
+may expose a public comment-service origin and Turnstile site key, never a
+credential; browser reads and submissions are delayed until the comment section
+is used. Each site has an exact canonical-origin allowlist entry. The static
+approved-comment baseline remains indexable and is retained if the interactive
+service is unavailable. This keeps ordinary public HTML delivery DB-free while
+preventing cross-site same-slug reads, cache invalidations, moderation, or
+submissions.
+
 ### Architecture Review Checklist
 
 - [x] 영향 패키지/레이어/파일 목록 작성 완료
