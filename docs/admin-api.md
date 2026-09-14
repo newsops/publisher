@@ -29,15 +29,15 @@ publish.
 
 ## Multiple sites
 
-The v1 routes always address the configured `default` site. Multi-site
-automation uses `/api/v2/sites/{siteId}/...` and a
-key whose `sites` allow-list contains that exact site ID. A missing allow-list
-never means access to every site.
+Every automation endpoint is site-qualified at
+`/api/v2/sites/{siteId}/...`. The PostgreSQL site registry is the sole
+runtime catalog for publication identity, lifecycle state, and canonical
+origin. An automation key must include the exact `siteId` in its `sites`
+allow-list; a missing allow-list never means access to every site.
 
-Set `ADMIN_SITES_JSON` to describe additional sites. Each entry contains
-`siteId`, `name`, `canonicalOrigin`, and `themeId`; an optional
-`adminEmails` array limits the browser admin selector to those application-owned
-administrator accounts. An owner account always has access.
+Create a site through `POST /api/v2/sites`, then initialize its empty
+editorial state through `POST /api/v2/sites/{siteId}/bootstrap`. No
+environment-variable catalog or default-site compatibility route exists.
 
 ## Local API smoke test
 
@@ -59,10 +59,10 @@ export PUBLISHER_API_URL=http://localhost:3001
 export PUBLISHER_API_TOKEN='the-one-time-token-from-the-generator'
 curl --fail-with-body \
   -H "Authorization: Bearer $PUBLISHER_API_TOKEN" \
-  "$PUBLISHER_API_URL/api/v1/posts?limit=20&offset=0"
+  "$PUBLISHER_API_URL/api/v2/sites/{siteId}/posts?limit=20&offset=0"
 ```
 
-The browser-oriented `/api/*` routes and the machine-oriented `/api/v1/*`
+The browser-oriented `/api/*` routes and the machine-oriented `/api/v2/sites/{siteId}/*`
 routes are separate contracts. The machine API does not use browser cookies or
 browser CORS.
 
@@ -83,32 +83,32 @@ equivalent operations.
 
 ## Endpoint and role summary
 
-| Method   | Path                    | Minimum role | Purpose                                         |
-| -------- | ----------------------- | ------------ | ----------------------------------------------- |
-| `GET`    | `/api/v1/posts`         | editor       | Paginated content list                          |
-| `POST`   | `/api/v1/posts`         | editor       | Create a validated draft                        |
-| `GET`    | `/api/v1/posts/:id`     | editor       | Read one record and revision                    |
-| `PATCH`  | `/api/v1/posts/:id`     | editor       | Revision-safe update using `If-Match`           |
-| `DELETE` | `/api/v1/posts/:id`     | editor       | Revision-safe deletion                          |
-| `GET`    | `/api/v1/tags`          | editor       | List managed tags                               |
-| `POST`   | `/api/v1/tags`          | editor       | Create a managed tag                            |
-| `GET`    | `/api/v1/tags/:slug`    | editor       | Read a managed tag                              |
-| `PATCH`  | `/api/v1/tags/:slug`    | editor       | Rename a tag with `If-Match`                    |
-| `DELETE` | `/api/v1/tags/:slug`    | editor       | Archive a tag with `If-Match`                   |
-| `GET`    | `/api/v1/settings`      | editor       | Read publication identity and canonical origin  |
-| `PATCH`  | `/api/v1/settings`      | editor       | Update publication settings with `If-Match`     |
-| `GET`    | `/api/v1/authors`       | editor       | List managed author profiles                    |
-| `POST`   | `/api/v1/authors`       | editor       | Create an author with a stable slug             |
-| `GET`    | `/api/v1/authors/:slug` | editor       | Read one author and revision                    |
-| `PATCH`  | `/api/v1/authors/:slug` | editor       | Edit an author without changing its slug        |
-| `DELETE` | `/api/v1/authors/:slug` | editor       | Archive an author with `If-Match`               |
-| `POST`   | `/api/v1/publish`       | publisher    | Create a snapshot and enqueue an idempotent job |
+| Method   | Path                                   | Minimum role | Purpose                                         |
+| -------- | -------------------------------------- | ------------ | ----------------------------------------------- |
+| `GET`    | `/api/v2/sites/{siteId}/posts`         | editor       | Paginated content list                          |
+| `POST`   | `/api/v2/sites/{siteId}/posts`         | editor       | Create a validated draft                        |
+| `GET`    | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Read one record and revision                    |
+| `PATCH`  | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Revision-safe update using `If-Match`           |
+| `DELETE` | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Revision-safe deletion                          |
+| `GET`    | `/api/v2/sites/{siteId}/tags`          | editor       | List managed tags                               |
+| `POST`   | `/api/v2/sites/{siteId}/tags`          | editor       | Create a managed tag                            |
+| `GET`    | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Read a managed tag                              |
+| `PATCH`  | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Rename a tag with `If-Match`                    |
+| `DELETE` | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Archive a tag with `If-Match`                   |
+| `GET`    | `/api/v2/sites/{siteId}/settings`      | editor       | Read publication identity and canonical origin  |
+| `PATCH`  | `/api/v2/sites/{siteId}/settings`      | editor       | Update publication settings with `If-Match`     |
+| `GET`    | `/api/v2/sites/{siteId}/authors`       | editor       | List managed author profiles                    |
+| `POST`   | `/api/v2/sites/{siteId}/authors`       | editor       | Create an author with a stable slug             |
+| `GET`    | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Read one author and revision                    |
+| `PATCH`  | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Edit an author without changing its slug        |
+| `DELETE` | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Archive an author with `If-Match`               |
+| `POST`   | `/api/v2/sites/{siteId}/publish`       | publisher    | Create a snapshot and enqueue an idempotent job |
 
 Article locale operations use the same editor key:
 
-| `GET` | `/api/v1/articles/:id` | editor | Read all locale variants |
-| `PUT` | `/api/v1/articles/:id` | editor | Add or update one locale with `If-Match` |
-| `DELETE` | `/api/v1/articles/:id?locale=ko-KR` | editor | Remove a locale with `If-Match` |
+| `GET` | `/api/v2/sites/{siteId}/articles/:id` | editor | Read all locale variants |
+| `PUT` | `/api/v2/sites/{siteId}/articles/:id` | editor | Add or update one locale with `If-Match` |
+| `DELETE` | `/api/v2/sites/{siteId}/articles/:id?locale=ko-KR` | editor | Remove a locale with `If-Match` |
 
 All machine responses use `Cache-Control: no-store` and `X-Request-Id`.
 
@@ -149,19 +149,19 @@ no-store` and include `X-Request-Id`. Errors use this shape:
 
 ## Content workflow
 
-1. `GET /api/v1/posts?limit=20&offset=0` to discover records and revisions.
-2. `GET /api/v1/settings`, `/api/v1/authors`, and `/api/v1/tags` to discover
+1. `GET /api/v2/sites/{siteId}/posts?limit=20&offset=0` to discover records and revisions.
+2. `GET /api/v2/sites/{siteId}/settings`, `/api/v2/sites/{siteId}/authors`, and `/api/v2/sites/{siteId}/tags` to discover
    the current publication identity and valid author/tag slugs.
-3. `POST /api/v1/tags` to create a tag, or `PATCH /api/v1/tags/:slug` to rename
+3. `POST /api/v2/sites/{siteId}/tags` to create a tag, or `PATCH /api/v2/sites/{siteId}/tags/:slug` to rename
    one with its current revision. `DELETE` archives a tag; it remains readable
    on existing posts but cannot be newly assigned.
-4. `POST /api/v1/posts` to create validated content with an active
+4. `POST /api/v2/sites/{siteId}/posts` to create validated content with an active
    `authorSlug`, SEO title/description, and one of `draft`, `review`,
    `scheduled`, or `published`; or `PATCH` an existing post with
    `If-Match: <revision>`.
 5. If the revision is stale, reload the post and reconcile instead of
    overwriting another update.
-6. `POST /api/v1/publish` with a publisher key and unique `Idempotency-Key`.
+6. `POST /api/v2/sites/{siteId}/publish` with a publisher key and unique `Idempotency-Key`.
 7. Verify the `202` response's `snapshotId`, checksum, `jobId`, and
    `jobStatus: queued`. The schema-version 4 snapshot contains publication
    settings, active authors/tags, published/due content, public-safe plugin
@@ -177,7 +177,7 @@ export PUBLISHER_API_TOKEN='store-this-outside-the-repository'
 
 curl --fail-with-body \
   -H "Authorization: Bearer $PUBLISHER_API_TOKEN" \
-  "$PUBLISHER_API_URL/api/v1/posts?limit=20&offset=0"
+  "$PUBLISHER_API_URL/api/v2/sites/{siteId}/posts?limit=20&offset=0"
 
 curl --fail-with-body -X POST \
   -H "Authorization: Bearer $PUBLISHER_API_TOKEN" \
@@ -196,7 +196,7 @@ curl --fail-with-body -X POST \
     "categories": ["Platforms"],
     "featured": false
   }' \
-  "$PUBLISHER_API_URL/api/v1/posts"
+  "$PUBLISHER_API_URL/api/v2/sites/{siteId}/posts"
 ```
 
 The complete request/response contract is in

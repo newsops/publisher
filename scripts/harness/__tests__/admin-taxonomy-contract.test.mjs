@@ -4,14 +4,18 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import {
-  GET as listTags,
-  POST as createTag,
-} from '../../../apps/admin/app/api/v1/tags/route.ts'
+  GET as rawListTags,
+  POST as rawCreateTag,
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/tags/route.ts'
 import {
   PATCH as renameTag,
   DELETE as archiveTag,
-} from '../../../apps/admin/app/api/v1/tags/[slug]/route.ts'
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/tags/[slug]/route.ts'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
+
+const siteContext = { params: Promise.resolve({ siteId: 'default' }) }
+const listTags = (request) => rawListTags(request, siteContext)
+const createTag = (request) => rawCreateTag(request, siteContext)
 
 const token = 'taxonomy-editor-secret'
 const keys = JSON.stringify([
@@ -19,6 +23,7 @@ const keys = JSON.stringify([
     id: 'taxonomy-editor',
     role: 'editor',
     sha256: createHash('sha256').update(token).digest('hex'),
+    sites: ['default'],
   },
 ])
 let dataDirectory
@@ -54,7 +59,7 @@ describe('admin taxonomy contract', () => {
 
   it('supports authenticated create, rename, archive, and revision conflicts', async () => {
     const createdResponse = await createTag(
-      new Request('http://admin.test/api/v1/tags', {
+      new Request('http://admin.test/api/v2/sites/default/tags', {
         method: 'POST',
         headers: { ...auth(), 'content-type': 'application/json' },
         body: JSON.stringify({ name: 'Spatial Audio' }),
@@ -65,7 +70,7 @@ describe('admin taxonomy contract', () => {
     expect(created.slug).toBe('spatial-audio')
 
     const conflict = await renameTag(
-      new Request('http://admin.test/api/v1/tags/spatial-audio', {
+      new Request('http://admin.test/api/v2/sites/default/tags/spatial-audio', {
         method: 'PATCH',
         headers: {
           ...auth(),
@@ -74,12 +79,12 @@ describe('admin taxonomy contract', () => {
         },
         body: JSON.stringify({ name: 'Audio' }),
       }),
-      { params: Promise.resolve({ slug: 'spatial-audio' }) },
+      { params: Promise.resolve({ siteId: 'default', slug: 'spatial-audio' }) },
     )
     expect(conflict.status).toBe(409)
 
     const renamedResponse = await renameTag(
-      new Request('http://admin.test/api/v1/tags/spatial-audio', {
+      new Request('http://admin.test/api/v2/sites/default/tags/spatial-audio', {
         method: 'PATCH',
         headers: {
           ...auth(),
@@ -88,24 +93,26 @@ describe('admin taxonomy contract', () => {
         },
         body: JSON.stringify({ name: 'Spatial Audio' }),
       }),
-      { params: Promise.resolve({ slug: 'spatial-audio' }) },
+      { params: Promise.resolve({ siteId: 'default', slug: 'spatial-audio' }) },
     )
     expect(renamedResponse.status).toBe(200)
     const renamed = (await renamedResponse.json()).tag
     expect(renamed.revision).toBe(2)
 
     const archivedResponse = await archiveTag(
-      new Request('http://admin.test/api/v1/tags/spatial-audio', {
+      new Request('http://admin.test/api/v2/sites/default/tags/spatial-audio', {
         method: 'DELETE',
         headers: { ...auth(), 'if-match': '2' },
       }),
-      { params: Promise.resolve({ slug: 'spatial-audio' }) },
+      { params: Promise.resolve({ siteId: 'default', slug: 'spatial-audio' }) },
     )
     expect(archivedResponse.status).toBe(200)
     expect((await archivedResponse.json()).tag.active).toBe(false)
 
     const tagsResponse = await listTags(
-      new Request('http://admin.test/api/v1/tags', { headers: auth() }),
+      new Request('http://admin.test/api/v2/sites/default/tags', {
+        headers: auth(),
+      }),
     )
     expect(tagsResponse.status).toBe(200)
     expect(

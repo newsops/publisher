@@ -8,22 +8,27 @@ import {
   shouldUseIsolatedFileRepository,
 } from '../../../apps/admin/app/lib/repository.ts'
 import {
-  GET as getSettings,
-  PATCH as patchSettings,
-} from '../../../apps/admin/app/api/v1/settings/route.ts'
+  GET as rawGetSettings,
+  PATCH as rawPatchSettings,
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/settings/route.ts'
 import {
-  GET as listAuthors,
-  POST as createAuthor,
-} from '../../../apps/admin/app/api/v1/authors/route.ts'
+  GET as rawListAuthors,
+  POST as rawCreateAuthor,
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/authors/route.ts'
 import {
   PATCH as patchAuthor,
   DELETE as deleteAuthor,
-} from '../../../apps/admin/app/api/v1/authors/[slug]/route.ts'
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/authors/[slug]/route.ts'
 
 const token = 'news-platform-editor-token'
 const digest = createHash('sha256').update(token).digest('hex')
 let apiDirectory
 const previous = new Map()
+const siteContext = { params: Promise.resolve({ siteId: 'default' }) }
+const getSettings = (request) => rawGetSettings(request, siteContext)
+const patchSettings = (request) => rawPatchSettings(request, siteContext)
+const listAuthors = (request) => rawListAuthors(request, siteContext)
+const createAuthor = (request) => rawCreateAuthor(request, siteContext)
 
 function request(url, method = 'GET', body, revision) {
   return new Request(url, {
@@ -44,7 +49,12 @@ describe('configurable news platform contract', () => {
       previous.set(key, process.env[key])
     process.env.ADMIN_DATA_DIR = apiDirectory
     process.env.ADMIN_AUTOMATION_KEYS = JSON.stringify([
-      { id: 'platform-editor', role: 'editor', sha256: digest },
+      {
+        id: 'platform-editor',
+        role: 'editor',
+        sha256: digest,
+        sites: ['default'],
+      },
     ])
     process.env.NODE_ENV = 'test'
   })
@@ -138,19 +148,23 @@ describe('configurable news platform contract', () => {
 
   it('manages revision-safe settings and stable-slug authors by machine API', async () => {
     const unauthorized = await getSettings(
-      new Request('http://admin.test/api/v1/settings'),
+      new Request('http://admin.test/api/v2/sites/default/settings'),
     )
     expect(unauthorized.status).toBe(401)
     expect(JSON.stringify(await unauthorized.json())).not.toContain(token)
 
     const settingsResponse = await getSettings(
-      request('http://admin.test/api/v1/settings'),
+      request('http://admin.test/api/v2/sites/default/settings'),
     )
     expect(settingsResponse.status).toBe(200)
     const current = (await settingsResponse.json()).settings
 
     const missingRevision = await patchSettings(
-      request('http://admin.test/api/v1/settings', 'PATCH', current),
+      request(
+        'http://admin.test/api/v2/sites/default/settings',
+        'PATCH',
+        current,
+      ),
     )
     expect(missingRevision.status).toBe(428)
 
@@ -165,7 +179,7 @@ describe('configurable news platform contract', () => {
     }
     const updatedResponse = await patchSettings(
       request(
-        'http://admin.test/api/v1/settings',
+        'http://admin.test/api/v2/sites/default/settings',
         'PATCH',
         settingsInput,
         current.revision,
@@ -179,7 +193,7 @@ describe('configurable news platform contract', () => {
 
     const conflict = await patchSettings(
       request(
-        'http://admin.test/api/v1/settings',
+        'http://admin.test/api/v2/sites/default/settings',
         'PATCH',
         settingsInput,
         current.revision,
@@ -188,7 +202,7 @@ describe('configurable news platform contract', () => {
     expect(conflict.status).toBe(409)
 
     const unknownField = await createAuthor(
-      request('http://admin.test/api/v1/authors', 'POST', {
+      request('http://admin.test/api/v2/sites/default/authors', 'POST', {
         name: 'Invalid Author',
         bio: 'Invalid because the request contains an unknown field.',
         secret: token,
@@ -198,7 +212,7 @@ describe('configurable news platform contract', () => {
     expect(JSON.stringify(await unknownField.json())).not.toContain(token)
 
     const createdResponse = await createAuthor(
-      request('http://admin.test/api/v1/authors', 'POST', {
+      request('http://admin.test/api/v2/sites/default/authors', 'POST', {
         name: 'Jane Example',
         bio: 'Reporter covering platform engineering.',
       }),
@@ -209,12 +223,12 @@ describe('configurable news platform contract', () => {
 
     const immutableSlug = await patchAuthor(
       request(
-        `http://admin.test/api/v1/authors/${author.slug}`,
+        `http://admin.test/api/v2/sites/default/authors/${author.slug}`,
         'PATCH',
         { slug: 'renamed-author' },
         author.revision,
       ),
-      { params: Promise.resolve({ slug: author.slug }) },
+      { params: Promise.resolve({ siteId: 'default', slug: author.slug }) },
     )
     expect(immutableSlug.status).toBe(400)
 
@@ -227,12 +241,12 @@ describe('configurable news platform contract', () => {
     })
     const assignedArchive = await deleteAuthor(
       request(
-        `http://admin.test/api/v1/authors/${author.slug}`,
+        `http://admin.test/api/v2/sites/default/authors/${author.slug}`,
         'DELETE',
         undefined,
         author.revision,
       ),
-      { params: Promise.resolve({ slug: author.slug }) },
+      { params: Promise.resolve({ siteId: 'default', slug: author.slug }) },
     )
     expect(assignedArchive.status).toBe(400)
     expect((await assignedArchive.json()).error.code).toBe('validation_failed')
@@ -244,18 +258,18 @@ describe('configurable news platform contract', () => {
 
     const archivedResponse = await deleteAuthor(
       request(
-        `http://admin.test/api/v1/authors/${author.slug}`,
+        `http://admin.test/api/v2/sites/default/authors/${author.slug}`,
         'DELETE',
         undefined,
         author.revision,
       ),
-      { params: Promise.resolve({ slug: author.slug }) },
+      { params: Promise.resolve({ siteId: 'default', slug: author.slug }) },
     )
     expect(archivedResponse.status).toBe(200)
     expect((await archivedResponse.json()).author.active).toBe(false)
 
     const authorsResponse = await listAuthors(
-      request('http://admin.test/api/v1/authors'),
+      request('http://admin.test/api/v2/sites/default/authors'),
     )
     expect(authorsResponse.status).toBe(200)
     expect((await authorsResponse.json()).authors).toHaveLength(2)

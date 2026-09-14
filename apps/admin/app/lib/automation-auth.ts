@@ -7,6 +7,7 @@ import {
   enforceRateLimit,
 } from './auth'
 import { ApiRequestError } from './api-error'
+import { getSiteRegistry } from './site-registry'
 
 export { ApiRequestError as AutomationApiError } from './api-error'
 
@@ -210,6 +211,10 @@ export async function withSiteAutomation(
       requiredRole,
       siteId,
     )
+    // Local isolated repositories are intentionally usable without a database
+    // for deterministic contract tests. Every deployed admin runtime has
+    // DATABASE_URL and therefore verifies the PostgreSQL registry first.
+    if (process.env.DATABASE_URL) await getSiteRegistry().require(siteId)
     enforceRateLimit(request, identity)
     return await handler(identity, id)
   } catch (error) {

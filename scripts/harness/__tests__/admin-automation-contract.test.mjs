@@ -4,24 +4,44 @@ import { mkdtemp, rm, readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import {
-  GET as listPosts,
-  POST as createPost,
-} from '../../../apps/admin/app/api/v1/posts/route.ts'
+  GET as rawListPosts,
+  POST as rawCreatePost,
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/posts/route.ts'
 import {
   GET as getPost,
   PATCH as updatePost,
   DELETE as deletePost,
-} from '../../../apps/admin/app/api/v1/posts/[id]/route.ts'
-import { POST as publishPosts } from '../../../apps/admin/app/api/v1/publish/route.ts'
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/posts/[id]/route.ts'
+import { POST as rawPublishPosts } from '../../../apps/admin/app/api/v2/sites/[siteId]/publish/route.ts'
+
+const siteContext = { params: Promise.resolve({ siteId: 'default' }) }
+const listPosts = (request) => rawListPosts(request, siteContext)
+const createPost = (request) => rawCreatePost(request, siteContext)
+const publishPosts = (request) => rawPublishPosts(request, siteContext)
 
 const editorToken = 'editor-automation-secret'
 const publisherToken = 'publisher-automation-secret'
 const rateToken = 'rate-automation-secret'
 const digest = (value) => createHash('sha256').update(value).digest('hex')
 const keys = JSON.stringify([
-  { id: 'editor-test', role: 'editor', sha256: digest(editorToken) },
-  { id: 'publisher-test', role: 'publisher', sha256: digest(publisherToken) },
-  { id: 'rate-test', role: 'editor', sha256: digest(rateToken) },
+  {
+    id: 'editor-test',
+    role: 'editor',
+    sha256: digest(editorToken),
+    sites: ['default'],
+  },
+  {
+    id: 'publisher-test',
+    role: 'publisher',
+    sha256: digest(publisherToken),
+    sites: ['default'],
+  },
+  {
+    id: 'rate-test',
+    role: 'editor',
+    sha256: digest(rateToken),
+    sites: ['default'],
+  },
 ])
 
 let dataDirectory
@@ -82,15 +102,15 @@ describe('admin automation API contract', () => {
 
   it('rejects missing, malformed, and unknown bearer keys without revealing details', async () => {
     const missing = await listPosts(
-      new Request('http://admin.test/api/v1/posts'),
+      new Request('http://admin.test/api/v2/sites/default/posts'),
     )
     const malformed = await listPosts(
-      new Request('http://admin.test/api/v1/posts', {
+      new Request('http://admin.test/api/v2/sites/default/posts', {
         headers: { authorization: 'Basic secret' },
       }),
     )
     const unknown = await listPosts(
-      new Request('http://admin.test/api/v1/posts', {
+      new Request('http://admin.test/api/v2/sites/default/posts', {
         headers: auth('unknown'),
       }),
     )
@@ -107,9 +127,12 @@ describe('admin automation API contract', () => {
 
   it('lists and reads seeded posts with bounded pagination', async () => {
     const response = await listPosts(
-      new Request('http://admin.test/api/v1/posts?limit=2&offset=1', {
-        headers: auth(editorToken),
-      }),
+      new Request(
+        'http://admin.test/api/v2/sites/default/posts?limit=2&offset=1',
+        {
+          headers: auth(editorToken),
+        },
+      ),
     )
     expect(response.status).toBe(200)
     const body = await json(response)
@@ -122,10 +145,13 @@ describe('admin automation API contract', () => {
     })
 
     const postResponse = await getPost(
-      new Request(`http://admin.test/api/v1/posts/${body.posts[0].id}`, {
-        headers: auth(editorToken),
-      }),
-      { params: Promise.resolve({ id: body.posts[0].id }) },
+      new Request(
+        `http://admin.test/api/v2/sites/default/posts/${body.posts[0].id}`,
+        {
+          headers: auth(editorToken),
+        },
+      ),
+      { params: Promise.resolve({ siteId: 'default', id: body.posts[0].id }) },
     )
     expect(postResponse.status).toBe(200)
     expect((await json(postResponse)).post.id).toBe(body.posts[0].id)
@@ -133,10 +159,15 @@ describe('admin automation API contract', () => {
 
   it('creates and updates validated content with revision protection', async () => {
     const invalidResponse = await createPost(
-      jsonRequest('http://admin.test/api/v1/posts', editorToken, 'POST', {
-        slug: 'invalid-content',
-        title: '',
-      }),
+      jsonRequest(
+        'http://admin.test/api/v2/sites/default/posts',
+        editorToken,
+        'POST',
+        {
+          slug: 'invalid-content',
+          title: '',
+        },
+      ),
     )
     expect(invalidResponse.status).toBe(400)
     expect((await json(invalidResponse)).error.code).toBe('validation_failed')
@@ -147,16 +178,21 @@ describe('admin automation API contract', () => {
     let createdResponse
     try {
       createdResponse = await createPost(
-        jsonRequest('http://admin.test/api/v1/posts', editorToken, 'POST', {
-          slug: 'automation-created-post',
-          title: 'Automation-created post',
-          excerpt: 'Created through the automation API.',
-          bodyHtml: '<script>alert(1)</script><p>Safe body</p>',
-          author: 'Example Editor',
-          authorSlug: 'example-editor',
-          publishedAt: '2026-08-21T00:00:00.000Z',
-          categories: ['General'],
-        }),
+        jsonRequest(
+          'http://admin.test/api/v2/sites/default/posts',
+          editorToken,
+          'POST',
+          {
+            slug: 'automation-created-post',
+            title: 'Automation-created post',
+            excerpt: 'Created through the automation API.',
+            bodyHtml: '<script>alert(1)</script><p>Safe body</p>',
+            author: 'Example Editor',
+            authorSlug: 'example-editor',
+            publishedAt: '2026-08-21T00:00:00.000Z',
+            categories: ['General'],
+          },
+        ),
       )
     } finally {
       console.info = originalInfo
@@ -165,25 +201,28 @@ describe('admin automation API contract', () => {
     const created = (await json(createdResponse)).post
     expect(created.bodyHtml).toBe('<p>Safe body</p>')
     expect(created.revision).toBe(1)
-    expect(auditLines.join('\n')).toContain('content.automation.created')
+    expect(auditLines.join('\n')).toContain('content.site.created')
     expect(auditLines.join('\n')).not.toContain(editorToken)
 
     const conflictResponse = await updatePost(
       jsonRequest(
-        `http://admin.test/api/v1/posts/${created.id}`,
+        `http://admin.test/api/v2/sites/default/posts/${created.id}`,
         editorToken,
         'PATCH',
         { title: 'Should not overwrite' },
         { 'if-match': '0' },
       ),
-      { params: Promise.resolve({ id: created.id }) },
+      { params: Promise.resolve({ siteId: 'default', id: created.id }) },
     )
     expect(conflictResponse.status).toBe(409)
     const afterConflictResponse = await getPost(
-      new Request(`http://admin.test/api/v1/posts/${created.id}`, {
-        headers: auth(editorToken),
-      }),
-      { params: Promise.resolve({ id: created.id }) },
+      new Request(
+        `http://admin.test/api/v2/sites/default/posts/${created.id}`,
+        {
+          headers: auth(editorToken),
+        },
+      ),
+      { params: Promise.resolve({ siteId: 'default', id: created.id }) },
     )
     expect((await json(afterConflictResponse)).post.title).toBe(
       'Automation-created post',
@@ -191,13 +230,13 @@ describe('admin automation API contract', () => {
 
     const updateResponse = await updatePost(
       jsonRequest(
-        `http://admin.test/api/v1/posts/${created.id}`,
+        `http://admin.test/api/v2/sites/default/posts/${created.id}`,
         editorToken,
         'PATCH',
         { title: 'Updated by automation' },
         { 'if-match': '1' },
       ),
-      { params: Promise.resolve({ id: created.id }) },
+      { params: Promise.resolve({ siteId: 'default', id: created.id }) },
     )
     expect(updateResponse.status).toBe(200)
     expect((await json(updateResponse)).post).toMatchObject({
@@ -208,7 +247,7 @@ describe('admin automation API contract', () => {
 
   it('enforces editor/publisher roles and deletes with a matching revision', async () => {
     const editorPublish = await publishPosts(
-      new Request('http://admin.test/api/v1/publish', {
+      new Request('http://admin.test/api/v2/sites/default/publish', {
         method: 'POST',
         headers: { ...auth(editorToken), 'idempotency-key': 'editor-attempt' },
       }),
@@ -216,7 +255,7 @@ describe('admin automation API contract', () => {
     expect(editorPublish.status).toBe(403)
 
     const missingKey = await publishPosts(
-      new Request('http://admin.test/api/v1/publish', {
+      new Request('http://admin.test/api/v2/sites/default/publish', {
         method: 'POST',
         headers: auth(publisherToken),
       }),
@@ -224,7 +263,7 @@ describe('admin automation API contract', () => {
     expect(missingKey.status).toBe(400)
 
     const publisherPublish = await publishPosts(
-      new Request('http://admin.test/api/v1/publish', {
+      new Request('http://admin.test/api/v2/sites/default/publish', {
         method: 'POST',
         headers: {
           ...auth(publisherToken),
@@ -240,7 +279,7 @@ describe('admin automation API contract', () => {
       jobStatus: 'queued',
     })
     const replay = await publishPosts(
-      new Request('http://admin.test/api/v1/publish', {
+      new Request('http://admin.test/api/v2/sites/default/publish', {
         method: 'POST',
         headers: {
           ...auth(publisherToken),
@@ -256,7 +295,7 @@ describe('admin automation API contract', () => {
     })
 
     const listResponse = await listPosts(
-      new Request('http://admin.test/api/v1/posts?limit=100', {
+      new Request('http://admin.test/api/v2/sites/default/posts?limit=100', {
         headers: auth(editorToken),
       }),
     )
@@ -264,20 +303,29 @@ describe('admin automation API contract', () => {
       (post) => post.slug === 'automation-created-post',
     )
     const deleteResponse = await deletePost(
-      new Request(`http://admin.test/api/v1/posts/${created.id}`, {
-        method: 'DELETE',
-        headers: { ...auth(editorToken), 'if-match': String(created.revision) },
-      }),
-      { params: Promise.resolve({ id: created.id }) },
+      new Request(
+        `http://admin.test/api/v2/sites/default/posts/${created.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            ...auth(editorToken),
+            'if-match': String(created.revision),
+          },
+        },
+      ),
+      { params: Promise.resolve({ siteId: 'default', id: created.id }) },
     )
     expect(deleteResponse.status).toBe(200)
     expect((await json(deleteResponse)).deleted).toBe(true)
 
     const missingResponse = await getPost(
-      new Request(`http://admin.test/api/v1/posts/${created.id}`, {
-        headers: auth(editorToken),
-      }),
-      { params: Promise.resolve({ id: created.id }) },
+      new Request(
+        `http://admin.test/api/v2/sites/default/posts/${created.id}`,
+        {
+          headers: auth(editorToken),
+        },
+      ),
+      { params: Promise.resolve({ siteId: 'default', id: created.id }) },
     )
     expect(missingResponse.status).toBe(404)
   })
@@ -285,14 +333,17 @@ describe('admin automation API contract', () => {
   it('rate-limits an automation identity per route', async () => {
     for (let index = 0; index < 60; index += 1) {
       const response = await listPosts(
-        new Request(`http://admin.test/api/v1/posts?rate=${index}`, {
-          headers: auth(rateToken),
-        }),
+        new Request(
+          `http://admin.test/api/v2/sites/default/posts?rate=${index}`,
+          {
+            headers: auth(rateToken),
+          },
+        ),
       )
       expect(response.status).toBe(200)
     }
     const response = await listPosts(
-      new Request('http://admin.test/api/v1/posts?rate=blocked', {
+      new Request('http://admin.test/api/v2/sites/default/posts?rate=blocked', {
         headers: auth(rateToken),
       }),
     )
@@ -309,12 +360,12 @@ describe('admin automation API contract', () => {
       'utf8',
     )
     for (const endpoint of [
-      '/api/v1/posts',
-      '/api/v1/posts/{id}',
-      '/api/v1/settings',
-      '/api/v1/authors',
-      '/api/v1/authors/{slug}',
-      '/api/v1/publish',
+      '/api/v2/sites/{siteId}/posts',
+      '/api/v2/sites/{siteId}/posts/{id}',
+      '/api/v2/sites/{siteId}/settings',
+      '/api/v2/sites/{siteId}/authors',
+      '/api/v2/sites/{siteId}/authors/{slug}',
+      '/api/v2/sites/{siteId}/publish',
     ])
       expect(openapi).toContain(endpoint)
     expect(docs).toContain('Authorization: Bearer')

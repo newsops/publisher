@@ -9,7 +9,10 @@ import {
   validateArticleLocales,
 } from '../../../packages/content/src/article-adapter.ts'
 import { FileArticleRepositoryAdapter } from '../../../apps/admin/app/lib/article-repository-adapter.ts'
-import { GET, PUT } from '../../../apps/admin/app/api/v1/articles/[id]/route.ts'
+import {
+  GET,
+  PUT,
+} from '../../../apps/admin/app/api/v2/sites/[siteId]/articles/[id]/route.ts'
 
 let apiDirectory
 const originalEnvironment = {}
@@ -78,6 +81,7 @@ describe('POST-001 article API', () => {
         id: 'editor',
         role: 'editor',
         sha256: createHash('sha256').update('editor-token').digest('hex'),
+        sites: ['default'],
       },
     ])
   })
@@ -96,67 +100,80 @@ describe('POST-001 article API', () => {
 
   it('requires automation and rejects stale aggregate revisions', async () => {
     const articleId = 'article-sample-01'
-    const context = { params: Promise.resolve({ id: articleId }) }
+    const context = {
+      params: Promise.resolve({ siteId: 'default', id: articleId }),
+    }
     const unauthorized = await GET(
-      new Request(`https://admin.example/api/v1/articles/${articleId}`),
+      new Request(
+        `https://admin.example/api/v2/sites/default/articles/${articleId}`,
+      ),
       context,
     )
     expect(unauthorized.status).toBe(401)
 
     const headers = { Authorization: 'Bearer editor-token' }
     const first = await GET(
-      new Request(`https://admin.example/api/v1/articles/${articleId}`, {
-        headers,
-      }),
+      new Request(
+        `https://admin.example/api/v2/sites/default/articles/${articleId}`,
+        {
+          headers,
+        },
+      ),
       context,
     )
     expect(first.status).toBe(200)
     const current = (await first.json()).article
     const response = await PUT(
-      new Request(`https://admin.example/api/v1/articles/${articleId}`, {
-        method: 'PUT',
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-          'If-Match': String(current.revision),
+      new Request(
+        `https://admin.example/api/v2/sites/default/articles/${articleId}`,
+        {
+          method: 'PUT',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            'If-Match': String(current.revision),
+          },
+          body: JSON.stringify({
+            locale: 'ko-KR',
+            slug: 'korean-article',
+            title: '한국어 기사',
+            excerpt: '요약',
+            bodyHtml: '<p>본문</p>',
+            seoTitle: '한국어 기사',
+            seoDescription: '설명',
+            status: 'published',
+            publishedAt: '2026-08-22T00:00:00.000Z',
+          }),
         },
-        body: JSON.stringify({
-          locale: 'ko-KR',
-          slug: 'korean-article',
-          title: '한국어 기사',
-          excerpt: '요약',
-          bodyHtml: '<p>본문</p>',
-          seoTitle: '한국어 기사',
-          seoDescription: '설명',
-          status: 'published',
-          publishedAt: '2026-08-22T00:00:00.000Z',
-        }),
-      }),
+      ),
       context,
     )
     expect(response.status).toBe(200)
     expect((await response.json()).article.variants).toHaveLength(2)
 
     const stale = await PUT(
-      new Request('https://admin.example/api/v1/articles/article-source-1', {
-        method: 'PUT',
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-          'If-Match': String(current.revision),
+      new Request(
+        'https://admin.example/api/v2/sites/default/articles/article-source-1',
+        {
+          method: 'PUT',
+          headers: {
+            ...headers,
+            'Content-Type': 'application/json',
+            'If-Match': String(current.revision),
+          },
+          body: JSON.stringify({
+            locale: 'ko-KR',
+            slug: 'korean-article',
+            title: 'stale',
+            excerpt: 'stale',
+            bodyHtml: '<p>stale</p>',
+            seoTitle: 'stale',
+            seoDescription: 'stale',
+            status: 'draft',
+            publishedAt: '2026-08-22T00:00:00.000Z',
+          }),
         },
-        body: JSON.stringify({
-          locale: 'ko-KR',
-          slug: 'korean-article',
-          title: 'stale',
-          excerpt: 'stale',
-          bodyHtml: '<p>stale</p>',
-          seoTitle: 'stale',
-          seoDescription: 'stale',
-          status: 'draft',
-          publishedAt: '2026-08-22T00:00:00.000Z',
-        }),
-      }),
+      ),
       context,
     )
     expect(stale.status).toBe(409)

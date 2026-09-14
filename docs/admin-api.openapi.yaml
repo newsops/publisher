@@ -8,7 +8,7 @@ servers:
 security:
   - bearerAuth: []
 paths:
-  /api/v1/posts:
+  /api/v2/sites/{siteId}/posts:
     get:
       operationId: listPosts
       summary: List managed posts
@@ -33,7 +33,7 @@ paths:
       responses:
         '201': { $ref: '#/components/responses/PostResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/posts/{id}:
+  /api/v2/sites/{siteId}/posts/{id}:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
@@ -74,7 +74,7 @@ paths:
             content: { application/json: { schema: { type: object } } },
           }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/articles/{id}:
+  /api/v2/sites/{siteId}/articles/{id}:
     parameters:
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
@@ -199,7 +199,7 @@ paths:
         '200': { $ref: '#/components/responses/PluginResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/tags:
+  /api/v2/sites/{siteId}/tags:
     get:
       operationId: listTags
       summary: List managed taxonomy tags
@@ -213,7 +213,7 @@ paths:
       responses:
         '201': { $ref: '#/components/responses/TagResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/tags/{slug}:
+  /api/v2/sites/{siteId}/tags/{slug}:
     parameters:
       - { name: slug, in: path, required: true, schema: { type: string } }
     get:
@@ -249,7 +249,7 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/TagResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/settings:
+  /api/v2/sites/{siteId}/settings:
     get:
       operationId: getPublicationSettings
       summary: Read publication settings
@@ -270,7 +270,7 @@ paths:
         '200': { $ref: '#/components/responses/SettingsResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
         '428': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/authors:
+  /api/v2/sites/{siteId}/authors:
     get:
       operationId: listAuthors
       summary: List managed authors
@@ -283,7 +283,7 @@ paths:
       responses:
         '201': { $ref: '#/components/responses/AuthorResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/authors/{slug}:
+  /api/v2/sites/{siteId}/authors/{slug}:
     parameters:
       - { name: slug, in: path, required: true, schema: { type: string } }
     get:
@@ -319,7 +319,7 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/AuthorResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v1/publish:
+  /api/v2/sites/{siteId}/publish:
     post:
       operationId: publishSnapshot
       summary: Create an immutable snapshot and enqueue its build job
