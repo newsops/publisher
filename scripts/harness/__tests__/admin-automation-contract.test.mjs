@@ -22,6 +22,7 @@ const publishPosts = (request) => rawPublishPosts(request, siteContext)
 const editorToken = 'editor-automation-secret'
 const publisherToken = 'publisher-automation-secret'
 const rateToken = 'rate-automation-secret'
+const additiveToken = 'additive-automation-secret'
 const digest = (value) => createHash('sha256').update(value).digest('hex')
 const keys = JSON.stringify([
   {
@@ -82,6 +83,7 @@ describe('admin automation API contract', () => {
     setEnvironment({
       NODE_ENV: 'test',
       ADMIN_AUTOMATION_KEYS: keys,
+      ADMIN_AUTOMATION_KEYS_EXTRA: undefined,
       ADMIN_DATA_DIR: dataDirectory,
       PUBLISH_WEBHOOK_URL: undefined,
       PUBLISH_WEBHOOK_SECRET: undefined,
@@ -123,6 +125,52 @@ describe('admin automation API contract', () => {
       expect(body.error.message).toBe('Authentication required')
       expect(JSON.stringify(body)).not.toContain('unknown')
     }
+  })
+
+  it('merges a separately scoped keyring and fails closed for malformed or duplicate rings', async () => {
+    setEnvironment({
+      ADMIN_AUTOMATION_KEYS_EXTRA: JSON.stringify([
+        {
+          id: 'additive-test',
+          role: 'editor',
+          sha256: digest(additiveToken),
+          sites: ['default'],
+        },
+      ]),
+    })
+    const additive = await listPosts(
+      new Request('http://admin.test/api/v2/sites/default/posts', {
+        headers: auth(additiveToken),
+      }),
+    )
+    expect(additive.status).toBe(200)
+
+    setEnvironment({ ADMIN_AUTOMATION_KEYS_EXTRA: '{invalid' })
+    const malformed = await listPosts(
+      new Request('http://admin.test/api/v2/sites/default/posts', {
+        headers: auth(additiveToken),
+      }),
+    )
+    expect(malformed.status).toBe(503)
+    expect(JSON.stringify(await json(malformed))).not.toContain(additiveToken)
+
+    setEnvironment({
+      ADMIN_AUTOMATION_KEYS_EXTRA: JSON.stringify([
+        {
+          id: 'editor-test',
+          role: 'editor',
+          sha256: digest(additiveToken),
+          sites: ['default'],
+        },
+      ]),
+    })
+    const duplicate = await listPosts(
+      new Request('http://admin.test/api/v2/sites/default/posts', {
+        headers: auth(additiveToken),
+      }),
+    )
+    expect(duplicate.status).toBe(503)
+    setEnvironment({ ADMIN_AUTOMATION_KEYS_EXTRA: undefined })
   })
 
   it('lists and reads seeded posts with bounded pagination', async () => {

@@ -16,6 +16,11 @@ Every `--json` result has `schemaVersion`, `ok`, and `code`. Credentials are
 read only from `PUBLISHER_API_TOKEN` and are never accepted as command-line
 arguments or returned in JSON.
 
+The admin service can merge a primary `ADMIN_AUTOMATION_KEYS` keyring with an
+optional `ADMIN_AUTOMATION_KEYS_EXTRA` keyring. This permits narrowly scoped
+rotation without replacing an encrypted primary provider secret; both rings
+use the same record schema and duplicate key IDs fail closed.
+
 ```bash
 publisher doctor --json --non-interactive
 publisher status --json

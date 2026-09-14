@@ -16,6 +16,12 @@ Store the printed `envFragment` as the server-only `ADMIN_AUTOMATION_KEYS`
 secret. Keep the printed `token` in the automation client's secret store. The
 repository and audit logs contain only the SHA-256 digest and key ID.
 
+When a provider cannot reveal the existing encrypted primary value, add a
+separately rotated record to `ADMIN_AUTOMATION_KEYS_EXTRA` instead of replacing
+the primary keyring. It uses the identical JSON schema, is validated with the
+primary ring, and duplicate key IDs fail closed. After verifying the new
+site-scoped client, retire an old record in a later controlled rotation.
+
 The generator prints the raw token once. Do not paste it into Git, issue
 trackers, chat transcripts, or audit logs. For local development, copy only the
 `envFragment` into the admin process environment and keep the raw `token` in

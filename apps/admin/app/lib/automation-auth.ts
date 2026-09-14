@@ -21,40 +21,48 @@ interface AutomationKeyRecord {
 }
 
 function keyRecords(): readonly AutomationKeyRecord[] {
-  const raw = process.env.ADMIN_AUTOMATION_KEYS
-  if (!raw)
+  const rings = [
+    process.env.ADMIN_AUTOMATION_KEYS,
+    process.env.ADMIN_AUTOMATION_KEYS_EXTRA,
+  ].filter((value): value is string => Boolean(value))
+  if (rings.length === 0)
     throw new AdminAuthError('Automation authentication unavailable', 503)
   try {
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) throw new Error('not an array')
-    const records = parsed.filter(
-      (item): item is AutomationKeyRecord =>
-        Boolean(item) &&
-        typeof item === 'object' &&
-        typeof (item as Record<string, unknown>).id === 'string' &&
-        ((item as Record<string, unknown>).role === 'editor' ||
-          (item as Record<string, unknown>).role === 'publisher') &&
-        typeof (item as Record<string, unknown>).sha256 === 'string' &&
-        ((item as Record<string, unknown>).sites === undefined ||
-          (Array.isArray((item as Record<string, unknown>).sites) &&
-            ((item as Record<string, unknown>).sites as unknown[]).every(
-              (site: unknown) => typeof site === 'string',
-            ))) &&
-        /^[a-f0-9]{64}$/.test(
-          (item as Record<string, unknown>).sha256 as string,
-        ),
-    )
-    if (records.length !== parsed.length) throw new Error('invalid record')
-    return records.map((record, index) => {
-      const source = parsed[index] as Record<string, unknown>
-      return {
-        ...record,
-        sites: Array.isArray(source.sites) ? source.sites : undefined,
-      }
-    })
+    const records = rings.flatMap((raw) => parseKeyring(raw))
+    if (new Set(records.map((record) => record.id)).size !== records.length)
+      throw new Error('duplicate record id')
+    return records
   } catch {
     throw new AdminAuthError('Automation authentication unavailable', 503)
   }
+}
+
+function parseKeyring(raw: string): readonly AutomationKeyRecord[] {
+  const parsed = JSON.parse(raw) as unknown
+  if (!Array.isArray(parsed)) throw new Error('not an array')
+  const records = parsed.filter(
+    (item): item is AutomationKeyRecord =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as Record<string, unknown>).id === 'string' &&
+      ((item as Record<string, unknown>).role === 'editor' ||
+        (item as Record<string, unknown>).role === 'publisher') &&
+      typeof (item as Record<string, unknown>).sha256 === 'string' &&
+      ((item as Record<string, unknown>).sites === undefined ||
+        (Array.isArray((item as Record<string, unknown>).sites) &&
+          ((item as Record<string, unknown>).sites as unknown[]).every(
+            (site: unknown) => typeof site === 'string',
+          ))) &&
+      /^[a-f0-9]{64}$/.test((item as Record<string, unknown>).sha256 as string),
+  )
+  if (records.length !== parsed.length) throw new Error('invalid record')
+  return records.map((record, index) => {
+    const source = parsed[index] as Record<string, unknown>
+    return {
+      ...record,
+      sites: Array.isArray(source.sites) ? source.sites : undefined,
+    }
+  })
 }
 
 function bearerToken(request: Request): string {
