@@ -250,9 +250,14 @@ export function renderArticleHtml(
   const heroImage = article.imageUrl
     ? `<figure class="article-figure"><img src="${escapeHtml(article.imageUrl)}" alt="${escapeHtml(article.imageAlt ?? '')}" fetchpriority="high" decoding="async"></figure>`
     : ''
+  const hasCommentProjection =
+    input.embedApprovedComments ||
+    Object.hasOwn(input.comments ?? {}, article.slug)
   const commentScripts = input.commentRuntime
     ? `<script src="/site-runtime/comments.v1.js" defer></script>${input.commentRuntime.submissionEnabled && input.commentRuntime.humanVerification ? '<script src="/site-runtime/human-verification.v1.js" defer></script>' : ''}`
-    : '<script src="/site-runtime/comment-bootstrap.v1.js" defer></script>'
+    : hasCommentProjection
+      ? '<script src="/site-runtime/comment-bootstrap.v1.js" defer></script>'
+      : ''
   return `<!doctype html><html lang="${escapeHtml(input.language)}"><head>${renderHead(input, article.seoTitle, canonical, baselinePath, article.description, article)}${commentScripts}<script type="application/ld+json">${jsonLd}</script></head><body><div class="site-shell" id="top">${renderSiteHeader(input, article)}<main class="container post-body"><div class="article-head"><nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></nav><a class="category" href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a><h1>${escapeHtml(article.title)}</h1><div class="byline"><span>By <a href="${escapeHtml(article.authorPath)}">${escapeHtml(article.authorName)}</a></span><span aria-hidden="true">·</span><span>Published <time datetime="${escapeHtml(article.publishedAt)}">${escapeHtml(longDate(article.publishedAt))}</time></span><span class="updated-time">Updated <time data-updated datetime="${escapeHtml(article.updatedAt)}">${escapeHtml(longDate(article.updatedAt))}</time></span></div></div>${heroImage}<article class="prose">${article.bodyHtml}</article><div class="article-tags"><a href="${escapeHtml(article.categoryPath)}">${escapeHtml(article.category)}</a></div><aside class="article-related" data-runtime-projection="recent"><h2>Recent stories</h2><p><a href="/recent/">Read recent stories</a></p></aside>${renderCommentSection(input, article, comments)}</main>${renderSiteFooter(input, article)}</div></body></html>`
 }
 
