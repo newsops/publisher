@@ -23,3 +23,7 @@ SELECT
   COALESCE(NULLIF(state.state #>> '{settings,themeId}', ''), 'editorial')
 FROM publisher_admin.site_states AS state
 ON CONFLICT (site_id) DO NOTHING;
+
+INSERT INTO publisher_admin.sites (site_id, name, canonical_origin, theme_id)
+VALUES ('default', 'Publication', 'https://publisher.com', 'editorial')
+ON CONFLICT (site_id) DO NOTHING;
