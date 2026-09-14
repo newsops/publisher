@@ -14,6 +14,8 @@ import {
   type AdminTag,
   type AdminPlugin,
   type AdminMedia,
+  type AdminAgentGuidance,
+  emptyAgentGuidance,
 } from './admin-model'
 
 export interface DashboardSetters {
@@ -29,6 +31,7 @@ export interface DashboardSetters {
   setMessage: Dispatch<SetStateAction<string>>
   setArticle: Dispatch<SetStateAction<AdminArticle | undefined>>
   setActiveLocale: Dispatch<SetStateAction<string>>
+  setGuidance: Dispatch<SetStateAction<AdminAgentGuidance>>
 }
 
 function useDashboardState(): {
@@ -47,6 +50,8 @@ function useDashboardState(): {
   const [message, setMessage] = useState('인증 보호가 활성화된 어드민입니다.')
   const [article, setArticle] = useState<AdminArticle | undefined>()
   const [activeLocale, setActiveLocale] = useState('')
+  const [guidance, setGuidance] =
+    useState<AdminAgentGuidance>(emptyAgentGuidance)
   return {
     state: {
       posts,
@@ -61,6 +66,7 @@ function useDashboardState(): {
       message,
       article,
       activeLocale,
+      guidance,
     },
     setters: {
       setPosts,
@@ -75,6 +81,7 @@ function useDashboardState(): {
       setMessage,
       setArticle,
       setActiveLocale,
+      setGuidance,
     },
   }
 }
@@ -92,6 +99,7 @@ function useInitialData(setters: DashboardSetters): void {
       action.loadSettings(setters.setSettings),
       action.loadPlugins(setters.setPlugins),
       action.loadMedia(setters.setMedia),
+      action.loadAgentGuidance(setters.setGuidance),
     ]).catch(() => {
       setters.setMessage('초기 관리자 데이터를 불러오지 못했습니다.')
     })
@@ -215,6 +223,11 @@ function dashboardActions(
     saveSettings: () =>
       action.saveSettings(state.settings, setters.setMessage, () =>
         action.loadSettings(setters.setSettings),
+      ),
+    setGuidance: setters.setGuidance,
+    saveAgentGuidance: () =>
+      action.saveAgentGuidance(state.guidance, setters.setMessage, () =>
+        action.loadAgentGuidance(setters.setGuidance),
       ),
     publish: () => publishAction.publishSnapshot(setters.setMessage),
     uploadMedia: (file) =>

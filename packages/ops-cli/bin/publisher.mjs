@@ -161,6 +161,48 @@ async function main() {
       return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
     }
   }
+  if (args[0] === 'site' && args[1] === 'guidance') {
+    const action = args[2]
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      if (action === 'get') {
+        const response = await api.getAgentGuidance(siteId)
+        return emit(true, 'AGENT_GUIDANCE', response.data ?? {})
+      }
+      if (action === 'set') {
+        const file = option('--file')
+        const revision = Number(option('--revision'))
+        if (!file) return emit(false, 'INPUT_REQUIRED', { field: '--file' }, 10)
+        if (!Number.isSafeInteger(revision) || revision < 1)
+          return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+        if (!nonInteractive)
+          return emit(
+            false,
+            'NON_INTERACTIVE_REQUIRED',
+            { mutationAttempted: false },
+            10,
+          )
+        const response = await api.updateAgentGuidance(
+          siteId,
+          await readFile(file, 'utf8'),
+          revision,
+        )
+        return emit(true, 'AGENT_GUIDANCE_UPDATED', response.data ?? {})
+      }
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+    return emit(false, 'USAGE', { command: 'site guidance get|set' }, 10)
+  }
   if (args[0] === 'content' && args[1] === 'inspect') {
     const result = await archiveManifest(option('--archive'))
     if ('error' in result)
@@ -199,6 +241,7 @@ async function main() {
         20,
       )
     try {
+      const guidance = await api.getAgentGuidance(siteId)
       const media = {}
       for (const entry of archiveResult.archive.media) {
         const body = await readFile(
@@ -230,6 +273,7 @@ async function main() {
         idempotencyKey,
       )
       return emit(true, 'ARCHIVE_RESTORE_ACCEPTED', {
+        agentContext: guidance.data?.agentContext,
         operationId: response.data?.operation?.operationId,
         state: response.data?.operation,
       })
@@ -314,9 +358,11 @@ async function main() {
         20,
       )
     try {
+      const guidance = await api.getAgentGuidance(siteId)
       const response = await api.publish(siteId, key)
       const body = response.data
       return emit(true, 'OPERATION_ACCEPTED', {
+        agentContext: guidance.data?.agentContext,
         status: response.status,
         operationId: body?.jobId,
         state: body,
@@ -381,6 +427,8 @@ async function main() {
         'site list',
         'site create --site <id> --name <name> --canonical-origin <origin> --non-interactive',
         'site bootstrap --site <id> --non-interactive',
+        'site guidance get --site <id> --json',
+        'site guidance set --site <id> --file <path> --revision <n> --non-interactive --json',
         'status',
         'publish',
         'operation get',

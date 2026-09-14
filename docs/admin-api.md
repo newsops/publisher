@@ -89,26 +89,28 @@ equivalent operations.
 
 ## Endpoint and role summary
 
-| Method   | Path                                   | Minimum role | Purpose                                         |
-| -------- | -------------------------------------- | ------------ | ----------------------------------------------- |
-| `GET`    | `/api/v2/sites/{siteId}/posts`         | editor       | Paginated content list                          |
-| `POST`   | `/api/v2/sites/{siteId}/posts`         | editor       | Create a validated draft                        |
-| `GET`    | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Read one record and revision                    |
-| `PATCH`  | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Revision-safe update using `If-Match`           |
-| `DELETE` | `/api/v2/sites/{siteId}/posts/:id`     | editor       | Revision-safe deletion                          |
-| `GET`    | `/api/v2/sites/{siteId}/tags`          | editor       | List managed tags                               |
-| `POST`   | `/api/v2/sites/{siteId}/tags`          | editor       | Create a managed tag                            |
-| `GET`    | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Read a managed tag                              |
-| `PATCH`  | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Rename a tag with `If-Match`                    |
-| `DELETE` | `/api/v2/sites/{siteId}/tags/:slug`    | editor       | Archive a tag with `If-Match`                   |
-| `GET`    | `/api/v2/sites/{siteId}/settings`      | editor       | Read publication identity and canonical origin  |
-| `PATCH`  | `/api/v2/sites/{siteId}/settings`      | editor       | Update publication settings with `If-Match`     |
-| `GET`    | `/api/v2/sites/{siteId}/authors`       | editor       | List managed author profiles                    |
-| `POST`   | `/api/v2/sites/{siteId}/authors`       | editor       | Create an author with a stable slug             |
-| `GET`    | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Read one author and revision                    |
-| `PATCH`  | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Edit an author without changing its slug        |
-| `DELETE` | `/api/v2/sites/{siteId}/authors/:slug` | editor       | Archive an author with `If-Match`               |
-| `POST`   | `/api/v2/sites/{siteId}/publish`       | publisher    | Create a snapshot and enqueue an idempotent job |
+| Method   | Path                                    | Minimum role | Purpose                                         |
+| -------- | --------------------------------------- | ------------ | ----------------------------------------------- |
+| `GET`    | `/api/v2/sites/{siteId}/posts`          | editor       | Paginated content list                          |
+| `POST`   | `/api/v2/sites/{siteId}/posts`          | editor       | Create a validated draft                        |
+| `GET`    | `/api/v2/sites/{siteId}/posts/:id`      | editor       | Read one record and revision                    |
+| `PATCH`  | `/api/v2/sites/{siteId}/posts/:id`      | editor       | Revision-safe update using `If-Match`           |
+| `DELETE` | `/api/v2/sites/{siteId}/posts/:id`      | editor       | Revision-safe deletion                          |
+| `GET`    | `/api/v2/sites/{siteId}/tags`           | editor       | List managed tags                               |
+| `POST`   | `/api/v2/sites/{siteId}/tags`           | editor       | Create a managed tag                            |
+| `GET`    | `/api/v2/sites/{siteId}/tags/:slug`     | editor       | Read a managed tag                              |
+| `PATCH`  | `/api/v2/sites/{siteId}/tags/:slug`     | editor       | Rename a tag with `If-Match`                    |
+| `DELETE` | `/api/v2/sites/{siteId}/tags/:slug`     | editor       | Archive a tag with `If-Match`                   |
+| `GET`    | `/api/v2/sites/{siteId}/settings`       | editor       | Read publication identity and canonical origin  |
+| `PATCH`  | `/api/v2/sites/{siteId}/settings`       | editor       | Update publication settings with `If-Match`     |
+| `GET`    | `/api/v2/sites/{siteId}/agent-guidance` | editor       | Read private operator context for agents        |
+| `PATCH`  | `/api/v2/sites/{siteId}/agent-guidance` | editor       | Revision-safe private guidance update           |
+| `GET`    | `/api/v2/sites/{siteId}/authors`        | editor       | List managed author profiles                    |
+| `POST`   | `/api/v2/sites/{siteId}/authors`        | editor       | Create an author with a stable slug             |
+| `GET`    | `/api/v2/sites/{siteId}/authors/:slug`  | editor       | Read one author and revision                    |
+| `PATCH`  | `/api/v2/sites/{siteId}/authors/:slug`  | editor       | Edit an author without changing its slug        |
+| `DELETE` | `/api/v2/sites/{siteId}/authors/:slug`  | editor       | Archive an author with `If-Match`               |
+| `POST`   | `/api/v2/sites/{siteId}/publish`        | publisher    | Create a snapshot and enqueue an idempotent job |
 
 Article locale operations use the same editor key:
 

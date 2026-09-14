@@ -105,6 +105,21 @@ export function createPublisherAdminClient(options) {
     })
 
   /** @param {string} siteId */
+  const getAgentGuidance = (siteId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/agent-guidance`)
+
+  /** @param {string} siteId @param {string} instructions @param {number} revision */
+  const updateAgentGuidance = (siteId, instructions, revision) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/agent-guidance`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+        'if-match': `"${revision}"`,
+      },
+      body: JSON.stringify({ instructions }),
+    })
+
+  /** @param {string} siteId */
   const listPosts = (siteId) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/posts`)
 
@@ -223,6 +238,8 @@ export function createPublisherAdminClient(options) {
     archiveSite,
     getSettings,
     updateSettings,
+    getAgentGuidance,
+    updateAgentGuidance,
     listPosts,
     createPost,
     updatePost,

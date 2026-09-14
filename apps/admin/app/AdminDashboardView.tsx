@@ -8,6 +8,7 @@ import type {
   AdminTag,
   AdminPlugin,
   AdminMedia,
+  AdminAgentGuidance,
 } from './admin-model'
 import ManagementPanel from './ManagementPanel'
 import PostEditor from './PostEditor'
@@ -19,6 +20,7 @@ import PluginManagementPanel from './PluginManagementPanel'
 import AccountManagementPanel from './AccountManagementPanel'
 import MediaLibraryPanel from './MediaLibraryPanel'
 import PublicationManagementPanel from './PublicationManagementPanel'
+import AgentGuidancePanel from './AgentGuidancePanel'
 
 export interface DashboardState {
   posts: AdminPost[]
@@ -33,6 +35,7 @@ export interface DashboardState {
   message: string
   article?: AdminArticle
   activeLocale: string
+  guidance: AdminAgentGuidance
 }
 
 export interface DashboardActions {
@@ -72,6 +75,8 @@ export interface DashboardActions {
   uploadMedia: (file: File) => Promise<void>
   approveMedia: (media: AdminMedia) => Promise<void>
   setActiveLocale: Dispatch<SetStateAction<string>>
+  setGuidance: Dispatch<SetStateAction<AdminAgentGuidance>>
+  saveAgentGuidance: () => Promise<void>
   updateVariant: (
     field: keyof AdminArticleVariant,
     value: string | number,
@@ -206,6 +211,11 @@ export default function AdminDashboardView({
         settings={state.settings}
         setSettings={actions.setSettings}
         save={actions.saveSettings}
+      />
+      <AgentGuidancePanel
+        guidance={state.guidance}
+        setGuidance={actions.setGuidance}
+        save={actions.saveAgentGuidance}
       />
       <PublicationManagementPanel />
       <PluginManagementPanel

@@ -37,6 +37,12 @@ export interface PublisherAdminClient {
     input: unknown,
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
+  getAgentGuidance(siteId: string): Promise<PublisherApiReply<unknown>>
+  updateAgentGuidance(
+    siteId: string,
+    instructions: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
   listPosts(siteId: string): Promise<PublisherApiReply<unknown>>
   createPost(
     siteId: string,

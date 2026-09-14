@@ -29,6 +29,20 @@ publisher operation get <operation-id> --json
 publisher auth login --device --json
 ```
 
+## Per-publication guidance
+
+An operator can retain private editorial instructions for each publication.
+Agents retrieve this context before content restore and publish operations;
+it is planning input, never an authorization bypass or public content.
+
+```bash
+publisher site guidance get --site example --json
+publisher site guidance set --site example --file ./editorial-guidance.txt \
+  --revision 1 --non-interactive --json
+```
+
+Guidance is excluded from snapshots, static HTML, feeds, and search indexes.
+
 ## Archive recovery
 
 `content restore` is the agent-first recovery path for a private archive kept

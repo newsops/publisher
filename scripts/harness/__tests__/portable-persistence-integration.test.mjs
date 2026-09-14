@@ -318,6 +318,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
         '0002_local_accounts.sql',
         '0003_archive_restore_operations.sql',
         '0004_site_registry.sql',
+        '0005_site_agent_guidance.sql',
       ])
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual(
         [],

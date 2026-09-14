@@ -28,6 +28,8 @@ describe('Publisher Admin API client', () => {
       canonicalOrigin: 'https://another.example.test',
     })
     await client.bootstrapSite('another-site')
+    await client.getAgentGuidance('another-site')
+    await client.updateAgentGuidance('another-site', 'Require an image.', 2)
     await client.getOperation('default', 'operation/1')
     await client.publish('default', 'replay-key')
     await client.uploadMedia('default', {
@@ -47,6 +49,8 @@ describe('Publisher Admin API client', () => {
       'https://admin.example.test/api/v2/sites',
       'https://admin.example.test/api/v2/sites',
       'https://admin.example.test/api/v2/sites/another-site/bootstrap',
+      'https://admin.example.test/api/v2/sites/another-site/agent-guidance',
+      'https://admin.example.test/api/v2/sites/another-site/agent-guidance',
       'https://admin.example.test/api/v2/sites/default/operations/operation%2F1',
       'https://admin.example.test/api/v2/sites/default/publish',
       'https://admin.example.test/api/v2/sites/default/media',
@@ -57,9 +61,13 @@ describe('Publisher Admin API client', () => {
       'Bearer secret-token-sentinel',
     )
     expect(new Headers(calls[4].init?.headers).get('idempotency-key')).toBe(
+      null,
+    )
+    expect(new Headers(calls[4].init?.headers).get('if-match')).toBe('"2"')
+    expect(new Headers(calls[6].init?.headers).get('idempotency-key')).toBe(
       'replay-key',
     )
-    expect(new Headers(calls[7].init?.headers).get('idempotency-key')).toBe(
+    expect(new Headers(calls[9].init?.headers).get('idempotency-key')).toBe(
       'restore-key',
     )
   })

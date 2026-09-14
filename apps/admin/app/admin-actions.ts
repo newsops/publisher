@@ -8,6 +8,7 @@ import {
   type AdminTag,
   type AdminPlugin,
   type AdminMedia,
+  type AdminAgentGuidance,
 } from './admin-model'
 
 type Setter<Value> = Dispatch<SetStateAction<Value>>
@@ -62,6 +63,36 @@ export async function loadSettings(
   if (!response.ok) return
   const data = (await response.json()) as { settings: AdminSettings }
   setSettings(data.settings)
+}
+
+export async function loadAgentGuidance(
+  setGuidance: Setter<AdminAgentGuidance>,
+): Promise<void> {
+  const response = await adminFetch('/api/agent-guidance')
+  if (!response.ok) return
+  const data = (await response.json()) as { agentContext: AdminAgentGuidance }
+  setGuidance(data.agentContext)
+}
+
+export async function saveAgentGuidance(
+  guidance: AdminAgentGuidance,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  const response = await adminFetch('/api/agent-guidance', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'If-Match': String(guidance.revision),
+    },
+    body: JSON.stringify({ instructions: guidance.instructions }),
+  })
+  setMessage(
+    response.ok
+      ? '에이전트 운영 지침을 저장했습니다.'
+      : `지침 저장 실패 (${response.status}).`,
+  )
+  if (response.ok) await reload()
 }
 
 export async function loadPlugins(

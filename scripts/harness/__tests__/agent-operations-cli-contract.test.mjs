@@ -188,6 +188,20 @@ describe('agent operations CLI contract', () => {
     )
     await withServer(
       async (request, response) => {
+        if (request.method === 'GET') {
+          expect(request.url).toBe('/api/v2/sites/default/agent-guidance')
+          response.setHeader('content-type', 'application/json')
+          response.end(
+            JSON.stringify({
+              siteId: 'default',
+              agentContext: {
+                instructions: 'Use a representative image.',
+                revision: 1,
+              },
+            }),
+          )
+          return
+        }
         expect(request.method).toBe('POST')
         expect(request.url).toBe('/api/v2/sites/default/content-restore')
         expect(request.headers.authorization).toBe('Bearer test-token')
@@ -306,6 +320,17 @@ describe('agent operations CLI contract', () => {
     const jobs = new Map()
     await withServer(
       (request, response) => {
+        if (request.method === 'GET') {
+          expect(request.url).toBe('/api/v2/sites/default/agent-guidance')
+          response.setHeader('content-type', 'application/json')
+          response.end(
+            JSON.stringify({
+              siteId: 'default',
+              agentContext: { instructions: '', revision: 1 },
+            }),
+          )
+          return
+        }
         expect(request.method).toBe('POST')
         expect(request.url).toBe('/api/v2/sites/default/publish')
         expect(request.headers.authorization).toBe('Bearer test-token')

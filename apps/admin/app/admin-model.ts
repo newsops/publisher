@@ -74,6 +74,17 @@ export interface AdminSettings {
   revision: number
 }
 
+export interface AdminAgentGuidance {
+  instructions: string
+  revision: number
+  updatedAt?: string
+}
+
+export const emptyAgentGuidance: AdminAgentGuidance = {
+  instructions: '',
+  revision: 0,
+}
+
 export interface AdminPlugin {
   siteId: string
   pluginId: string
