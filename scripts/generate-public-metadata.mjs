@@ -24,8 +24,8 @@ const releaseId = (
   process.env.CONTENT_SNAPSHOT_ID ??
   'local'
 ).replace(/[^A-Za-z0-9._-]/g, '-')
-const versionedSearchIndexPath = `data/search-index.${releaseId}.json`
-const versionedRecentPath = `data/recent.${releaseId}.json`
+const versionedSearchIndexPath = `data/immutable/search-index.${releaseId}.json`
+const versionedRecentPath = `data/immutable/recent.${releaseId}.json`
 const siteUrl = publication.canonicalOrigin.replace(/\/$/, '')
 const posts = snapshot.posts
 const tags = Array.isArray(snapshot.tags) ? snapshot.tags : []

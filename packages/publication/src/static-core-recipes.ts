@@ -5,6 +5,11 @@ import {
   contentDigest,
 } from './static-policy'
 import type { PublicationInputs } from './static-types'
+import {
+  createStaticHostPolicyRecipe,
+  IMMUTABLE_CACHE_CONTROL,
+  REVALIDATE_CACHE_CONTROL,
+} from './static-host-policy'
 
 export interface BasePublicationGraph {
   readonly dependencies: Record<string, string>
@@ -16,9 +21,10 @@ export function createBasePublicationGraph(
   input: PublicationInputs,
 ): BasePublicationGraph {
   const baseline = `${input.baselineVersion}\u0000${input.baselineCss ?? DEFAULT_BASELINE_CSS}`
-  const baselinePath = `/theme-runtime/baseline.${contentDigest(baseline)}.css`
+  const baselinePath = `/theme-runtime/immutable/baseline.${contentDigest(baseline)}.css`
   const dependencies: Record<string, string> = {
     'headers:csp': BASELINE_CSP,
+    'headers:static-cache': 'static-cache-v1',
     'template:semantic': input.semanticVersion,
     'runtime:version': input.runtimeVersion,
     'theme:baseline': baseline,
@@ -40,12 +46,13 @@ export function createBasePublicationGraph(
           schemaVersion: 1,
           contentSecurityPolicy: read('headers:csp'),
           cache: {
-            html: 'public, max-age=60, s-maxage=300, stale-if-error=86400',
-            immutable: 'public, max-age=31536000, immutable',
-            runtime: 'public, max-age=300, must-revalidate',
+            html: REVALIDATE_CACHE_CONTROL,
+            immutable: IMMUTABLE_CACHE_CONTROL,
+            runtime: REVALIDATE_CACHE_CONTROL,
           },
         }),
     },
+    createStaticHostPolicyRecipe(),
     {
       path: baselinePath,
       kind: 'theme',
@@ -67,9 +74,12 @@ export function appendMediaRecipes(
   recipes: ArtifactRecipe[],
 ): void {
   for (const media of input.media ?? []) {
-    if (!media.publicPath.startsWith('/media/'))
+    const pathMatch = /^\/media\/([a-f0-9]{64})\.[A-Za-z0-9]+$/.exec(
+      media.publicPath,
+    )
+    if (!pathMatch || pathMatch[1] !== media.sha256)
       throw new Error(
-        `Media public path must start with /media/: ${media.publicPath}`,
+        `Media public path must be content-addressed: ${media.publicPath}`,
       )
     if (contentDigest(media.body) !== media.sha256)
       throw new Error(`Media checksum mismatch: ${media.id}`)

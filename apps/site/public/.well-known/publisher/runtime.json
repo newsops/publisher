@@ -3,9 +3,9 @@
   "theme": {
     "id": "editorial",
     "version": "1",
-    "css": "/theme-runtime/editorial.ba3bc8cc5449a1f067fec2500a31f17216ad65a5f5bd5eabc4db3462bcdd134d.css"
+    "css": "/theme-runtime/immutable/editorial.2e5507c38ac3cc3fd7026ac04bcbd54462e7d041f7b3fc1541b32c09b282b470.css"
   },
   "projections": {
-    "recent": "/data/recent.local.json"
+    "recent": "/data/immutable/recent.local.json"
   }
 }

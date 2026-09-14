@@ -11,7 +11,8 @@ export interface FeedPost {
 }
 
 const SEARCH_INDEX_URL =
-  process.env.NEXT_PUBLIC_SEARCH_INDEX_URL ?? '/data/search-index.local.json'
+  process.env.NEXT_PUBLIC_SEARCH_INDEX_URL ??
+  '/data/immutable/search-index.local.json'
 
 const MONTHS = [
   'Jan',

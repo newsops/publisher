@@ -19,7 +19,8 @@ describe('edge deployment contract', () => {
       'utf8',
     )
     expect(headers).toContain('immutable')
-    expect(headers).toContain('stale-if-error')
+    expect(headers).toContain('max-age=0, must-revalidate')
+    expect(headers).not.toContain('stale-if-error')
     expect(smoke).toContain('PUBLIC_SMOKE_URL')
     expect(smoke).toContain('ADMIN_SMOKE_URL')
     expect(smoke).toContain('ORIGIN_SMOKE_URL')

@@ -41,6 +41,35 @@ or runtime secret. It is not an alternative production publisher. Production
 content always follows the immutable snapshot, dependency graph, candidate
 verification, and atomic activation path described below.
 
+## Static presentation and CDN contract
+
+Generated HTML contains semantic content, SEO metadata, and stable same-origin
+references. It does not contain the visual theme itself. Every document loads
+the baseline and `/theme-runtime/current.css` as ordinary synchronous
+stylesheets, so the complete layout is present on first paint and still works
+with JavaScript disabled. JavaScript may progressively load comments or list
+projections, but it is not responsible for applying the page design.
+
+The publication release includes a conventional `/_headers` file. It assigns a
+one-year immutable browser lifetime only to content-addressed namespaces:
+
+- `/media/*`
+- `/theme-runtime/immutable/*`
+- `/data/immutable/*`
+
+HTML and stable pointers such as `/theme-runtime/current.css`, runtime
+manifests, comment pointers, and the search index use `max-age=0,
+must-revalidate`. A theme-only publication therefore replaces the stable theme
+pointer and creates a new hashed stylesheet without rebuilding article HTML.
+Never apply an immutable rule to all `/theme-runtime/*`, all `/data/*`, or HTML.
+
+This is a provider-neutral HTTP cache contract. A host that understands the
+static `_headers` convention can consume it directly; another host can map the
+same immutable and revalidation classes in its static adapter. On Cloudflare
+Pages, use the normal static deployment and its built-in CDN. No Worker, Pages
+Function, KV, Cache Rule, Cache Reserve, database proxy, or paid Cloudflare
+feature is required for this caching design.
+
 ## Provider-independent clean-room smoke
 
 Docker can verify the real PostgreSQL 16 and S3-compatible boundary without a

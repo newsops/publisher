@@ -133,7 +133,7 @@ a.category:hover {
 }
 
 .comments h2 {
-  margin-beditorm: 16px;
+  margin-bottom: 16px;
   font-size: 24px;
 }
 
@@ -191,7 +191,7 @@ a.category:hover {
 /* ------------------------------------------------------------- masthead */
 
 .topbar {
-  border-beditorm: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .topbar-inner {
@@ -238,7 +238,7 @@ a.category:hover {
 
 .section-nav {
   border-top: 2px solid var(--ink);
-  border-beditorm: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .section-nav-inner {
@@ -334,7 +334,7 @@ a.category:hover {
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-beditorm: 20px;
+  margin-bottom: 20px;
 }
 
 .section-heading h1,
@@ -344,8 +344,8 @@ a.category:hover {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border-beditorm: 3px solid var(--accent);
-  padding-beditorm: 6px;
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 6px;
 }
 
 .section-heading a {
@@ -425,13 +425,13 @@ a.category:hover {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 220px;
   gap: 24px;
-  padding-beditorm: 28px;
-  border-beditorm: 1px solid var(--rule);
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--rule);
 }
 
 .post-list[data-variant='list'] .post-card:last-of-type {
-  border-beditorm: 0;
-  padding-beditorm: 0;
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 
 .post-list[data-variant='list'] .post-image {
@@ -513,9 +513,9 @@ a.category:hover {
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  border-beditorm: 2px solid var(--ink);
-  padding-beditorm: 8px;
-  margin-beditorm: 4px;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .sidebar ul {
@@ -531,11 +531,11 @@ a.category:hover {
   flex-direction: column;
   gap: 6px;
   padding: 15px 0;
-  border-beditorm: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .rail-list li:last-child {
-  border-beditorm: 0;
+  border-bottom: 0;
 }
 
 .rail-list a {
@@ -553,11 +553,11 @@ a.category:hover {
 }
 
 .archive-list li {
-  border-beditorm: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .archive-list li:last-child {
-  border-beditorm: 0;
+  border-bottom: 0;
 }
 
 .archive-list a {
@@ -681,7 +681,7 @@ button[type='submit']:hover {
   gap: 10px;
   padding: 16px 0;
   border-top: 1px solid var(--rule);
-  border-beditorm: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
   font-family: var(--sans);
   font-size: 12px;
   color: var(--meta);
@@ -808,7 +808,7 @@ button[type='submit']:hover {
 
 .post-body label {
   display: block;
-  margin-beditorm: 10px;
+  margin-bottom: 10px;
   font-family: var(--sans);
   font-size: 11px;
   font-weight: 600;

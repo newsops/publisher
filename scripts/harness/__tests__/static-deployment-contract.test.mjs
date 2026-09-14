@@ -50,6 +50,16 @@ describe('static deployment contract', () => {
     expect(html).toContain('/author/example-editor/')
   })
 
+  it('loads presentation synchronously and leaves scripts to data enhancement', () => {
+    const html = readOutput('index.html')
+    expect(html).toContain('href="/theme-runtime/current.css"')
+    expect(html).toContain('src="/site-runtime/projection-bootstrap.v1.js"')
+    expect(html).not.toContain('theme-bootstrap.v1.js')
+    expect(fs.existsSync(path.join(output, 'theme-runtime/immutable'))).toBe(
+      true,
+    )
+  })
+
   it("renders the honest editor's picks label without popularity claims", () => {
     const html = readOutput('index.html')
     expect(html).toMatch(/Editor(?:'|&#x27;)s picks/)
@@ -68,13 +78,17 @@ describe('static deployment contract', () => {
     expect(searchIndex[0]).toHaveProperty('authorSlug', 'example-editor')
   })
 
-  it('defines immutable asset and bounded document cache policies', () => {
+  it('keeps immutable assets separate from revalidated stable routes', () => {
     const headers = fs.readFileSync(
       path.join(root, 'apps/site/public/_headers'),
       'utf8',
     )
-    expect(headers).toContain('immutable')
-    expect(headers).toContain('stale-if-error')
-    expect(headers).toContain('/*.html')
+    expect(headers).toContain('/theme-runtime/immutable/*')
+    expect(headers).toContain('/data/immutable/*')
+    expect(headers).toContain('/theme-runtime/current.css')
+    expect(headers).toContain('max-age=0, must-revalidate')
+    expect(headers).not.toContain('/theme-runtime/*')
+    expect(headers).not.toContain('/data/*\n')
+    expect(headers).not.toContain('/*.html')
   })
 })

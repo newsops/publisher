@@ -66,6 +66,8 @@ export function assertCompletePublicationGraph(
     ...(input.media ?? []).map((media) => media.publicPath),
     ...indexPaths,
     '/feed.xml',
+    '/_headers',
+    '/theme-runtime/current.css',
     '/.well-known/publisher/release-policy.json',
   ]
   for (const expectedPath of new Set(expected))

@@ -5,6 +5,11 @@ import {
   renderFeedXml,
   renderProjectionPage,
 } from './static-renderers'
+import {
+  editorialShellDependency,
+  indexPageDependency,
+  projectionPayload,
+} from './static-index-data'
 import type {
   ArticleDocument,
   PublicationInputs,
@@ -29,26 +34,6 @@ interface IndexContext {
 
 function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex')
-}
-
-function projectionPayload(
-  projection: PublicationProjection,
-  articles: ReadonlyMap<string, ArticleDocument>,
-) {
-  return {
-    ...projection,
-    items: projection.slugs
-      .map((slug) => articles.get(slug))
-      .filter((article): article is ArticleDocument => Boolean(article))
-      .map(({ slug, path, title, description, publishedAt, updatedAt }) => ({
-        slug,
-        path,
-        title,
-        description,
-        publishedAt,
-        updatedAt,
-      })),
-  }
 }
 
 function grouped(
@@ -83,13 +68,7 @@ function addPage(
   pageArticles: readonly ArticleDocument[],
 ): void {
   const key = `index:${route}`
-  context.dependencies[key] = JSON.stringify(
-    pageArticles.map(({ slug, path, title: itemTitle }) => ({
-      slug,
-      path,
-      title: itemTitle,
-    })),
-  )
+  context.dependencies[key] = indexPageDependency(title, pageArticles)
   context.recipes.push({
     path: route,
     kind: 'index-html',
@@ -97,12 +76,14 @@ function addPage(
     cacheClass: 'html',
     dependencyKeys: [
       key,
+      'index:editorial-shell',
       'template:semantic',
       'theme:baseline',
       'site:identity',
     ],
     render: (read) => {
       read(key)
+      read('index:editorial-shell')
       read('template:semantic')
       read('theme:baseline')
       read('site:identity')
@@ -137,7 +118,7 @@ function addProjection(
     projectionPayload(projection, context.articles),
   )
   context.dependencies[key] = payload
-  const dataPath = `/data/${name}.${digest(payload)}.json`
+  const dataPath = `/data/immutable/${name}.${digest(payload)}.json`
   context.recipes.push({
     path: dataPath,
     kind: 'projection',
@@ -260,6 +241,8 @@ export function createStaticIndexRecipes(
     dependencies: {},
     recipes: [],
   }
+  context.dependencies['index:editorial-shell'] =
+    editorialShellDependency(input)
   const recentArticles = projectionArticles(input.recent, context.articles)
   addPage(context, '/', input.publicationName, recentArticles)
   addPage(context, '/recent/', 'Recent stories', recentArticles)
@@ -276,6 +259,7 @@ export function createStaticIndexRecipes(
   }
   addGroupedPages(context)
   addSearchArtifacts(context)
+  addPage(context, '/404.html', 'Page not found', [])
   addFeed(context)
   addSitemap(context)
   return {
@@ -285,6 +269,7 @@ export function createStaticIndexRecipes(
     popularDataPath,
     requiredPaths: [
       ...staticIndexPaths(input),
+      '/404.html',
       '/search-index.json',
       '/sitemap.xml',
     ],

@@ -87,7 +87,7 @@ describe('WEB-008 1,000-article invalidation regression', () => {
     )
     expect(themed.metrics.renderedByKind['article-html']).toBe(0)
     expect(themed.metrics.uploadedByKind['article-html']).toBe(0)
-    expect(themed.metrics.renderedByKind.theme).toBe(1)
+    expect(themed.metrics.renderedByKind.theme).toBe(2)
     expect(themed.metrics.renderedByKind.runtime).toBe(1)
     expect(
       themed.manifest.entries
