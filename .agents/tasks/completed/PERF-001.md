@@ -31,9 +31,12 @@ runtime feature.
   complete 175-test suite, build, typecheck, lint, and harness scan pass.
 - Production-snapshot browser checks pass at 1440px and 390px, including home
   and article loads with JavaScript disabled and synchronous `current.css`.
-- Cloudflare Pages deployment `83b4aa27` is active on the custom domain. Hashed
-  theme and media requests changed from `MISS` to `HIT`; stable theme CSS
-  changed from `MISS` to `REVALIDATED` with the expected cache directives.
+- Cloudflare Pages deployment `83b4aa27` was the gate-verification activation.
+  Hashed theme and media requests changed from `MISS` to `HIT`; stable theme
+  CSS changed from `MISS` to `REVALIDATED` with the expected cache directives.
+- Final production deployment `395e84a0` is attached to merged `main` commit
+  `3b07a00`; the same repeated header checks and browser checks passed on the
+  custom domain after activation.
 
 ## Decisions
 
