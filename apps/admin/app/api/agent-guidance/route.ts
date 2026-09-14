@@ -57,9 +57,8 @@ export async function PATCH(request: Request): Promise<Response> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Unable to save agent guidance'
-    return Response.json(
-      { error: message },
-      { status: message.startsWith('Agent guidance changed') ? 409 : 400 },
-    )
+    if (message.startsWith('Agent guidance changed'))
+      return Response.json({ error: message }, { status: 409 })
+    return authErrorResponse(error)
   }
 }
