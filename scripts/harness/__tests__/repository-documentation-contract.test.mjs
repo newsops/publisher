@@ -61,6 +61,15 @@ describe('repository handoff documentation contract', () => {
     )
   })
 
+  it('rejects malformed CSS left by over-broad identity replacement', () => {
+    const cssSources = [
+      read('apps/site/app/styles.css'),
+      read('packages/publication/src/static-policy.ts'),
+      read('packages/content/src/data/theme-presentation.json'),
+    ].join('\n')
+    expect(cssSources).not.toContain('beditorm')
+  })
+
   it('documents automation setup without tracking a real secret', () => {
     const content = [read('README.md'), read('docs/admin-api.md')].join('\n')
     for (const required of [

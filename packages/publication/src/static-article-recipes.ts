@@ -5,10 +5,12 @@ import { renderArticleHtml } from './static-renderers'
 import type { ArticleDocument, PublicationInputs } from './static-types'
 
 function projectionPaths(slug: string, payload: string) {
-  const prefix = `/data/comments/${encodeURIComponent(slug)}`
+  const encodedSlug = encodeURIComponent(slug)
   return {
-    pointer: `${prefix}.json`,
-    projection: `${prefix}.${contentDigest(payload)}.json`,
+    pointer: `/data/comments/${encodedSlug}.json`,
+    projection:
+      `/data/immutable/comments/${encodedSlug}.` +
+      `${contentDigest(payload)}.json`,
   }
 }
 

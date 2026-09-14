@@ -110,6 +110,15 @@ function replaceArtifact(store, manifest, artifactPath, body) {
   return { ...changed, sha256: manifestChecksum(changed) }
 }
 
+function removeArtifact(manifest, artifactPath) {
+  const { sha256: _checksum, ...payload } = manifest
+  const changed = {
+    ...payload,
+    entries: manifest.entries.filter((entry) => entry.path !== artifactPath),
+  }
+  return { ...changed, sha256: manifestChecksum(changed) }
+}
+
 describe('WEB-008 incremental publication contract', () => {
   it('deduplicates build jobs before a worker is claimed', async () => {
     const jobs = new InMemoryBuildJobRepository()
@@ -261,7 +270,7 @@ describe('WEB-008 incremental publication contract', () => {
     const theme = graph.recipes.find(
       (recipe) =>
         recipe.kind === 'theme' &&
-        recipe.path.startsWith('/theme-runtime/editorial.'),
+        recipe.path.startsWith('/theme-runtime/immutable/editorial.'),
     )
     expect(theme).toBeDefined()
     const css = theme.render((key) => graph.dependencies[key])
@@ -269,16 +278,179 @@ describe('WEB-008 incremental publication contract', () => {
     expect(css).toMatch(/header\s*\{/)
     expect(css).toMatch(/main\s*\{/)
     expect(css).toMatch(/article\s*\{/)
-    expect(css).toMatch(/@media\s*\(max-width:\s*600px\)/)
+    for (const selector of [
+      '.main-header',
+      '.lead-title',
+      ".post-list[data-variant='grid']",
+      '.editorial-rail',
+      '.post-body',
+      '.comments',
+      '.site-footer',
+    ])
+      expect(css).toContain(selector)
+    expect(css).toMatch(/@media\s*\(max-width:\s*760px\)/)
+    expect(css).toMatch(/@media\s*\(max-width:\s*520px\)/)
     const article = graph.recipes.find(
       (recipe) => recipe.kind === 'article-html',
     )
     expect(article?.dependencyKeys).not.toContain('theme:editorial:1')
+    const currentTheme = graph.recipes.find(
+      (recipe) => recipe.path === '/theme-runtime/current.css',
+    )
+    expect(currentTheme).toMatchObject({
+      kind: 'theme',
+      cacheClass: 'runtime-pointer',
+    })
+    expect(currentTheme.render((key) => graph.dependencies[key])).toBe(css)
   })
 
-  it('renders crawlable semantic article content and metadata without JavaScript', async () => {
+  it('emits a portable cache policy without broad immutable rules', () => {
+    const graph = createPublicationRecipes(inputs())
+    const headers = graph.recipes.find((recipe) => recipe.path === '/_headers')
+    expect(headers).toMatchObject({
+      kind: 'metadata',
+      contentType: 'text/plain; charset=utf-8',
+    })
+    const policy = headers.render((key) => graph.dependencies[key])
+    for (const path of [
+      '/media/*',
+      '/theme-runtime/immutable/*',
+      '/data/immutable/*',
+    ])
+      expect(policy).toContain(
+        `${path}\n  Cache-Control: public, max-age=31536000, immutable`,
+      )
+    for (const path of [
+      '/theme-runtime/current.css',
+      '/.well-known/publisher/*',
+      '/data/comments/*',
+      '/search-index.json',
+      '/site-runtime/*',
+    ])
+      expect(policy).toContain(
+        `${path}\n  Cache-Control: public, max-age=0, must-revalidate`,
+      )
+    expect(policy).not.toMatch(/\n\/theme-runtime\/\*\n[\s\S]*immutable/)
+    expect(policy).not.toMatch(/\n\/data\/\*\n[\s\S]*immutable/)
+    expect(policy).not.toMatch(/\n\/\*\n\s+Cache-Control:/)
+  })
+
+  it('uses hash-shaped immutable namespaces behind stable runtime pointers', () => {
+    const graph = createPublicationRecipes(
+      inputs({
+        popular: {
+          generatedAt: '2026-09-11T00:00:00.000Z',
+          slugs: ['article-0002', 'article-0001'],
+          source: 'editorial',
+          window: '7d',
+          policyApproved: true,
+        },
+      }),
+    )
+    const paths = graph.recipes.map((recipe) => recipe.path)
+    expect(paths).toContain('/theme-runtime/current.css')
+    expect(paths).toContain('/search-index.json')
+    expect(paths).toContain('/_headers')
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(
+          /^\/theme-runtime\/immutable\/baseline\.[a-f0-9]{64}\.css$/,
+        ),
+        expect.stringMatching(
+          /^\/theme-runtime\/immutable\/editorial\.[a-f0-9]{64}\.css$/,
+        ),
+        expect.stringMatching(
+          /^\/data\/immutable\/recent\.[a-f0-9]{64}\.json$/,
+        ),
+        expect.stringMatching(
+          /^\/data\/immutable\/popular\.[a-f0-9]{64}\.json$/,
+        ),
+      ]),
+    )
+  })
+
+  it('renders the complete editorial home shell with a lead, feed, rail, and footer', async () => {
+    const body = new TextEncoder().encode('editorial image fixture')
+    const sha256 = createHash('sha256').update(body).digest('hex')
+    const mediaPath = `/media/${sha256}.webp`
+    const base = inputs()
+    const articles = base.articles.map((article, index) =>
+      index < 3
+        ? {
+            ...article,
+            imageUrl: mediaPath,
+            imageAlt: 'Editorial fixture illustration',
+          }
+        : article,
+    )
+    const values = inputs({
+      articles,
+      media: [
+        {
+          id: 'editorial-media',
+          publicPath: mediaPath,
+          sha256,
+          mimeType: 'image/webp',
+          body,
+        },
+      ],
+    })
     const store = new MemoryArtifactStore()
-    const result = await build(store, 'release-seo', inputs())
+    const result = await build(store, 'editorial-home', values)
+    const home = result.manifest.entries.find((entry) => entry.path === '/')
+    const html = new TextDecoder().decode(
+      store.objects.get(home.objectKey).body,
+    )
+    for (const expected of [
+      'class="topbar"',
+      'class="brand"',
+      'aria-label="Essential navigation"',
+      'class="lead"',
+      'class="lead-title"',
+      'class="lead-figure"',
+      'class="post-list" data-variant="grid"',
+      '<h2>Latest stories</h2>',
+      'class="sidebar editorial-rail"',
+      '<h2>Archive</h2>',
+      '<h2>Sections</h2>',
+      'class="site-footer"',
+    ])
+      expect(html).toContain(expected)
+    expect(html).toContain('Description 0001')
+    expect(html).toContain(`src="${mediaPath}"`)
+  })
+
+  it('renders crawlable editorial article content and metadata without JavaScript', async () => {
+    const body = new TextEncoder().encode('article hero fixture')
+    const sha256 = createHash('sha256').update(body).digest('hex')
+    const mediaPath = `/media/${sha256}.webp`
+    const base = inputs()
+    const articles = base.articles.map((article, index) =>
+      index === 0
+        ? {
+            ...article,
+            imageUrl: mediaPath,
+            imageAlt: 'Article hero fixture',
+          }
+        : article,
+    )
+    const store = new MemoryArtifactStore()
+    const result = await build(
+      store,
+      'release-seo',
+      inputs({
+        articles,
+        media: [
+          {
+            id: 'article-hero',
+            publicPath: mediaPath,
+            sha256,
+            mimeType: 'image/webp',
+            body,
+          },
+        ],
+      }),
+    )
     const entry = result.manifest.entries.find(
       (candidate) => candidate.kind === 'article-html',
     )
@@ -294,19 +466,85 @@ describe('WEB-008 incremental publication contract', () => {
     expect(html).toContain('property="og:description"')
     expect(html).toContain('data-updated')
     expect(html).toContain('aria-label="Essential navigation"')
+    expect(html).toContain('class="article-head"')
+    expect(html).toContain('class="byline"')
+    expect(html).toContain('class="article-figure"')
+    expect(html).toContain('alt="Article hero fixture"')
+    expect(html).toContain('class="prose"')
+    expect(html).toContain('class="article-tags"')
+    expect(html).toContain('class="comments"')
+    expect(html).toContain('class="site-footer"')
     expect(html).toContain('Read recent stories')
-    expect(html).toContain('/site-runtime/theme-bootstrap.v1.js')
+    expect(html).toContain(
+      '<link rel="stylesheet" href="/theme-runtime/current.css">',
+    )
+    expect(html).not.toContain('/site-runtime/theme-bootstrap.v1.js')
     expect(html).not.toContain('theme:editorial')
     const baseline = result.manifest.entries.find((candidate) =>
-      candidate.path.startsWith('/theme-runtime/baseline.'),
+      candidate.path.startsWith('/theme-runtime/immutable/baseline.'),
     )
     expect(baseline).toMatchObject({ kind: 'theme' })
     expect(store.objects.has(baseline.objectKey)).toBe(true)
     expect(
       result.manifest.entries.find(
-        (candidate) => candidate.path === '/site-runtime/theme-bootstrap.v1.js',
+        (candidate) => candidate.path === '/theme-runtime/current.css',
       ),
-    ).toMatchObject({ kind: 'runtime', cacheClass: 'runtime-pointer' })
+    ).toMatchObject({ kind: 'theme', cacheClass: 'runtime-pointer' })
+  })
+
+  it('updates synchronous theme CSS without rebuilding article HTML', async () => {
+    const store = new MemoryArtifactStore()
+    const first = await build(store, 'theme-before', inputs())
+    const second = await build(
+      store,
+      'theme-after',
+      inputs({
+        theme: {
+          id: 'editorial',
+          version: '2',
+          css: ':root{--paper:#f7f4ee;--ink:#101010}',
+        },
+      }),
+      first.manifest,
+    )
+    const article = second.manifest.entries.find(
+      (entry) => entry.kind === 'article-html',
+    )
+    const currentTheme = second.manifest.entries.find(
+      (entry) => entry.path === '/theme-runtime/current.css',
+    )
+    const immutableTheme = second.manifest.entries.find((entry) =>
+      entry.path.startsWith('/theme-runtime/immutable/editorial.'),
+    )
+    expect(article.sourceReleaseId).toBe('theme-before')
+    expect(currentTheme.sourceReleaseId).toBe('theme-after')
+    expect(immutableTheme.sourceReleaseId).toBe('theme-after')
+    expect(
+      new TextDecoder().decode(store.objects.get(currentTheme.objectKey).body),
+    ).toContain('--paper:#f7f4ee')
+  })
+
+  it('rebuilds editorial indexes when visible story-card data changes', async () => {
+    const store = new MemoryArtifactStore()
+    const original = inputs()
+    const first = await build(store, 'story-card-before', original)
+    const articles = original.articles.map((article, index) =>
+      index === 0
+        ? { ...article, description: 'Updated visible deck' }
+        : article,
+    )
+    const second = await build(
+      store,
+      'story-card-after',
+      inputs({ articles }),
+      first.manifest,
+    )
+    const home = second.manifest.entries.find((entry) => entry.path === '/')
+    const html = new TextDecoder().decode(
+      store.objects.get(home.objectKey).body,
+    )
+    expect(html).toContain('Updated visible deck')
+    expect(home.sourceReleaseId).toBe('story-card-after')
   })
 
   it('generates every article-derived index, search, feed, and sitemap route', async () => {
@@ -316,6 +554,7 @@ describe('WEB-008 incremental publication contract', () => {
     expect(paths).toEqual(
       expect.arrayContaining([
         '/',
+        '/404.html',
         '/recent/',
         '/search/',
         '/search-index.json',
@@ -340,17 +579,27 @@ describe('WEB-008 incremental publication contract', () => {
     expect(
       new TextDecoder().decode(store.objects.get(feed.objectKey).body),
     ).toContain('<title>Article 0001</title>')
+    const notFound = result.manifest.entries.find(
+      (entry) => entry.path === '/404.html',
+    )
+    const notFoundHtml = new TextDecoder().decode(
+      store.objects.get(notFound.objectKey).body,
+    )
+    expect(notFoundHtml).toContain('<h1>Page not found</h1>')
+    expect(notFoundHtml).toContain('content="noindex,follow"')
+    expect(notFoundHtml).toContain('class="site-footer"')
   })
 
   it('requires article images to be materialized with alternative text', async () => {
     const body = new TextEncoder().encode('verified image fixture')
     const sha256 = createHash('sha256').update(body).digest('hex')
+    const mediaPath = `/media/${sha256}.webp`
     const base = inputs()
     const articles = base.articles.map((article, index) =>
       index === 0
         ? {
             ...article,
-            imageUrl: '/media/verified.webp',
+            imageUrl: mediaPath,
             imageAlt: 'Verified fixture illustration',
           }
         : article,
@@ -358,12 +607,28 @@ describe('WEB-008 incremental publication contract', () => {
     expect(() => createPublicationRecipes(inputs({ articles }))).toThrow(
       'outside the release',
     )
+    expect(() =>
+      createPublicationRecipes(
+        inputs({
+          articles,
+          media: [
+            {
+              id: 'mutable-media-path',
+              publicPath: '/media/verified.webp',
+              sha256,
+              mimeType: 'image/webp',
+              body,
+            },
+          ],
+        }),
+      ),
+    ).toThrow('content-addressed')
     const values = inputs({
       articles,
       media: [
         {
           id: 'verified-media',
-          publicPath: '/media/verified.webp',
+          publicPath: mediaPath,
           sha256,
           mimeType: 'image/webp',
           body,
@@ -588,7 +853,7 @@ describe('WEB-008 incremental publication contract', () => {
       cacheClass: 'immutable',
     })
     expect(pointerBody.projection).toMatch(
-      /^\/data\/comments\/article-0001\.[a-f0-9]{64}\.json$/,
+      /^\/data\/immutable\/comments\/article-0001\.[a-f0-9]{64}\.json$/,
     )
     expect(
       JSON.parse(
@@ -829,6 +1094,19 @@ describe('WEB-008 incremental publication contract', () => {
     await expect(verifyPublicationCandidate(policy, store)).rejects.toThrow(
       'baseline CSP',
     )
+
+    await expect(
+      verifyPublicationCandidate(
+        removeArtifact(result.manifest, '/_headers'),
+        store,
+      ),
+    ).rejects.toThrow('static-host policy')
+    await expect(
+      verifyPublicationCandidate(
+        removeArtifact(result.manifest, '/theme-runtime/current.css'),
+        store,
+      ),
+    ).rejects.toThrow('missing local artifact')
 
     const runtimeEntry = result.manifest.entries.find(
       (entry) => entry.path === '/.well-known/publisher/runtime.json',

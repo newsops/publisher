@@ -45,8 +45,9 @@ describe('provider-neutral release contract', () => {
       .map((file) => fs.readFileSync(path.join(root, file), 'utf8'))
       .join('\n')
     expect(headers).not.toContain('stale-while-revalidate')
-    expect(headers).toContain('/data/*')
-    expect(metadata).toContain('data/search-index.${releaseId}.json')
+    expect(headers).toContain('/data/immutable/*')
+    expect(headers).not.toContain('/data/*\n')
+    expect(metadata).toContain('data/immutable/search-index.${releaseId}.json')
     expect(worker).toContain(
       'manifests/${manifest.siteId}/${manifest.releaseId}.json',
     )

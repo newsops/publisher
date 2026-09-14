@@ -3,6 +3,7 @@ import { manifestChecksum, type ReleaseManifest } from './release-manifest'
 import type { ReadableArtifactStore } from './static-deployment'
 import { BASELINE_CSP } from './static-policy'
 import { extractLocalArtifactReferences } from './html-references'
+import { STATIC_HOST_HEADERS } from './static-host-policy'
 
 function sha256(value: Uint8Array): string {
   return createHash('sha256').update(value).digest('hex')
@@ -67,9 +68,16 @@ function mustReadEntry(
   return (
     path === '/.well-known/publisher/release-policy.json' ||
     path === '/.well-known/publisher/runtime.json' ||
+    path === '/_headers' ||
     (path.startsWith('/data/comments/') &&
       entry.cacheClass === 'runtime-pointer')
   )
+}
+
+function verifyStaticHostPolicy(bodies: ReadonlyMap<string, Uint8Array>): void {
+  const body = bodies.get('/_headers')
+  if (!body || text(body) !== STATIC_HOST_HEADERS)
+    throw new Error('Candidate static-host policy is missing or invalid')
 }
 
 async function readVerifiedBodies(
@@ -176,7 +184,7 @@ function verifyCommentPointers(
     if (
       pointer.schemaVersion !== 1 ||
       !safeLocalPath(pointer.projection) ||
-      !pointer.projection.startsWith('/data/comments/') ||
+      !pointer.projection.startsWith('/data/immutable/comments/') ||
       !paths.has(pointer.projection)
     )
       throw new Error('Candidate comment pointer is invalid')
@@ -201,10 +209,16 @@ export async function verifyPublicationCandidate(
   if (paths.size !== manifest.entries.length)
     throw new Error('Candidate manifest contains duplicate paths')
   const bodies = await readVerifiedBodies(manifest, store, previous, paths)
+  verifyStaticHostPolicy(bodies)
   verifyReleasePolicy(bodies)
   verifyRuntimeManifest(bodies, paths)
   verifyCommentPointers(manifest, bodies, paths)
-  for (const required of ['/sitemap.xml', '/feed.xml'])
+  for (const required of [
+    '/sitemap.xml',
+    '/feed.xml',
+    '/_headers',
+    '/theme-runtime/current.css',
+  ])
     if (!paths.has(required))
       throw new Error(`Candidate metadata artifact is missing: ${required}`)
 }

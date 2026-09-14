@@ -34,7 +34,8 @@ export default function RootLayout({
     <html lang={publication.language}>
       <head>
         <PluginHeadContributions contributions={pluginContributions} />
-        <script src="/site-runtime/theme-bootstrap.v1.js" defer />
+        <link rel="stylesheet" href="/theme-runtime/current.css" />
+        <script src="/site-runtime/projection-bootstrap.v1.js" defer />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
         <link
           rel="alternate"
