@@ -11,7 +11,7 @@ import {
   validatePluginInstallation,
 } from '@publisher/content'
 import { PostgresPluginRepository } from './postgres-plugin-repository'
-import { assertKnownSite } from './site-catalog'
+import { assertSiteId } from './site-registry'
 
 export interface PluginInstallationView {
   readonly siteId: string
@@ -143,7 +143,7 @@ export class FilePluginRepository implements PluginRepository {
       path.join(process.cwd(), '.data/admin'),
     siteId = 'default',
   ) {
-    assertKnownSite(siteId)
+    assertSiteId(siteId)
     this.siteId = siteId
     this.filePath =
       siteId === 'default'
@@ -265,7 +265,7 @@ export class FilePluginRepository implements PluginRepository {
 }
 
 export function getPluginRepositoryForSite(siteId: string): PluginRepository {
-  assertKnownSite(siteId)
+  assertSiteId(siteId)
   if (
     shouldUseIsolatedPluginRepository() ||
     (process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL)

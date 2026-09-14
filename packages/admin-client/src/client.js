@@ -61,19 +61,36 @@ export function createPublisherAdminClient(options) {
     }
   }
 
-  const getStatus = () => request('/api/v1/posts?limit=1')
+  const listSites = () => request('/api/v2/sites')
 
-  /** @param {string} id */
-  const getOperation = (id) =>
-    request(`/api/v1/operations/${encodeURIComponent(id)}`)
+  /** @param {{ siteId: string, name: string, canonicalOrigin: string, themeId?: string }} input */
+  const createSite = (input) =>
+    request('/api/v2/sites', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    })
 
-  /** @param {string} idempotencyKey */
-  const publish = (idempotencyKey) =>
-    request('/api/v1/publish', {
+  /** @param {string} siteId */
+  const bootstrapSite = (siteId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/bootstrap`, {
+      method: 'POST',
+    })
+
+  /** @param {string} siteId @param {string} id */
+  const getOperation = (siteId, id) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/operations/${encodeURIComponent(id)}`,
+    )
+
+  /** @param {string} siteId @param {string} idempotencyKey */
+  const publish = (siteId, idempotencyKey) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/publish`, {
       method: 'POST',
       headers: { 'idempotency-key': idempotencyKey },
     })
 
+  /** @param {string} id */
   /**
    * @param {string} siteId
    * @param {{ fileName: string, mimeType: string, sha256: string, body: Uint8Array }} input
@@ -112,7 +129,9 @@ export function createPublisherAdminClient(options) {
     })
 
   return Object.freeze({
-    getStatus,
+    listSites,
+    createSite,
+    bootstrapSite,
     getOperation,
     publish,
     uploadMedia,

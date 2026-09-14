@@ -28,7 +28,7 @@ import {
   validatedSettings,
   validatedTag,
 } from './repository-validation'
-import { assertKnownSite } from './site-catalog'
+import { assertSiteId } from './site-registry'
 import {
   loadPostgresSiteState,
   publishPostgresContent,
@@ -44,7 +44,7 @@ export class PostgresContentRepository implements ContentRepository {
       process.env.DATABASE_URL ?? '',
     ),
   ) {
-    assertKnownSite(siteId)
+    assertSiteId(siteId)
     this.siteId = siteId
   }
 

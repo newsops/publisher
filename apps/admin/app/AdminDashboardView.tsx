@@ -18,6 +18,7 @@ import SiteSelector from './SiteSelector'
 import PluginManagementPanel from './PluginManagementPanel'
 import AccountManagementPanel from './AccountManagementPanel'
 import MediaLibraryPanel from './MediaLibraryPanel'
+import PublicationManagementPanel from './PublicationManagementPanel'
 
 export interface DashboardState {
   posts: AdminPost[]
@@ -206,6 +207,7 @@ export default function AdminDashboardView({
         setSettings={actions.setSettings}
         save={actions.saveSettings}
       />
+      <PublicationManagementPanel />
       <PluginManagementPanel
         plugins={state.plugins}
         configure={actions.configurePlugin}

@@ -1,10 +1,10 @@
 import { AdminAuthError, type AdminIdentity } from './auth'
 import { getRepositoryForSite } from './repository'
 import { getPluginRepositoryForSite } from './plugin-repository'
-import { DEFAULT_SITE_ID, getSiteCatalog, isSiteAdmin } from './site-catalog'
+import { assertSiteId } from './site-registry'
 
 export function requestedSiteId(request: Request): string {
-  return request.headers.get('x-admin-site-id')?.trim() || DEFAULT_SITE_ID
+  return request.headers.get('x-admin-site-id')?.trim() || 'default'
 }
 
 export function repositoryForRequest(
@@ -12,8 +12,8 @@ export function repositoryForRequest(
   identity: AdminIdentity,
 ) {
   const siteId = requestedSiteId(request)
-  const site = getSiteCatalog().require(siteId)
-  if (!identity.roles.includes('owner') && !isSiteAdmin(identity.email, site))
+  assertSiteId(siteId)
+  if (!identity.roles.includes('owner'))
     throw new AdminAuthError('Not authorized for this site', 403)
   return getRepositoryForSite(siteId)
 }
@@ -23,8 +23,8 @@ export function pluginRepositoryForRequest(
   identity: AdminIdentity,
 ) {
   const siteId = requestedSiteId(request)
-  const site = getSiteCatalog().require(siteId)
-  if (!identity.roles.includes('owner') && !isSiteAdmin(identity.email, site))
+  assertSiteId(siteId)
+  if (!identity.roles.includes('owner'))
     throw new AdminAuthError('Not authorized for this site', 403)
   return getPluginRepositoryForSite(siteId)
 }

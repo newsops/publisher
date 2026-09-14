@@ -18,9 +18,19 @@ export class PublisherApiError extends Error {
 }
 
 export interface PublisherAdminClient {
-  getStatus(): Promise<PublisherApiReply<unknown>>
-  getOperation(id: string): Promise<PublisherApiReply<unknown>>
-  publish(idempotencyKey: string): Promise<PublisherApiReply<unknown>>
+  listSites(): Promise<PublisherApiReply<unknown>>
+  createSite(input: {
+    siteId: string
+    name: string
+    canonicalOrigin: string
+    themeId?: string
+  }): Promise<PublisherApiReply<unknown>>
+  bootstrapSite(siteId: string): Promise<PublisherApiReply<unknown>>
+  getOperation(siteId: string, id: string): Promise<PublisherApiReply<unknown>>
+  publish(
+    siteId: string,
+    idempotencyKey: string,
+  ): Promise<PublisherApiReply<unknown>>
   uploadMedia(
     siteId: string,
     input: {

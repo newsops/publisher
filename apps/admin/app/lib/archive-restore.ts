@@ -15,7 +15,7 @@ import {
   type PostgresPool,
   type PostgresQueryable,
 } from '@publisher/persistence'
-import { assertKnownSite } from './site-catalog'
+import { assertSiteId } from './site-registry'
 import { loadPostgresSiteState } from './postgres-publication'
 import { initialPayload, type LocalState } from './repository-seed'
 import {
@@ -228,7 +228,7 @@ export async function restoreArchive(
   input: ArchiveRestoreInput,
   pool: PostgresPool = postgresPool(process.env.DATABASE_URL ?? ''),
 ): Promise<ArchiveRestoreResult> {
-  assertKnownSite(siteId)
+  assertSiteId(siteId)
   if (
     !Number.isSafeInteger(input.expectedRevision) ||
     input.expectedRevision < 1

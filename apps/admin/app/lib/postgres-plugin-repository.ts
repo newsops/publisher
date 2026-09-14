@@ -13,7 +13,7 @@ import {
   type PostgresQueryable,
 } from '@publisher/persistence'
 import type { PluginRepository } from './plugin-repository'
-import { assertKnownSite } from './site-catalog'
+import { assertSiteId } from './site-registry'
 
 function assertRevision(
   current: PluginInstallation | undefined,
@@ -59,7 +59,7 @@ export class PostgresPluginRepository implements PluginRepository {
       process.env.DATABASE_URL ?? '',
     ),
   ) {
-    assertKnownSite(siteId)
+    assertSiteId(siteId)
   }
 
   async list(): Promise<readonly PluginInstallation[]> {

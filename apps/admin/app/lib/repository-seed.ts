@@ -10,7 +10,7 @@ import {
   type ManagedTaxonomyTerm,
 } from '@publisher/content'
 import type { PublishDelivery } from './publisher'
-import { DEFAULT_SITE_ID } from './site-catalog'
+const DEFAULT_SITE_ID = 'default'
 
 export interface LocalState {
   readonly siteId: string
@@ -77,6 +77,36 @@ export function initialPayload(siteId = DEFAULT_SITE_ID): LocalState {
     tags: initialTags(),
     settings: initialSettings(),
     authors: initialAuthors(),
+    snapshots: [],
+  }
+}
+
+export function emptyPayload(
+  siteId: string,
+  identity: {
+    readonly name: string
+    readonly canonicalOrigin: string
+    readonly themeId: string
+  },
+): LocalState {
+  const now = new Date().toISOString()
+  return {
+    siteId,
+    posts: [],
+    tags: [],
+    authors: [],
+    settings: {
+      name: identity.name,
+      shortName: identity.name,
+      description: '',
+      canonicalOrigin: identity.canonicalOrigin,
+      language: 'en',
+      locale: 'en-US',
+      publisherName: identity.name,
+      themeId: identity.themeId,
+      revision: 1,
+      updatedAt: now,
+    },
     snapshots: [],
   }
 }

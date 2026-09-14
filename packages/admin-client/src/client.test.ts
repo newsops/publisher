@@ -21,9 +21,15 @@ describe('Publisher Admin API client', () => {
       },
     })
 
-    await client.getStatus()
-    await client.getOperation('operation/1')
-    await client.publish('replay-key')
+    await client.listSites()
+    await client.createSite({
+      siteId: 'another-site',
+      name: 'Another Site',
+      canonicalOrigin: 'https://another.example.test',
+    })
+    await client.bootstrapSite('another-site')
+    await client.getOperation('default', 'operation/1')
+    await client.publish('default', 'replay-key')
     await client.uploadMedia('default', {
       fileName: 'pixel.png',
       mimeType: 'image/png',
@@ -38,9 +44,11 @@ describe('Publisher Admin API client', () => {
     )
 
     expect(calls.map((call) => call.url)).toEqual([
-      'https://admin.example.test/api/v1/posts?limit=1',
-      'https://admin.example.test/api/v1/operations/operation%2F1',
-      'https://admin.example.test/api/v1/publish',
+      'https://admin.example.test/api/v2/sites',
+      'https://admin.example.test/api/v2/sites',
+      'https://admin.example.test/api/v2/sites/another-site/bootstrap',
+      'https://admin.example.test/api/v2/sites/default/operations/operation%2F1',
+      'https://admin.example.test/api/v2/sites/default/publish',
       'https://admin.example.test/api/v2/sites/default/media',
       'https://admin.example.test/api/v2/sites/default/media',
       'https://admin.example.test/api/v2/sites/default/content-restore',
@@ -48,10 +56,10 @@ describe('Publisher Admin API client', () => {
     expect(new Headers(calls[0].init?.headers).get('authorization')).toBe(
       'Bearer secret-token-sentinel',
     )
-    expect(new Headers(calls[2].init?.headers).get('idempotency-key')).toBe(
+    expect(new Headers(calls[4].init?.headers).get('idempotency-key')).toBe(
       'replay-key',
     )
-    expect(new Headers(calls[5].init?.headers).get('idempotency-key')).toBe(
+    expect(new Headers(calls[7].init?.headers).get('idempotency-key')).toBe(
       'restore-key',
     )
   })
@@ -63,7 +71,7 @@ describe('Publisher Admin API client', () => {
       fetch: async () => response(403, { token: 'secret-token-sentinel' }),
     })
 
-    await expect(client.getStatus()).rejects.toMatchObject({
+    await expect(client.listSites()).rejects.toMatchObject({
       code: 'REMOTE_ERROR',
       status: 403,
     })

@@ -15,7 +15,7 @@ import { PostgresArticleRepository } from './postgres-article-repository'
 import { PostgresContentRepository } from './postgres-content-repository'
 import type { ContentRepository, PublishResult } from './repository-contract'
 import type { BuildJob } from '@publisher/publication'
-import { assertKnownSite } from './site-catalog'
+import { assertSiteId } from './site-registry'
 
 class RuntimeContentRepository implements ContentRepository {
   readonly siteId = 'default'
@@ -108,7 +108,7 @@ export function getRepository(): ContentRepository {
 }
 
 export function getRepositoryForSite(siteId: string): ContentRepository {
-  assertKnownSite(siteId)
+  assertSiteId(siteId)
   if (process.env.DATABASE_URL) return new PostgresContentRepository(siteId)
   if (siteId === 'default') return getRepository()
   if (process.env.NODE_ENV === 'production')
@@ -119,7 +119,7 @@ export function getRepositoryForSite(siteId: string): ContentRepository {
 export function getArticleRepositoryForSite(
   siteId = 'default',
 ): ArticleRepository {
-  assertKnownSite(siteId)
+  assertSiteId(siteId)
   if (
     shouldUseIsolatedFileRepository() ||
     (process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL)

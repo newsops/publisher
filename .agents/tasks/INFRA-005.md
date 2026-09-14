@@ -35,6 +35,9 @@ only after the complete multi-publication boundary is verified.
 - Updated the canonical platform design to define UI and CLI/API as independent,
   complete control planes and expanded INFRA-005 to cover every management
   domain before any production activation.
+- Added the PostgreSQL site registry migration, owner UI/API site creation,
+  idempotent agent bootstrap endpoint, and CLI site commands. Full regression
+  suite passes while the remaining site-management parity routes are in work.
 
 ## Decisions
 

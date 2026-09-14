@@ -85,6 +85,82 @@ async function archiveManifest(directory) {
 }
 
 async function main() {
+  if (args[0] === 'site' && args[1] === 'list') {
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.listSites()
+      return emit(true, 'SITES', { sites: response.data?.sites ?? [] })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (args[0] === 'site' && args[1] === 'create') {
+    const siteId = option('--site')
+    const name = option('--name')
+    const canonicalOrigin = option('--canonical-origin')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!name) return emit(false, 'INPUT_REQUIRED', { field: '--name' }, 10)
+    if (!canonicalOrigin)
+      return emit(false, 'INPUT_REQUIRED', { field: '--canonical-origin' }, 10)
+    if (!nonInteractive)
+      return emit(
+        false,
+        'NON_INTERACTIVE_REQUIRED',
+        { mutationAttempted: false },
+        10,
+      )
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.createSite({
+        siteId,
+        name,
+        canonicalOrigin,
+        themeId: option('--theme'),
+      })
+      return emit(true, 'SITE_CREATED', { site: response.data?.site })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (args[0] === 'site' && args[1] === 'bootstrap') {
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!nonInteractive)
+      return emit(
+        false,
+        'NON_INTERACTIVE_REQUIRED',
+        { mutationAttempted: false },
+        10,
+      )
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.bootstrapSite(siteId)
+      return emit(true, 'SITE_BOOTSTRAPPED', response.data ?? {})
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
   if (args[0] === 'content' && args[1] === 'inspect') {
     const result = await archiveManifest(option('--archive'))
     if ('error' in result)
@@ -180,7 +256,7 @@ async function main() {
         20,
       )
     try {
-      const response = await api.getStatus()
+      const response = await api.listSites()
       return emit(true, 'READY', {
         status: response.status,
         state: {
@@ -188,7 +264,7 @@ async function main() {
           status: 'ready',
           terminal: false,
           retryable: false,
-          site: response.data,
+          site: response.data?.sites ?? [],
         },
       })
     } catch (error) {
@@ -196,6 +272,8 @@ async function main() {
     }
   }
   if (args[0] === 'operation' && args[1] === 'get' && args[2]) {
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
     const api = client()
     if (!api)
       return emit(
@@ -205,7 +283,7 @@ async function main() {
         20,
       )
     try {
-      const response = await api.getOperation(args[2])
+      const response = await api.getOperation(siteId, args[2])
       return emit(true, 'OPERATION', {
         status: response.status,
         state: response.data,
@@ -223,8 +301,10 @@ async function main() {
         40,
       )
     const key = option('--idempotency-key')
+    const siteId = option('--site')
     if (!key)
       return emit(false, 'INPUT_REQUIRED', { field: '--idempotency-key' }, 10)
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
     const api = client()
     if (!api)
       return emit(
@@ -234,7 +314,7 @@ async function main() {
         20,
       )
     try {
-      const response = await api.publish(key)
+      const response = await api.publish(siteId, key)
       const body = response.data
       return emit(true, 'OPERATION_ACCEPTED', {
         status: response.status,
@@ -298,6 +378,9 @@ async function main() {
     {
       commands: [
         'doctor',
+        'site list',
+        'site create --site <id> --name <name> --canonical-origin <origin> --non-interactive',
+        'site bootstrap --site <id> --non-interactive',
         'status',
         'publish',
         'operation get',

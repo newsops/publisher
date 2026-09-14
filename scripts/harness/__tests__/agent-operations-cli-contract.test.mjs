@@ -245,9 +245,11 @@ describe('agent operations CLI contract', () => {
       (request, response) => {
         expect(request.headers.authorization).toBe('Bearer test-token')
         response.setHeader('content-type', 'application/json')
-        if (request.url === '/api/v1/posts?limit=1')
-          return response.end(JSON.stringify({ posts: [{ id: 'post-1' }] }))
-        if (request.url === '/api/v1/operations/job-1')
+        if (request.url === '/api/v2/sites')
+          return response.end(
+            JSON.stringify({ sites: [{ siteId: 'default' }] }),
+          )
+        if (request.url === '/api/v2/sites/default/operations/job-1')
           return response.end(
             JSON.stringify({
               operation: {
@@ -278,12 +280,12 @@ describe('agent operations CLI contract', () => {
             status: 'ready',
             terminal: false,
             retryable: false,
-            site: { posts: [{ id: 'post-1' }] },
+            site: [{ siteId: 'default' }],
           },
         })
 
         const operation = await runAsync(
-          ['operation', 'get', 'job-1', '--json'],
+          ['operation', 'get', 'job-1', '--site', 'default', '--json'],
           environment,
         )
         expect(operation.status).toBe(0)
@@ -305,7 +307,7 @@ describe('agent operations CLI contract', () => {
     await withServer(
       (request, response) => {
         expect(request.method).toBe('POST')
-        expect(request.url).toBe('/api/v1/publish')
+        expect(request.url).toBe('/api/v2/sites/default/publish')
         expect(request.headers.authorization).toBe('Bearer test-token')
         const key = request.headers['idempotency-key']
         const jobId = jobs.get(key) ?? `job-${jobs.size + 1}`
@@ -319,7 +321,14 @@ describe('agent operations CLI contract', () => {
           PUBLISHER_ADMIN_ORIGIN: origin,
           PUBLISHER_API_TOKEN: 'test-token',
         }
-        const args = ['publish', '--idempotency-key', 'release-1', '--json']
+        const args = [
+          'publish',
+          '--site',
+          'default',
+          '--idempotency-key',
+          'release-1',
+          '--json',
+        ]
         const first = await runAsync(args, environment)
         const second = await runAsync(args, environment)
         expect(first.status).toBe(0)

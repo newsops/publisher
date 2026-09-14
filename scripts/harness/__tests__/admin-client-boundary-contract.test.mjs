@@ -15,7 +15,7 @@ describe('admin client package boundary', () => {
     expect(source).not.toMatch(
       /process\.env|postgres|@aws-sdk|cloudflare|vercel|window\.|document\./i,
     )
-    expect(source).toContain("'/api/v1/posts?limit=1'")
+    expect(source).toContain("'/api/v2/sites'")
   })
 
   it('documents the admin app as the API mutation authority', async () => {

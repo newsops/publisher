@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ConfiguredSiteCatalog } from '../../../apps/admin/app/lib/site-catalog.ts'
+import { assertSiteId } from '../../../apps/admin/app/lib/site-registry.ts'
 import { getRepositoryForSite } from '../../../apps/admin/app/lib/repository.ts'
 import { requireSiteAutomationIdentity } from '../../../apps/admin/app/lib/automation-auth.ts'
 import { readFile } from 'node:fs/promises'
@@ -26,25 +26,8 @@ describe('ADMIN-003 multi-site isolation contract', () => {
   it('uses separate repository state and rejects an out-of-scope automation key', async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), 'publisher-sites-'))
     remember('ADMIN_DATA_DIR')
-    remember('ADMIN_SITES_JSON')
     remember('ADMIN_AUTOMATION_KEYS')
     process.env.ADMIN_DATA_DIR = directory
-    process.env.ADMIN_SITES_JSON = JSON.stringify([
-      {
-        siteId: 'site-a',
-        name: 'A',
-        canonicalOrigin: 'https://a.example',
-        themeId: 'editorial',
-        active: true,
-      },
-      {
-        siteId: 'site-b',
-        name: 'B',
-        canonicalOrigin: 'https://b.example',
-        themeId: 'signal',
-        active: true,
-      },
-    ])
     const token = 'site-a-token'
     process.env.ADMIN_AUTOMATION_KEYS = JSON.stringify([
       {
@@ -55,13 +38,8 @@ describe('ADMIN-003 multi-site isolation contract', () => {
       },
     ])
     try {
-      const catalog = new ConfiguredSiteCatalog(
-        JSON.parse(process.env.ADMIN_SITES_JSON),
-      )
-      expect(catalog.require('site-a').canonicalOrigin).toBe(
-        'https://a.example',
-      )
-      expect(() => catalog.require('unknown')).toThrow('Unknown site')
+      expect(() => assertSiteId('site-a')).not.toThrow()
+      expect(() => assertSiteId('Unknown Site')).toThrow('siteId')
       const siteA = getRepositoryForSite('site-a')
       const siteB = getRepositoryForSite('site-b')
       const [aPost] = await siteA.list()
