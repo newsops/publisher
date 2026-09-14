@@ -1,6 +1,6 @@
 # Define the static CDN cache boundary
 
-- **Status**: in-progress
+- **Status**: completed
 - **Created**: 2026-09-14
 - **Branch**: fix/restore-public-editorial-design
 - **Scope**: packages/publication, apps/site, scripts/harness, docs
@@ -17,7 +17,7 @@ runtime feature.
 - [x] Move immutable theme, projection, and approved-comment payloads into explicit hashed namespaces while keeping stable pointers stable.
 - [x] Verify theme-only updates reuse article HTML and reject incomplete cache-policy releases.
 - [x] Document the provider-neutral cache-class mapping and standard Cloudflare Pages behavior.
-- [ ] Run focused, full, and live deployment verification before lifecycle completion.
+- [x] Run focused, full, and live deployment verification before lifecycle completion.
 
 ## Progress
 
@@ -31,6 +31,9 @@ runtime feature.
   complete 175-test suite, build, typecheck, lint, and harness scan pass.
 - Production-snapshot browser checks pass at 1440px and 390px, including home
   and article loads with JavaScript disabled and synchronous `current.css`.
+- Cloudflare Pages deployment `83b4aa27` is active on the custom domain. Hashed
+  theme and media requests changed from `MISS` to `HIT`; stable theme CSS
+  changed from `MISS` to `REVALIDATED` with the expected cache directives.
 
 ## Decisions
 
@@ -44,4 +47,5 @@ runtime feature.
 
 ## Result
 
-In progress.
+The portable immutable/revalidation cache boundary is verified locally and on
+the active production Pages deployment.

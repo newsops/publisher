@@ -4,7 +4,7 @@
 apps/site/next-env.d.ts
 apps/admin/next-env.d.ts
 apps/site/public/search-index.json
-apps/site/public/site-runtime/theme-bootstrap.v1.js
+apps/site/public/site-runtime/projection-bootstrap.v1.js
 apps/site/public/theme-runtime/
 packages/content/src/data/posts.json
 pnpm-lock.yaml
