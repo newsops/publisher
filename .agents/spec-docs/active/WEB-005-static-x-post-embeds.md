@@ -56,10 +56,10 @@ Define a content-owned resolved X-post embed record and sanitizer transform. The
 
 ## Completion Criteria
 
-- [ ] TC-01: The authenticated oEmbed resolver accepts a canonical X status URL, rejects non-X hosts and non-numeric status identifiers, and returns an observable diagnostic for timeout, malformed response, iframe, or script content.
-- [ ] TC-02: `pnpm --filter @publisher/site test` renders a deterministic accessible X-post card from a resolved oEmbed fixture containing the canonical source link and quote text, with no `platform.twitter.com`, iframe, or script in output.
-- [ ] TC-03: Admin UI and `publisher` CLI article create/update paths invoke the same oEmbed resolution contract and report identical invalid-URL or unavailable-provider diagnostics.
-- [ ] TC-04: `pnpm --filter @publisher/site build` exits 0 with an article containing an X-post card and no runtime database or third-party X dependency.
+- [x] TC-01: The authenticated oEmbed resolver accepts a canonical X status URL, rejects non-X hosts and non-numeric status identifiers, and returns an observable diagnostic for timeout, malformed response, iframe, or script content.
+- [x] TC-02: `pnpm --filter @publisher/site test` renders a deterministic accessible X-post card from a resolved oEmbed fixture containing the canonical source link and quote text, with no `platform.twitter.com`, iframe, or script in output.
+- [x] TC-03: Admin UI and `publisher` CLI article create/update paths invoke the same oEmbed resolution contract and report identical invalid-URL or unavailable-provider diagnostics.
+- [x] TC-04: `pnpm --filter @publisher/site build` exits 0 with an article containing an X-post card and no runtime database or third-party X dependency.
 - [ ] TC-05: Browser verification at desktop and 390px mobile widths shows the X-post card, source link, and surrounding article layout without horizontal overflow or layout shift.
 
 ## Test Plan
@@ -100,3 +100,9 @@ The reviewed architecture and frontmatter `type`/`tags` remain unchanged after t
 **Status upgrade:** approved → in-progress
 The task record exists at `.agents/tasks/WEB-005.md`, and the spec's `## Tasks` section records that exact active path.
 The task plan maps every Completion Criterion to implementation work: resolver safety (TC-01), static card/build coverage (TC-02 and TC-04), authenticated API/admin/client/CLI parity (TC-03), and desktop/mobile verification (TC-05).
+
+### [IMPLEMENTATION] — ✅ TC-01 through TC-04 | 2026-09-15
+
+`apps/admin/app/lib/x-oembed.ts` validates canonical X status URLs, imposes a five-second author-time timeout, rejects malformed/unsafe provider markup, and returns a platform-owned semantic figure. Both the authenticated browser API and the scoped automation API invoke that resolver; `publisher embed x resolve` calls the same automation route. The admin post editor offers Resolve and insert.
+
+The 180-test harness run, full typecheck, build, scan, and production resolver call passed. The production `aitrendtimes.com` article contains two resolved cards and no iframe, provider widget script, or reader-time X runtime. Its live stylesheet contains the card's responsive rules. Browser-surface verification remains pending because no browser surface is available in this environment.
