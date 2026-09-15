@@ -604,14 +604,19 @@ components:
     PostInput:
       type: object
       required:
-        [slug, title, excerpt, bodyHtml, author, publishedAt, categories]
+        [slug, title, excerpt, bodyMarkdown, author, publishedAt, categories]
       properties:
         sourceId: { type: string }
         sourceUrl: { type: string, format: uri }
         slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         title: { type: string }
         excerpt: { type: string }
-        bodyHtml: { type: string }
+        bodyMarkdown:
+          {
+            type: string,
+            minLength: 1,
+            description: 'Versioned CommonMark with validated figure/embed directives.',
+          }
         author: { type: string }
         authorSlug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         seoTitle: { type: string, maxLength: 70 }
@@ -634,7 +639,12 @@ components:
         slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         title: { type: string }
         excerpt: { type: string }
-        bodyHtml: { type: string }
+        bodyMarkdown:
+          {
+            type: string,
+            minLength: 1,
+            description: 'Versioned CommonMark with validated figure/embed directives.',
+          }
         author: { type: string }
         authorSlug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         seoTitle: { type: string, maxLength: 70 }
@@ -675,7 +685,7 @@ components:
           slug,
           title,
           excerpt,
-          bodyHtml,
+          bodyMarkdown,
           seoTitle,
           seoDescription,
           status,
@@ -687,7 +697,7 @@ components:
         slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         title: { type: string }
         excerpt: { type: string }
-        bodyHtml: { type: string }
+        bodyMarkdown: { type: string }
         seoTitle: { type: string }
         seoDescription: { type: string }
         status: { type: string, enum: [draft, review, scheduled, published] }
