@@ -139,6 +139,12 @@ export function createPublisherAdminClient(options) {
       body: JSON.stringify(input),
     })
 
+  /** @param {string} siteId @param {string} postId */
+  const getPost = (siteId, postId) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/posts/${encodeURIComponent(postId)}`,
+    )
+
   /** @param {string} siteId @param {string} postId @param {unknown} input @param {number} revision */
   const updatePost = (siteId, postId, input, revision) =>
     request(
@@ -193,6 +199,13 @@ export function createPublisherAdminClient(options) {
         },
         body: JSON.stringify(input),
       },
+    )
+
+  /** @param {string} siteId @param {string} slug @param {number} revision */
+  const archiveAuthor = (siteId, slug, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/authors/${encodeURIComponent(slug)}`,
+      { method: 'DELETE', headers: { 'if-match': `"${revision}"` } },
     )
 
   /** @param {string} siteId */
@@ -343,12 +356,14 @@ export function createPublisherAdminClient(options) {
     listPosts,
     resolveXPostEmbed,
     createPost,
+    getPost,
     updatePost,
     deletePost,
     listAuthors,
     createAuthor,
     getAuthor,
     updateAuthor,
+    archiveAuthor,
     listTags,
     createTag,
     getTag,

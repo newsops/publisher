@@ -52,6 +52,7 @@ export interface PublisherAdminClient {
     siteId: string,
     input: unknown,
   ): Promise<PublisherApiReply<unknown>>
+  getPost(siteId: string, postId: string): Promise<PublisherApiReply<unknown>>
   updatePost(
     siteId: string,
     postId: string,
@@ -73,6 +74,11 @@ export interface PublisherAdminClient {
     siteId: string,
     slug: string,
     input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  archiveAuthor(
+    siteId: string,
+    slug: string,
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
   listTags(siteId: string): Promise<PublisherApiReply<unknown>>

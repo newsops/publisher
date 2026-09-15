@@ -85,7 +85,7 @@ async function archiveManifest(directory) {
 }
 
 async function main() {
-  if (args[0] === 'post' && ['plan', 'create'].includes(args[1])) {
+  if (args[0] === 'post' && ['plan', 'create', 'update'].includes(args[1])) {
     const action = args[1]
     const siteId = option('--site')
     const authorSlug = option('--author')
@@ -100,15 +100,24 @@ async function main() {
       )
     try {
       let input
-      if (action === 'create') {
+      if (action === 'create' || action === 'update') {
         const file = option('--input')
         if (!file)
           return emit(false, 'INPUT_REQUIRED', { field: '--input' }, 10)
         input = JSON.parse(await readFile(file, 'utf8'))
       }
+      const postId = option('--post')
+      const current =
+        action === 'update' && postId
+          ? await api.getPost(siteId, postId)
+          : undefined
+      if (action === 'update' && !postId)
+        return emit(false, 'INPUT_REQUIRED', { field: '--post' }, 10)
       const selectedAuthor =
         authorSlug ??
-        (typeof input?.authorSlug === 'string' ? input.authorSlug : undefined)
+        (typeof input?.authorSlug === 'string'
+          ? input.authorSlug
+          : current?.data?.post?.authorSlug)
       if (!selectedAuthor)
         return emit(false, 'INPUT_REQUIRED', { field: '--author' }, 10)
       const author = await api.getAuthor(siteId, selectedAuthor)
@@ -130,11 +139,25 @@ async function main() {
           { mutationAttempted: false, authorContext },
           10,
         )
-      const response = await api.createPost(siteId, {
-        ...input,
-        authorSlug: selectedAuthor,
-      })
-      return emit(true, 'POST_CREATED', {
+      const revision = Number(option('--revision'))
+      if (
+        action === 'update' &&
+        (!Number.isSafeInteger(revision) || revision < 1)
+      )
+        return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+      const response =
+        action === 'create'
+          ? await api.createPost(siteId, {
+              ...input,
+              authorSlug: selectedAuthor,
+            })
+          : await api.updatePost(
+              siteId,
+              postId,
+              { ...input, authorSlug: selectedAuthor },
+              revision,
+            )
+      return emit(true, action === 'create' ? 'POST_CREATED' : 'POST_UPDATED', {
         authorContext: response.data?.authorContext ?? authorContext,
         post: response.data?.post,
       })
@@ -163,16 +186,28 @@ async function main() {
             : await api.listTags(siteId)
         return emit(true, 'TAXONOMY', response.data ?? {})
       }
+      const slug = option('--slug')
       const name = option('--name')
-      if (action !== 'create' || !name)
+      if (!['create', 'get', 'update', 'archive'].includes(action))
         return emit(
           false,
           'USAGE',
           {
-            command: `taxonomy ${kind} list|create --site <id> [--name <name>]`,
+            command: `taxonomy ${kind} list|create|get|update|archive --site <id>`,
           },
           10,
         )
+      if (!slug && action !== 'create')
+        return emit(false, 'INPUT_REQUIRED', { field: '--slug' }, 10)
+      if (action === 'get') {
+        const response =
+          kind === 'categories'
+            ? await api.getCategory(siteId, slug)
+            : await api.getTag(siteId, slug)
+        return emit(true, 'TAXONOMY', response.data ?? {})
+      }
+      if (!name && action !== 'archive')
+        return emit(false, 'INPUT_REQUIRED', { field: '--name' }, 10)
       if (!nonInteractive)
         return emit(
           false,
@@ -180,25 +215,38 @@ async function main() {
           { mutationAttempted: false },
           10,
         )
+      const revision = Number(option('--revision'))
+      if (
+        action !== 'create' &&
+        (!Number.isSafeInteger(revision) || revision < 1)
+      )
+        return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
       const response =
-        kind === 'categories'
-          ? await api.createCategory(siteId, { name, slug: option('--slug') })
-          : await api.createTag(siteId, { name, slug: option('--slug') })
-      return emit(true, 'TAXONOMY_CREATED', response.data ?? {})
+        action === 'create'
+          ? kind === 'categories'
+            ? await api.createCategory(siteId, { name, slug })
+            : await api.createTag(siteId, { name, slug })
+          : action === 'update'
+            ? kind === 'categories'
+              ? await api.updateCategory(siteId, slug, { name }, revision)
+              : await api.updateTag(siteId, slug, { name }, revision)
+            : kind === 'categories'
+              ? await api.archiveCategory(siteId, slug, revision)
+              : await api.archiveTag(siteId, slug, revision)
+      return emit(
+        true,
+        `TAXONOMY_${action.toUpperCase()}D`,
+        response.data ?? {},
+      )
     } catch (error) {
       return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
     }
   }
-  if (args[0] === 'author' && args[1] === 'get') {
-    const siteId = option('--site'),
-      slug = option('--slug')
-    if (!siteId || !slug)
-      return emit(
-        false,
-        'INPUT_REQUIRED',
-        { field: !siteId ? '--site' : '--slug' },
-        10,
-      )
+  if (args[0] === 'author') {
+    const action = args[1] ?? 'list'
+    const siteId = option('--site')
+    const slug = option('--slug')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
     const api = client()
     if (!api)
       return emit(
@@ -208,10 +256,53 @@ async function main() {
         20,
       )
     try {
+      if (action === 'list')
+        return emit(true, 'AUTHORS', (await api.listAuthors(siteId)).data ?? {})
+      if (!slug && action !== 'create')
+        return emit(false, 'INPUT_REQUIRED', { field: '--slug' }, 10)
+      if (action === 'get')
+        return emit(
+          true,
+          'AUTHOR_CONTEXT',
+          (await api.getAuthor(siteId, slug)).data ?? {},
+        )
+      if (!nonInteractive)
+        return emit(
+          false,
+          'NON_INTERACTIVE_REQUIRED',
+          { mutationAttempted: false },
+          10,
+        )
+      const file = option('--input')
+      if (action !== 'archive' && !file)
+        return emit(false, 'INPUT_REQUIRED', { field: '--input' }, 10)
+      const input = file ? JSON.parse(await readFile(file, 'utf8')) : undefined
+      if (action === 'create')
+        return emit(
+          true,
+          'AUTHOR_CREATED',
+          (await api.createAuthor(siteId, input)).data ?? {},
+        )
+      const revision = Number(option('--revision'))
+      if (!Number.isSafeInteger(revision) || revision < 1)
+        return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+      if (action === 'update')
+        return emit(
+          true,
+          'AUTHOR_UPDATED',
+          (await api.updateAuthor(siteId, slug, input, revision)).data ?? {},
+        )
+      if (action === 'archive')
+        return emit(
+          true,
+          'AUTHOR_ARCHIVED',
+          (await api.archiveAuthor(siteId, slug, revision)).data ?? {},
+        )
       return emit(
-        true,
-        'AUTHOR_CONTEXT',
-        (await api.getAuthor(siteId, slug)).data ?? {},
+        false,
+        'USAGE',
+        { command: 'author list|get|create|update|archive' },
+        10,
       )
     } catch (error) {
       return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
@@ -586,6 +677,7 @@ async function main() {
         'author get --site <id> --slug <author-slug> --json',
         'post plan --site <id> --author <author-slug> --json',
         'post create --site <id> --input <post.json> [--author <author-slug>] --non-interactive --json',
+        'post update --site <id> --post <post-id> --input <patch.json> --revision <n> [--author <author-slug>] --non-interactive --json',
         'status',
         'publish',
         'operation get',

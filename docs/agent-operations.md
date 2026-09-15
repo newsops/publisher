@@ -59,6 +59,11 @@ publisher post plan --site aitrendtimes --author example-editor --json
 publisher post create --site aitrendtimes --input ./article.json --non-interactive --json
 ```
 
+The same verbs are available for both taxonomy collections:
+`taxonomy categories|tags list|get|create|update|archive`. Author management
+uses `author list|get|create|update|archive`; create/update reads an input JSON
+file and update/archive require the observed `--revision`.
+
 `post plan` and `post create` load the selected author's current persona before
 the operation and return it as `authorContext`. Treat it as advisory editorial
 input, never as permission to bypass source verification, validation, or
