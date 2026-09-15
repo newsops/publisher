@@ -8,6 +8,7 @@ import { mergePostInput, parsePostPatch } from '../../../../../../lib/api-input'
 import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
 import { getRepositoryForSite } from '../../../../../../lib/repository'
 import { AutomationApiError } from '../../../../../../lib/automation-auth'
+import { authorContext } from '../../../../../../lib/author-context'
 
 function assertRevision(current: { revision: number }, request: Request): void {
   const expected = revisionFrom(request)
@@ -61,16 +62,30 @@ export async function PATCH(
             requestId,
           )
         assertRevision(current, request)
-        const post = await repository.save(
-          postId,
-          mergePostInput(current, parsePostPatch(await parseJsonBody(request))),
+        const input = mergePostInput(
+          current,
+          parsePostPatch(await parseJsonBody(request)),
         )
+        const author = input.authorSlug
+          ? await repository.getAuthor(input.authorSlug)
+          : undefined
+        if (!author)
+          throw new AutomationApiError(
+            'validation_failed',
+            'Selected author is unavailable',
+            400,
+          )
+        const post = await repository.save(postId, input)
         auditAutomation('content.site.updated', identity, {
           siteId,
           postId,
           revision: post.revision,
         })
-        return apiResponse({ siteId, post }, 200, requestId)
+        return apiResponse(
+          { siteId, post, authorContext: authorContext(author) },
+          200,
+          requestId,
+        )
       } catch (error) {
         return apiErrorResponse(error, requestId)
       }

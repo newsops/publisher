@@ -17,7 +17,7 @@ import {
 import { FileArticleRepositoryAdapter } from './article-repository-adapter'
 import type { ContentRepository, PublishResult } from './repository-contract'
 import { publishFileContent } from './file-publication'
-import { initialState, type LocalState } from './repository-seed'
+import { initialPayload, type LocalState } from './repository-seed'
 import {
   assertAuthorUnassigned,
   validatedAuthor,
@@ -67,7 +67,7 @@ export class FileContentRepository implements ContentRepository {
       }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
-      return { ...initialState(), siteId: this.siteId }
+      return initialPayload(this.siteId)
     }
   }
 

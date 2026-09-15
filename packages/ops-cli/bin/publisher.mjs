@@ -85,6 +85,63 @@ async function archiveManifest(directory) {
 }
 
 async function main() {
+  if (args[0] === 'post' && ['plan', 'create'].includes(args[1])) {
+    const action = args[1]
+    const siteId = option('--site')
+    const authorSlug = option('--author')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      let input
+      if (action === 'create') {
+        const file = option('--input')
+        if (!file)
+          return emit(false, 'INPUT_REQUIRED', { field: '--input' }, 10)
+        input = JSON.parse(await readFile(file, 'utf8'))
+      }
+      const selectedAuthor =
+        authorSlug ??
+        (typeof input?.authorSlug === 'string' ? input.authorSlug : undefined)
+      if (!selectedAuthor)
+        return emit(false, 'INPUT_REQUIRED', { field: '--author' }, 10)
+      const author = await api.getAuthor(siteId, selectedAuthor)
+      const authorContext = author.data?.author
+        ? {
+            authorSlug: author.data.author.slug,
+            displayName: author.data.author.name,
+            editorialPersona: author.data.author.editorialPersona ?? '',
+          }
+        : undefined
+      if (!authorContext)
+        return emit(false, 'AUTHOR_CONTEXT_UNAVAILABLE', { siteId }, 30)
+      if (action === 'plan')
+        return emit(true, 'POST_PLAN', { siteId, authorContext })
+      if (!nonInteractive)
+        return emit(
+          false,
+          'NON_INTERACTIVE_REQUIRED',
+          { mutationAttempted: false, authorContext },
+          10,
+        )
+      const response = await api.createPost(siteId, {
+        ...input,
+        authorSlug: selectedAuthor,
+      })
+      return emit(true, 'POST_CREATED', {
+        authorContext: response.data?.authorContext ?? authorContext,
+        post: response.data?.post,
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
   if (args[0] === 'taxonomy' && ['categories', 'tags'].includes(args[1])) {
     const kind = args[1]
     const action = args[2] ?? 'list'
@@ -527,6 +584,8 @@ async function main() {
         'taxonomy categories|tags list --site <id> --json',
         'taxonomy categories|tags create --site <id> --name <name> [--slug <slug>] --non-interactive --json',
         'author get --site <id> --slug <author-slug> --json',
+        'post plan --site <id> --author <author-slug> --json',
+        'post create --site <id> --input <post.json> [--author <author-slug>] --non-interactive --json',
         'status',
         'publish',
         'operation get',

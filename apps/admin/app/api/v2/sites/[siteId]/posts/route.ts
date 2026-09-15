@@ -2,6 +2,7 @@ import {
   apiErrorResponse,
   apiResponse,
   auditAutomation,
+  AutomationApiError,
   withSiteAutomation,
 } from '../../../../../lib/automation-auth'
 import { parsePostInput } from '../../../../../lib/api-input'
@@ -10,6 +11,7 @@ import {
   validatePagination,
 } from '../../../../../lib/api-request'
 import { getRepositoryForSite } from '../../../../../lib/repository'
+import { authorContext } from '../../../../../lib/author-context'
 
 export async function GET(
   request: Request,
@@ -49,16 +51,28 @@ export async function POST(
   const { siteId } = await context.params
   return withSiteAutomation(request, 'editor', siteId, async (identity, id) => {
     try {
-      const post = await getRepositoryForSite(siteId).save(
-        undefined,
-        parsePostInput(await parseJsonBody(request)),
-      )
+      const repository = getRepositoryForSite(siteId)
+      const input = parsePostInput(await parseJsonBody(request))
+      const author = input.authorSlug
+        ? await repository.getAuthor(input.authorSlug)
+        : undefined
+      if (!author)
+        throw new AutomationApiError(
+          'validation_failed',
+          'Selected author is unavailable',
+          400,
+        )
+      const post = await repository.save(undefined, input)
       auditAutomation('content.site.created', identity, {
         siteId,
         postId: post.id,
         revision: post.revision,
       })
-      return apiResponse({ siteId, post }, 201, id)
+      return apiResponse(
+        { siteId, post, authorContext: authorContext(author) },
+        201,
+        id,
+      )
     } catch (error) {
       return apiErrorResponse(error, id)
     }

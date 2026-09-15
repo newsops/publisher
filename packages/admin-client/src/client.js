@@ -207,6 +207,36 @@ export function createPublisherAdminClient(options) {
       body: JSON.stringify(input),
     })
 
+  /** @param {string} siteId @param {string} slug */
+  const getTag = (siteId, slug) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/tags/${encodeURIComponent(slug)}`,
+    )
+
+  /** @param {string} siteId @param {string} slug @param {unknown} input @param {number} revision */
+  const updateTag = (siteId, slug, input, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/tags/${encodeURIComponent(slug)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(input),
+      },
+    )
+
+  /** @param {string} siteId @param {string} slug @param {number} revision */
+  const archiveTag = (siteId, slug, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/tags/${encodeURIComponent(slug)}`,
+      {
+        method: 'DELETE',
+        headers: { 'if-match': `"${revision}"` },
+      },
+    )
+
   /** @param {string} siteId */
   const listCategories = (siteId) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/categories`)
@@ -218,6 +248,36 @@ export function createPublisherAdminClient(options) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(input),
     })
+
+  /** @param {string} siteId @param {string} slug */
+  const getCategory = (siteId, slug) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/categories/${encodeURIComponent(slug)}`,
+    )
+
+  /** @param {string} siteId @param {string} slug @param {unknown} input @param {number} revision */
+  const updateCategory = (siteId, slug, input, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/categories/${encodeURIComponent(slug)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(input),
+      },
+    )
+
+  /** @param {string} siteId @param {string} slug @param {number} revision */
+  const archiveCategory = (siteId, slug, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/categories/${encodeURIComponent(slug)}`,
+      {
+        method: 'DELETE',
+        headers: { 'if-match': `"${revision}"` },
+      },
+    )
 
   /** @param {string} siteId @param {string} id */
   const getOperation = (siteId, id) =>
@@ -291,8 +351,14 @@ export function createPublisherAdminClient(options) {
     updateAuthor,
     listTags,
     createTag,
+    getTag,
+    updateTag,
+    archiveTag,
     listCategories,
     createCategory,
+    getCategory,
+    updateCategory,
+    archiveCategory,
     getOperation,
     publish,
     uploadMedia,

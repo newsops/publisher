@@ -80,6 +80,13 @@ function articleInputs(snapshot: ContentSnapshot) {
   const authors = new Map(
     snapshot.authors.map((author) => [author.slug, author]),
   )
+  const categoryNames = new Map(
+    (snapshot.categories ?? snapshot.tags).map((category) => [
+      category.slug,
+      category.name,
+    ]),
+  )
+  const tagNames = new Map(snapshot.tags.map((tag) => [tag.slug, tag.name]))
   return [...snapshot.posts]
     .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt))
     .map((post) => ({
@@ -92,9 +99,12 @@ function articleInputs(snapshot: ContentSnapshot) {
       bodyHtml: sanitizeBodyHtml(post.bodyHtml),
       authorName: authors.get(post.authorSlug)?.name ?? post.author,
       authorPath: publicAuthorPath(post.authorSlug),
-      category: post.categories[0] ?? 'News',
+      category:
+        categoryNames.get(post.categories[0] ?? '') ??
+        post.categories[0] ??
+        'News',
       categoryPath: publicCategoryPath(post.categories[0] ?? 'News'),
-      tags: post.tags,
+      tags: (post.tags ?? []).map((tag) => tagNames.get(tag) ?? tag),
       archivePath: publicArchiveMonthPath(post.publishedAt),
       publishedAt: post.publishedAt,
       updatedAt: post.updatedAt,

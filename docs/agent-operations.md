@@ -43,6 +43,27 @@ publisher site guidance set --site example --file ./editorial-guidance.txt \
 
 Guidance is excluded from snapshots, static HTML, feeds, and search indexes.
 
+## Reporter personas and taxonomy
+
+Each site separately manages required primary `categories` and optional article
+`tags`. A reporter also has a private `editorialPersona`. It is returned only
+by authenticated authoring APIs and the CLI planning/create commands; it is
+not included in public author profiles, snapshots, static HTML, feeds, or
+search data.
+
+```bash
+publisher taxonomy categories list --site aitrendtimes --json
+publisher taxonomy tags create --site aitrendtimes --name OpenAI --non-interactive --json
+publisher author get --site aitrendtimes --slug example-editor --json
+publisher post plan --site aitrendtimes --author example-editor --json
+publisher post create --site aitrendtimes --input ./article.json --non-interactive --json
+```
+
+`post plan` and `post create` load the selected author's current persona before
+the operation and return it as `authorContext`. Treat it as advisory editorial
+input, never as permission to bypass source verification, validation, or
+editorial review.
+
 ## Archive recovery
 
 `content restore` is the agent-first recovery path for a private archive kept

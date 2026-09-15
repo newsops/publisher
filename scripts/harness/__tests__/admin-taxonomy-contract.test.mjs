@@ -12,10 +12,12 @@ import {
   DELETE as archiveTag,
 } from '../../../apps/admin/app/api/v2/sites/[siteId]/tags/[slug]/route.ts'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
+import { POST as rawCreatePost } from '../../../apps/admin/app/api/v2/sites/[siteId]/posts/route.ts'
 
 const siteContext = { params: Promise.resolve({ siteId: 'default' }) }
 const listTags = (request) => rawListTags(request, siteContext)
 const createTag = (request) => rawCreateTag(request, siteContext)
+const createPost = (request) => rawCreatePost(request, siteContext)
 
 const token = 'taxonomy-editor-secret'
 const keys = JSON.stringify([
@@ -120,5 +122,45 @@ describe('admin taxonomy contract', () => {
         (tag) => tag.slug === 'spatial-audio',
       ).active,
     ).toBe(false)
+  })
+
+  it('returns the selected private author context only to the automation caller', async () => {
+    const repository = new FileContentRepository(dataDirectory)
+    const author = await repository.getAuthor('example-editor')
+    await repository.saveAuthor('example-editor', {
+      name: author.name,
+      bio: author.bio,
+      avatarUrl: author.avatarUrl,
+      active: true,
+      editorialPersona: 'Use a factual reporting voice.',
+    })
+    const response = await createPost(
+      new Request('http://admin.test/api/v2/sites/default/posts', {
+        method: 'POST',
+        headers: { ...auth(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sourceId: 'author-context',
+          sourceUrl: 'https://www.publisher.com/author-context',
+          slug: 'author-context',
+          title: 'Author context',
+          excerpt: 'A test post.',
+          bodyHtml: '<p>A test post.</p>',
+          author: author.name,
+          authorSlug: author.slug,
+          seoTitle: 'Author context',
+          seoDescription: 'A test post.',
+          status: 'draft',
+          publishedAt: '2026-09-15T00:00:00.000Z',
+          categories: ['General'],
+          tags: ['General'],
+        }),
+      }),
+    )
+    expect(response.status).toBe(201)
+    expect((await response.json()).authorContext).toEqual({
+      authorSlug: 'example-editor',
+      displayName: author.name,
+      editorialPersona: 'Use a factual reporting voice.',
+    })
   })
 })

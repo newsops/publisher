@@ -12,6 +12,25 @@ import {
 import type { PublishDelivery } from './publisher'
 const DEFAULT_SITE_ID = 'default'
 
+const FIRST_LEVEL_CATEGORIES: Readonly<
+  Record<string, readonly [string, string][]>
+> = {
+  default: [
+    ['xr-ar-vr', 'XR/AR/VR'],
+    ['ai', 'AI'],
+    ['hardware', 'Hardware'],
+    ['gaming', 'Gaming'],
+    ['industry', 'Industry'],
+  ],
+  aitrendtimes: [
+    ['models', 'Models'],
+    ['research', 'Research'],
+    ['products', 'Products'],
+    ['industry', 'Industry'],
+    ['policy', 'Policy'],
+  ],
+}
+
 export interface LocalState {
   readonly siteId: string
   readonly posts: ManagedPost[]
@@ -68,6 +87,21 @@ export function initialTags(): ManagedTaxonomyTerm[] {
   }))
 }
 
+export function initialCategories(
+  siteId = DEFAULT_SITE_ID,
+): ManagedTaxonomyTerm[] {
+  const now = new Date().toISOString()
+  const named = FIRST_LEVEL_CATEGORIES[siteId] ?? []
+  return [...named, ['General', 'General']].map(([slug, name]) => ({
+    slug,
+    name,
+    active: true,
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  }))
+}
+
 export function initialState(): LocalState {
   return initialPayload()
 }
@@ -77,7 +111,7 @@ export function initialPayload(siteId = DEFAULT_SITE_ID): LocalState {
     siteId,
     posts: initialPosts(),
     tags: initialTags(),
-    categories: initialTags(),
+    categories: initialCategories(siteId),
     settings: initialSettings(),
     authors: initialAuthors(),
     snapshots: [],
