@@ -1,4 +1,5 @@
 import { ApiRequestError } from './api-error'
+import { assertSiteId } from './site-registry'
 
 export type ModerationStatus = 'pending' | 'approved' | 'rejected'
 
@@ -10,6 +11,24 @@ export interface ModerationComment {
   readonly status: ModerationStatus
   readonly createdAt: string
   readonly updatedAt: string
+}
+
+export function moderationListPath(
+  siteId: string,
+  status: ModerationStatus,
+): string {
+  assertSiteId(siteId)
+  return `/v1/sites/${encodeURIComponent(siteId)}/moderation/comments?status=${status}`
+}
+
+export function moderationUpdatePath(
+  siteId: string,
+  commentId: string,
+): string {
+  assertSiteId(siteId)
+  if (!/^[a-zA-Z0-9-]{1,100}$/.test(commentId))
+    throw new ApiRequestError('invalid_comment_id', 'Invalid comment id', 400)
+  return `/v1/sites/${encodeURIComponent(siteId)}/moderation/comments/${encodeURIComponent(commentId)}`
 }
 
 const REQUEST_TIMEOUT_MS = 5_000

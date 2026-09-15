@@ -7,8 +7,10 @@ import {
 } from '../../../../lib/auth'
 import {
   forwardCommentResponse,
+  moderationUpdatePath,
   requestCommentService,
 } from '../../../../lib/comment-moderation'
+import { requestedSiteId } from '../../../../lib/request-repository'
 
 export async function PATCH(
   request: Request,
@@ -33,7 +35,7 @@ export async function PATCH(
         { status: 400, headers: { 'Cache-Control': 'no-store' } },
       )
     const response = await requestCommentService(
-      `/v1/moderation/comments/${encodeURIComponent(id)}`,
+      moderationUpdatePath(requestedSiteId(request), id),
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

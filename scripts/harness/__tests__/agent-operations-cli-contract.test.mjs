@@ -148,6 +148,56 @@ describe('agent operations CLI contract', () => {
     })
   })
 
+  it('retrieves the selected author persona before planning a Markdown post', async () => {
+    await withServer(
+      (request, response) => {
+        expect(request.method).toBe('GET')
+        expect(request.url).toBe('/api/v2/sites/default/authors/reporter')
+        expect(request.headers.authorization).toBe('Bearer test-token')
+        response.setHeader('content-type', 'application/json')
+        response.end(
+          JSON.stringify({
+            author: {
+              slug: 'reporter',
+              name: 'Reporter',
+              editorialPersona: 'Use concise factual language.',
+            },
+          }),
+        )
+      },
+      async (origin) => {
+        const result = await runAsync(
+          [
+            'post',
+            'plan',
+            '--site',
+            'default',
+            '--author',
+            'reporter',
+            '--json',
+            '--non-interactive',
+          ],
+          {
+            PUBLISHER_ADMIN_ORIGIN: origin,
+            PUBLISHER_API_TOKEN: 'test-token',
+          },
+        )
+        expect(result.status).toBe(0)
+        expect(result.body).toMatchObject({
+          ok: true,
+          code: 'POST_PLAN',
+          siteId: 'default',
+          authorContext: {
+            authorSlug: 'reporter',
+            displayName: 'Reporter',
+            editorialPersona: 'Use concise factual language.',
+          },
+        })
+        expect(JSON.stringify(result.body)).not.toContain('test-token')
+      },
+    )
+  })
+
   it('restores only through the scoped Admin API and redacts archive content', async () => {
     const directory = await mkdtemp(
       path.join(os.tmpdir(), 'publisher-restore-'),
