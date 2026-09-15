@@ -16,7 +16,9 @@ function variantInput(value: unknown): ArticleVariant {
     slug: typeof object.slug === 'string' ? object.slug : '',
     title: typeof object.title === 'string' ? object.title : '',
     excerpt: typeof object.excerpt === 'string' ? object.excerpt : '',
-    bodyHtml: typeof object.bodyHtml === 'string' ? object.bodyHtml : '',
+    bodyMarkdown:
+      typeof object.bodyMarkdown === 'string' ? object.bodyMarkdown : '',
+    bodyHtml: '',
     seoTitle: typeof object.seoTitle === 'string' ? object.seoTitle : '',
     seoDescription:
       typeof object.seoDescription === 'string' ? object.seoDescription : '',

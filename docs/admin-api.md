@@ -199,7 +199,7 @@ curl --fail-with-body -X POST \
     "slug": "new-report",
     "title": "New report",
     "excerpt": "A short summary.",
-    "bodyHtml": "<p>Validated article body.</p>",
+    "bodyMarkdown": "Validated article body.\n\n:::figure{src=\"/media/report.webp\" alt=\"Report illustration\" creditName=\"Example\" creditUrl=\"https://example.test/source\"}\nImage caption.\n:::",
     "author": "Example Editor",
     "authorSlug": "example-editor",
     "seoTitle": "New report",
@@ -213,9 +213,10 @@ curl --fail-with-body -X POST \
 ```
 
 The complete request/response contract is in
-[`admin-api.openapi.yaml`](./admin-api.openapi.yaml). Body HTML is sanitized by
-the shared content validation boundary; scripts, iframes, event handlers, and
-`javascript:` URLs are removed or neutralized.
+[`admin-api.openapi.yaml`](./admin-api.openapi.yaml). `bodyMarkdown` is the
+only editable document field. It accepts CommonMark plus non-executable
+`figure` and `embed` directives; raw HTML, unsafe URLs, and unknown directives
+are rejected. The platform derives sanitized static HTML at publication time.
 
 Publication settings are a single managed record per deployment. Changing the
 canonical origin is a migration operation: update existing post `sourceUrl`

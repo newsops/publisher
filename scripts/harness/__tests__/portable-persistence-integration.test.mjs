@@ -111,8 +111,7 @@ function createWorkerSnapshot(snapshotId = 'worker-fixture') {
         slug: 'worker-story',
         title: 'Worker story',
         excerpt: 'A static worker fixture.',
-        bodyHtml:
-          '<h2 style="color:red" onclick="alert(1)">Static section</h2><script>alert(1)</script><p>Readable without services.</p>',
+        bodyMarkdown: '## Static section\n\nReadable without services.',
         author: 'Editor',
         authorSlug: 'editor',
         seoTitle: 'Worker story',
@@ -232,7 +231,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
             slug: 'restore-story',
             title: 'Restore story',
             excerpt: 'A generic restored article.',
-            bodyHtml: '<p>Restored through the API contract.</p>',
+            bodyMarkdown: 'Restored through the API contract.',
             author: 'Editor',
             authorSlug: 'editor',
             seoTitle: 'R'.repeat(71),
@@ -703,8 +702,8 @@ describe('INFRA-005 S3-compatible and image integration', () => {
                 slug: 'media-restore-story',
                 title: 'Media restore story',
                 excerpt: 'A generic media restore fixture.',
-                bodyHtml:
-                  '<p>Media restore fixture.</p><img src="/media/pixel.png" alt="Fixture pixel">',
+                bodyMarkdown:
+                  'Media restore fixture.\n\n:::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::',
                 author: 'Editor',
                 authorSlug: 'editor',
                 seoTitle: 'Media restore story',

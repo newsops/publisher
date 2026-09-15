@@ -4,7 +4,8 @@ import type {
   ArticleVariantStatus,
   NewsPost,
 } from './types'
-import { ContentValidationError, sanitizeBodyHtml } from './editor'
+import { ContentValidationError } from './editor'
+import { renderEditorialMarkdown } from './editorial-markdown'
 
 const LOCALE_PATTERN = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/
 
@@ -67,8 +68,8 @@ export function validateArticleVariant(
   ] as const)
     if (typeof input[field] !== 'string' || !input[field].trim())
       errors.push(`${field} is required`)
-  if (typeof input.bodyHtml !== 'string' || !input.bodyHtml.trim())
-    errors.push('bodyHtml is required')
+  if (typeof input.bodyMarkdown !== 'string' || !input.bodyMarkdown.trim())
+    errors.push('bodyMarkdown is required')
   if (
     typeof input.status !== 'string' ||
     !ARTICLE_STATUSES.has(input.status as ArticleVariantStatus)
@@ -92,7 +93,8 @@ export function assertValidArticleVariant(
     slug: input.slug as string,
     title: (input.title as string).trim(),
     excerpt: (input.excerpt as string).trim(),
-    bodyHtml: sanitizeBodyHtml(input.bodyHtml as string),
+    bodyMarkdown: input.bodyMarkdown as string,
+    bodyHtml: renderEditorialMarkdown(input.bodyMarkdown as string),
     seoTitle: (input.seoTitle as string).trim(),
     seoDescription: (input.seoDescription as string).trim(),
     status: input.status as ArticleVariantStatus,
@@ -119,6 +121,7 @@ export function articleFromPost(
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
+    bodyMarkdown: post.bodyMarkdown,
     bodyHtml: post.bodyHtml,
     seoTitle: post.seoTitle,
     seoDescription: post.seoDescription,
@@ -161,6 +164,7 @@ export function articleToPost(
     slug: variant.slug,
     title: variant.title,
     excerpt: variant.excerpt,
+    bodyMarkdown: variant.bodyMarkdown,
     bodyHtml: variant.bodyHtml,
     author: article.author,
     authorSlug: article.authorSlug,

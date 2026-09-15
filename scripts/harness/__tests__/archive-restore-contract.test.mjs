@@ -35,7 +35,7 @@ function fixture() {
         slug: 'archive-story',
         title: 'Archive story',
         excerpt: 'A generic archive summary.',
-        bodyHtml: '<p>Generic archive body.</p>',
+        bodyMarkdown: 'Generic archive body.',
         author: 'Editor',
         authorSlug: 'editor',
         seoTitle: 'Archive story',
@@ -71,7 +71,7 @@ describe('archive restore contract', () => {
     ['invalid checksum', (value) => (value.media[0].sha256 = 'bad')],
     [
       'secret sentinel',
-      (value) => (value.posts[0].bodyHtml = 'fixture-secret-sentinel'),
+      (value) => (value.posts[0].bodyMarkdown = 'fixture-secret-sentinel'),
     ],
   ])('rejects %s', (_name, mutate) => {
     const value = fixture()
@@ -83,8 +83,8 @@ describe('archive restore contract', () => {
     [
       'an unbound body media reference',
       (value) =>
-        (value.posts[0].bodyHtml =
-          '<p><img src="/media/pixel.png" alt=""></p>'),
+        (value.posts[0].bodyMarkdown =
+          ':::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::'),
     ],
     [
       'a binding for a missing reference',
@@ -96,7 +96,8 @@ describe('archive restore contract', () => {
     [
       'a binding to unknown media',
       (value) => {
-        value.posts[0].bodyHtml = '<p><img src="/media/pixel.png" alt=""></p>'
+        value.posts[0].bodyMarkdown =
+          ':::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::'
         value.posts[0].bodyMediaAssets = {
           '/media/pixel.png': 'media/unknown.png',
         }
@@ -105,8 +106,8 @@ describe('archive restore contract', () => {
     [
       'an unsafe body media reference',
       (value) => {
-        value.posts[0].bodyHtml =
-          '<p><img src="/media/../pixel.png" alt=""></p>'
+        value.posts[0].bodyMarkdown =
+          ':::figure{src="/media/../pixel.png" alt="Fixture pixel"}\n:::'
         value.posts[0].bodyMediaAssets = {
           '/media/../pixel.png': 'media/pixel.png',
         }
@@ -120,7 +121,8 @@ describe('archive restore contract', () => {
 
   it('retains complete exact body media bindings', () => {
     const value = fixture()
-    value.posts[0].bodyHtml = '<p><img src="/media/pixel.png" alt=""></p>'
+    value.posts[0].bodyMarkdown =
+      ':::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::'
     value.posts[0].bodyMediaAssets = {
       '/media/pixel.png': 'media/pixel.png',
     }

@@ -4,6 +4,9 @@ export interface NewsPost {
   readonly slug: string
   readonly title: string
   readonly excerpt: string
+  /** Canonical, versioned editorial source. */
+  readonly bodyMarkdown: string
+  /** Derived, sanitized static-publication representation. */
   readonly bodyHtml: string
   readonly author: string
   readonly authorSlug: string
@@ -26,6 +29,7 @@ export interface ArticleVariant {
   readonly slug: string
   readonly title: string
   readonly excerpt: string
+  readonly bodyMarkdown: string
   readonly bodyHtml: string
   readonly seoTitle: string
   readonly seoDescription: string

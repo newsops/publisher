@@ -40,6 +40,15 @@ export {
   validateFeaturedRanks,
   validatePostInput,
 } from './editor'
+export {
+  EditorialMarkdownError,
+  figureDirective,
+  importPreReleaseHtmlToMarkdown,
+  EditorialMigrationError,
+  parseEditorialMarkdown,
+  renderEditorialMarkdown,
+} from './editorial-markdown'
+export type { EditorialDocument, FigureAttribution } from './editorial-markdown'
 export type {
   ContentSnapshot,
   ContentStatus,
