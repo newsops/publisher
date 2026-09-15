@@ -282,6 +282,7 @@ export async function restoreArchive(
       settings,
       authors,
       tags,
+      categories: tags,
       posts,
       snapshots: [],
     }

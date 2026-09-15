@@ -4,16 +4,22 @@ import type { AdminAuthor, AdminTag } from './admin-model'
 interface ManagementPanelProps {
   authors: AdminAuthor[]
   tags: AdminTag[]
+  categories: AdminTag[]
   newAuthorName: string
   setNewAuthorName: Dispatch<SetStateAction<string>>
   newTagName: string
+  newCategoryName: string
   setNewTagName: Dispatch<SetStateAction<string>>
+  setNewCategoryName: Dispatch<SetStateAction<string>>
   createAuthor: () => Promise<void>
   editAuthor: (author: AdminAuthor) => Promise<void>
   archiveAuthor: (author: AdminAuthor) => Promise<void>
   createTag: () => Promise<void>
   renameTag: (tag: AdminTag) => Promise<void>
   archiveTag: (tag: AdminTag) => Promise<void>
+  createCategory: () => Promise<void>
+  renameCategory: (category: AdminTag) => Promise<void>
+  archiveCategory: (category: AdminTag) => Promise<void>
 }
 
 function AuthorRow({
@@ -152,12 +158,57 @@ function TagsPanel(
   )
 }
 
+function CategoriesPanel(
+  props: Readonly<
+    Pick<
+      ManagementPanelProps,
+      | 'categories'
+      | 'newCategoryName'
+      | 'setNewCategoryName'
+      | 'createCategory'
+      | 'renameCategory'
+      | 'archiveCategory'
+    >
+  >,
+): ReactElement {
+  return (
+    <section>
+      <h2>Categories</h2>
+      <div className="tag-create">
+        <input
+          aria-label="New category name"
+          placeholder="New category"
+          value={props.newCategoryName}
+          onChange={(event) => props.setNewCategoryName(event.target.value)}
+        />
+        <button
+          className="secondary"
+          onClick={() => void props.createCategory()}
+        >
+          Add
+        </button>
+      </div>
+      <ul className="tag-list">
+        {props.categories.map((category) => (
+          <TagRow
+            key={category.slug}
+            tag={category}
+            rename={props.renameCategory}
+            archive={props.archiveCategory}
+          />
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 export default function ManagementPanel(
   props: Readonly<ManagementPanelProps>,
 ): ReactElement {
   return (
     <aside className="management-panel">
       <AuthorsPanel {...props} />
+      <CategoriesPanel {...props} />
       <TagsPanel {...props} />
     </aside>
   )

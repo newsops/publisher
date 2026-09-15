@@ -13,6 +13,7 @@ export interface AdminPost {
   seoDescription: string
   publishedAt: string
   categories: string[]
+  tags: string[]
   imageUrl?: string
   featured: boolean
   featuredRank?: number
@@ -57,6 +58,7 @@ export interface AdminAuthor {
   slug: string
   name: string
   bio: string
+  editorialPersona: string
   avatarUrl?: string
   active: boolean
   revision: number
@@ -144,6 +146,7 @@ export function blankPost(author?: AdminAuthor): AdminPost {
     seoDescription: '',
     publishedAt: new Date().toISOString(),
     categories: [],
+    tags: [],
     featured: false,
     featuredRank: undefined,
     status: 'draft',

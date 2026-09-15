@@ -16,6 +16,7 @@ export interface LocalState {
   readonly siteId: string
   readonly posts: ManagedPost[]
   readonly tags: ManagedTaxonomyTerm[]
+  readonly categories: ManagedTaxonomyTerm[]
   readonly settings: ManagedPublicationSettings
   readonly authors: ManagedAuthorProfile[]
   readonly snapshots: Array<{
@@ -50,6 +51,7 @@ export function initialAuthors(): ManagedAuthorProfile[] {
   const now = new Date().toISOString()
   return seedAuthors.map((author) => ({
     ...author,
+    editorialPersona: '',
     revision: 1,
     createdAt: now,
     updatedAt: now,
@@ -75,6 +77,7 @@ export function initialPayload(siteId = DEFAULT_SITE_ID): LocalState {
     siteId,
     posts: initialPosts(),
     tags: initialTags(),
+    categories: initialTags(),
     settings: initialSettings(),
     authors: initialAuthors(),
     snapshots: [],
@@ -94,6 +97,7 @@ export function emptyPayload(
     siteId,
     posts: [],
     tags: [],
+    categories: [],
     authors: [],
     settings: {
       name: identity.name,

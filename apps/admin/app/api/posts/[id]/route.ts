@@ -41,6 +41,9 @@ function parseInput(value: unknown): PostDraftInput {
           (item): item is string => typeof item === 'string',
         )
       : [],
+    tags: Array.isArray(object.tags)
+      ? object.tags.filter((item): item is string => typeof item === 'string')
+      : [],
     imageUrl: typeof object.imageUrl === 'string' ? object.imageUrl : undefined,
     featured: object.featured === true,
     featuredRank:

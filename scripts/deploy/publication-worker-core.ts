@@ -94,6 +94,7 @@ function articleInputs(snapshot: ContentSnapshot) {
       authorPath: publicAuthorPath(post.authorSlug),
       category: post.categories[0] ?? 'News',
       categoryPath: publicCategoryPath(post.categories[0] ?? 'News'),
+      tags: post.tags,
       archivePath: publicArchiveMonthPath(post.publishedAt),
       publishedAt: post.publishedAt,
       updatedAt: post.updatedAt,

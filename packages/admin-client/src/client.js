@@ -175,6 +175,26 @@ export function createPublisherAdminClient(options) {
       body: JSON.stringify(input),
     })
 
+  /** @param {string} siteId @param {string} slug */
+  const getAuthor = (siteId, slug) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/authors/${encodeURIComponent(slug)}`,
+    )
+
+  /** @param {string} siteId @param {string} slug @param {unknown} input @param {number} revision */
+  const updateAuthor = (siteId, slug, input, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/authors/${encodeURIComponent(slug)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(input),
+      },
+    )
+
   /** @param {string} siteId */
   const listTags = (siteId) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/tags`)
@@ -182,6 +202,18 @@ export function createPublisherAdminClient(options) {
   /** @param {string} siteId @param {unknown} input */
   const createTag = (siteId, input) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/tags`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+
+  /** @param {string} siteId */
+  const listCategories = (siteId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/categories`)
+
+  /** @param {string} siteId @param {unknown} input */
+  const createCategory = (siteId, input) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/categories`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(input),
@@ -255,8 +287,12 @@ export function createPublisherAdminClient(options) {
     deletePost,
     listAuthors,
     createAuthor,
+    getAuthor,
+    updateAuthor,
     listTags,
     createTag,
+    listCategories,
+    createCategory,
     getOperation,
     publish,
     uploadMedia,

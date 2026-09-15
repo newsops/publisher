@@ -25,12 +25,14 @@ import AgentGuidancePanel from './AgentGuidancePanel'
 export interface DashboardState {
   posts: AdminPost[]
   tags: AdminTag[]
+  categories: AdminTag[]
   authors: AdminAuthor[]
   settings: AdminSettings
   plugins: AdminPlugin[]
   media: AdminMedia[]
   selected: AdminPost
   newTagName: string
+  newCategoryName: string
   newAuthorName: string
   message: string
   article?: AdminArticle
@@ -42,6 +44,7 @@ export interface DashboardActions {
   setSettings: Dispatch<SetStateAction<AdminSettings>>
   setSelected: Dispatch<SetStateAction<AdminPost>>
   setNewTagName: Dispatch<SetStateAction<string>>
+  setNewCategoryName: Dispatch<SetStateAction<string>>
   setNewAuthorName: Dispatch<SetStateAction<string>>
   update: <Key extends keyof AdminPost>(
     field: Key,
@@ -71,6 +74,9 @@ export interface DashboardActions {
   createTag: () => Promise<void>
   renameTag: (tag: AdminTag) => Promise<void>
   archiveTag: (tag: AdminTag) => Promise<void>
+  createCategory: () => Promise<void>
+  renameCategory: (category: AdminTag) => Promise<void>
+  archiveCategory: (category: AdminTag) => Promise<void>
   publish: () => Promise<void>
   uploadMedia: (file: File) => Promise<void>
   approveMedia: (media: AdminMedia) => Promise<void>
@@ -155,6 +161,7 @@ function DashboardGrid({
         selected={state.selected}
         setSelected={actions.setSelected}
         authors={state.authors}
+        categories={state.categories}
         tags={state.tags}
         update={actions.update}
         save={actions.savePost}
@@ -178,6 +185,7 @@ function DashboardGrid({
       />
       <ManagementPanel
         authors={state.authors}
+        categories={state.categories}
         tags={state.tags}
         newAuthorName={state.newAuthorName}
         setNewAuthorName={actions.setNewAuthorName}
@@ -189,6 +197,11 @@ function DashboardGrid({
         createTag={actions.createTag}
         renameTag={actions.renameTag}
         archiveTag={actions.archiveTag}
+        newCategoryName={state.newCategoryName}
+        setNewCategoryName={actions.setNewCategoryName}
+        createCategory={actions.createCategory}
+        renameCategory={actions.renameCategory}
+        archiveCategory={actions.archiveCategory}
       />
     </div>
   )

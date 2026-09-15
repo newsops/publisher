@@ -21,12 +21,14 @@ import {
 export interface DashboardSetters {
   setPosts: Dispatch<SetStateAction<AdminPost[]>>
   setTags: Dispatch<SetStateAction<AdminTag[]>>
+  setCategories: Dispatch<SetStateAction<AdminTag[]>>
   setAuthors: Dispatch<SetStateAction<AdminAuthor[]>>
   setSettings: Dispatch<SetStateAction<AdminSettings>>
   setPlugins: Dispatch<SetStateAction<AdminPlugin[]>>
   setMedia: Dispatch<SetStateAction<AdminMedia[]>>
   setSelected: Dispatch<SetStateAction<AdminPost>>
   setNewTagName: Dispatch<SetStateAction<string>>
+  setNewCategoryName: Dispatch<SetStateAction<string>>
   setNewAuthorName: Dispatch<SetStateAction<string>>
   setMessage: Dispatch<SetStateAction<string>>
   setArticle: Dispatch<SetStateAction<AdminArticle | undefined>>
@@ -40,12 +42,14 @@ function useDashboardState(): {
 } {
   const [posts, setPosts] = useState<AdminPost[]>([])
   const [tags, setTags] = useState<AdminTag[]>([])
+  const [categories, setCategories] = useState<AdminTag[]>([])
   const [authors, setAuthors] = useState<AdminAuthor[]>([])
   const [settings, setSettings] = useState<AdminSettings>(emptySettings)
   const [plugins, setPlugins] = useState<AdminPlugin[]>([])
   const [media, setMedia] = useState<AdminMedia[]>([])
   const [selected, setSelected] = useState<AdminPost>(blankPost())
   const [newTagName, setNewTagName] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
   const [newAuthorName, setNewAuthorName] = useState('')
   const [message, setMessage] = useState('인증 보호가 활성화된 어드민입니다.')
   const [article, setArticle] = useState<AdminArticle | undefined>()
@@ -56,12 +60,14 @@ function useDashboardState(): {
     state: {
       posts,
       tags,
+      categories,
       authors,
       settings,
       plugins,
       media,
       selected,
       newTagName,
+      newCategoryName,
       newAuthorName,
       message,
       article,
@@ -71,12 +77,14 @@ function useDashboardState(): {
     setters: {
       setPosts,
       setTags,
+      setCategories,
       setAuthors,
       setSettings,
       setPlugins,
       setMedia,
       setSelected,
       setNewTagName,
+      setNewCategoryName,
       setNewAuthorName,
       setMessage,
       setArticle,
@@ -95,6 +103,7 @@ function useInitialData(setters: DashboardSetters): void {
         setters.setMessage,
       ),
       action.loadTags(setters.setTags),
+      action.loadCategories(setters.setCategories),
       action.loadAuthors(setters.setAuthors, setters.setSelected),
       action.loadSettings(setters.setSettings),
       action.loadPlugins(setters.setPlugins),
@@ -122,7 +131,7 @@ function postActions(
     createPost: () =>
       action.createPost(
         state.authors,
-        state.tags,
+        state.categories,
         setters.setSelected,
         setters.setMessage,
       ),
@@ -190,6 +199,30 @@ function tagActions(
   }
 }
 
+function categoryActions(
+  state: DashboardState,
+  setters: DashboardSetters,
+): Pick<
+  DashboardActions,
+  'setNewCategoryName' | 'createCategory' | 'renameCategory' | 'archiveCategory'
+> {
+  const reload = () => action.loadCategories(setters.setCategories)
+  return {
+    setNewCategoryName: setters.setNewCategoryName,
+    createCategory: () =>
+      action.createCategory(
+        state.newCategoryName,
+        setters.setNewCategoryName,
+        setters.setMessage,
+        reload,
+      ),
+    renameCategory: (category) =>
+      action.renameCategory(category, setters.setMessage, reload),
+    archiveCategory: (category) =>
+      action.archiveCategory(category, setters.setMessage, reload),
+  }
+}
+
 function dashboardActions(
   state: DashboardState,
   setters: DashboardSetters,
@@ -205,6 +238,7 @@ function dashboardActions(
     ...postActions(state, setters),
     ...authorActions(state, setters),
     ...tagActions(state, setters),
+    ...categoryActions(state, setters),
     setSettings: setters.setSettings,
     configurePlugin: (pluginId, configuration, revision) =>
       action.configurePlugin(

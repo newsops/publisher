@@ -104,6 +104,18 @@ export class PostgresContentRepository implements ContentRepository {
     )
   }
 
+  async listCategories(): Promise<readonly ManagedTaxonomyTerm[]> {
+    return [...(await this.stored()).state.categories].sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )
+  }
+
+  async getCategory(slug: string): Promise<ManagedTaxonomyTerm | undefined> {
+    return (await this.stored()).state.categories.find(
+      (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+    )
+  }
+
   async getSettings(): Promise<ManagedPublicationSettings> {
     const settings = (await this.stored()).state.settings
     return settings
@@ -188,13 +200,14 @@ export class PostgresContentRepository implements ContentRepository {
         : undefined
       const current = stored
       if (id && !current) throw new Error('Post not found')
+      const categories = state.categories
       const tags = state.tags
       const authors = state.authors
       const post = validatedPost(
         id,
         current,
         input,
-        tags
+        categories
           .filter((tag) => tag.active || current?.categories.includes(tag.slug))
           .map((tag) => tag.slug),
         authors
@@ -203,6 +216,9 @@ export class PostgresContentRepository implements ContentRepository {
           )
           .map((author) => author.slug),
         state.settings.canonicalOrigin,
+        tags
+          .filter((tag) => tag.active || current?.tags.includes(tag.slug))
+          .map((tag) => tag.slug),
       )
       const posts = current
         ? state.posts.map((candidate) =>
@@ -251,6 +267,54 @@ export class PostgresContentRepository implements ContentRepository {
         state: {
           ...state,
           tags: tags.map((tag) => (tag.slug === current.slug ? archived : tag)),
+        },
+        result: archived,
+      }
+    })
+  }
+
+  async saveCategory(
+    slug: string | undefined,
+    input: TaxonomyTermInput,
+  ): Promise<ManagedTaxonomyTerm> {
+    return this.mutate((state) => {
+      const categories = [...state.categories]
+      const current = slug
+        ? categories.find(
+            (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+          )
+        : undefined
+      if (slug && !current) throw new Error('Category not found')
+      const category = validatedTag(slug, input, current)
+      if (!current && categories.some((item) => item.slug === category.slug))
+        throw new ContentValidationError('Category already exists')
+      const next = current
+        ? categories.map((item) =>
+            item.slug === current.slug ? category : item,
+          )
+        : [...categories, category]
+      return { state: { ...state, categories: next }, result: category }
+    })
+  }
+
+  async removeCategory(slug: string): Promise<ManagedTaxonomyTerm> {
+    return this.mutate((state) => {
+      const current = state.categories.find(
+        (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+      )
+      if (!current) throw new Error('Category not found')
+      const archived = {
+        ...current,
+        active: false,
+        revision: current.revision + 1,
+        updatedAt: new Date().toISOString(),
+      }
+      return {
+        state: {
+          ...state,
+          categories: state.categories.map((item) =>
+            item.slug === current.slug ? archived : item,
+          ),
         },
         result: archived,
       }

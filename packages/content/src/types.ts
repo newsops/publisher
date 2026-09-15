@@ -12,6 +12,7 @@ export interface NewsPost {
   readonly publishedAt: string
   readonly updatedAt: string
   readonly categories: readonly string[]
+  readonly tags: readonly string[]
   readonly imageUrl: string | undefined
   readonly featured: boolean
   readonly featuredRank: number | undefined
@@ -41,6 +42,7 @@ export interface Article {
   readonly author: string
   readonly authorSlug: string
   readonly categories: readonly string[]
+  readonly tags: readonly string[]
   readonly imageUrl: string | undefined
   readonly featured: boolean
   readonly featuredRank: number | undefined
@@ -72,6 +74,8 @@ export interface AuthorProfile {
 }
 
 export interface ManagedAuthorProfile extends AuthorProfile {
+  /** Private authoring guidance; never part of AuthorProfile/public snapshots. */
+  readonly editorialPersona: string
   readonly revision: number
   readonly createdAt: string
   readonly updatedAt: string
@@ -88,6 +92,8 @@ export interface ManagedTaxonomyTerm extends TaxonomyTerm {
   readonly createdAt: string
   readonly updatedAt: string
 }
+
+export type ManagedCategoryTerm = ManagedTaxonomyTerm
 
 export interface SitePage {
   readonly slug: 'about' | 'contact'

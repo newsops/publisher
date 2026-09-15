@@ -56,7 +56,15 @@ export class FileContentRepository implements ContentRepository {
       ) as LocalState
       if (state.siteId !== this.siteId)
         throw new Error('Content repository site mismatch')
-      return state
+      return {
+        ...state,
+        categories: state.categories ?? state.tags,
+        posts: state.posts.map((post) => ({ ...post, tags: post.tags ?? [] })),
+        authors: state.authors.map((author) => ({
+          ...author,
+          editorialPersona: author.editorialPersona ?? '',
+        })),
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       return { ...initialState(), siteId: this.siteId }
@@ -97,6 +105,18 @@ export class FileContentRepository implements ContentRepository {
   async getTag(slug: string): Promise<ManagedTaxonomyTerm | undefined> {
     return (await this.readState()).tags.find(
       (tag) => tag.slug.toLowerCase() === slug.toLowerCase(),
+    )
+  }
+
+  async listCategories(): Promise<readonly ManagedTaxonomyTerm[]> {
+    return [...(await this.readState()).categories].sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )
+  }
+
+  async getCategory(slug: string): Promise<ManagedTaxonomyTerm | undefined> {
+    return (await this.readState()).categories.find(
+      (category) => category.slug.toLowerCase() === slug.toLowerCase(),
     )
   }
 
@@ -180,9 +200,13 @@ export class FileContentRepository implements ContentRepository {
     const stored = id ? state.posts.find((post) => post.id === id) : undefined
     const current = stored
     if (id && !current) throw new Error('Post not found')
+    const categories = state.categories
+    const allowedCategories = categories
+      .filter((tag) => tag.active || current?.categories.includes(tag.slug))
+      .map((tag) => tag.slug)
     const tags = state.tags
     const allowedTags = tags
-      .filter((tag) => tag.active || current?.categories.includes(tag.slug))
+      .filter((tag) => tag.active || current?.tags.includes(tag.slug))
       .map((tag) => tag.slug)
     const authors = state.authors
     const allowedAuthors = authors
@@ -192,9 +216,10 @@ export class FileContentRepository implements ContentRepository {
       id,
       current,
       input,
-      allowedTags,
+      allowedCategories,
       allowedAuthors,
       state.settings.canonicalOrigin,
+      allowedTags,
     )
     const posts = current
       ? state.posts.map((candidate) =>
@@ -202,7 +227,7 @@ export class FileContentRepository implements ContentRepository {
         )
       : [...state.posts, post]
     assertUniqueFeaturedRanks(posts)
-    await this.writeState({ ...state, tags, posts })
+    await this.writeState({ ...state, posts })
     return post
   }
 
@@ -242,6 +267,49 @@ export class FileContentRepository implements ContentRepository {
     await this.writeState({
       ...state,
       tags: tags.map((tag) => (tag.slug === current.slug ? archived : tag)),
+    })
+    return archived
+  }
+
+  async saveCategory(
+    slug: string | undefined,
+    input: TaxonomyTermInput,
+  ): Promise<ManagedTaxonomyTerm> {
+    const state = await this.readState()
+    const categories = state.categories
+    const current = slug
+      ? categories.find(
+          (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+        )
+      : undefined
+    if (slug && !current) throw new Error('Category not found')
+    const category = validatedTag(slug, input, current)
+    if (!current && categories.some((item) => item.slug === category.slug))
+      throw new ContentValidationError('Category already exists')
+    const next = current
+      ? categories.map((item) => (item.slug === current.slug ? category : item))
+      : [...categories, category]
+    await this.writeState({ ...state, categories: next })
+    return category
+  }
+
+  async removeCategory(slug: string): Promise<ManagedTaxonomyTerm> {
+    const state = await this.readState()
+    const current = state.categories.find(
+      (item) => item.slug.toLowerCase() === slug.toLowerCase(),
+    )
+    if (!current) throw new Error('Category not found')
+    const archived = {
+      ...current,
+      active: false,
+      revision: current.revision + 1,
+      updatedAt: new Date().toISOString(),
+    }
+    await this.writeState({
+      ...state,
+      categories: state.categories.map((item) =>
+        item.slug === current.slug ? archived : item,
+      ),
     })
     return archived
   }

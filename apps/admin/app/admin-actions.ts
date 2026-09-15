@@ -40,6 +40,15 @@ export async function loadTags(setTags: Setter<AdminTag[]>): Promise<void> {
   setTags(data.tags)
 }
 
+export async function loadCategories(
+  setCategories: Setter<AdminTag[]>,
+): Promise<void> {
+  const response = await adminFetch('/api/categories')
+  if (!response.ok) return
+  const data = (await response.json()) as { categories: AdminTag[] }
+  setCategories(data.categories)
+}
+
 export async function loadAuthors(
   setAuthors: Setter<AdminAuthor[]>,
   setSelected: Setter<AdminPost>,
@@ -222,14 +231,14 @@ export async function setPluginState(
 
 export function createPost(
   authors: AdminAuthor[],
-  tags: AdminTag[],
+  categories: AdminTag[],
   setSelected: Setter<AdminPost>,
   setMessage: Setter<string>,
 ): void {
   const firstAuthor = authors.find((author) => author.active)
   setSelected({
     ...blankPost(firstAuthor),
-    categories: tags
+    categories: categories
       .filter((tag) => tag.active)
       .slice(0, 1)
       .map((tag) => tag.slug),
@@ -338,6 +347,13 @@ export async function editAuthor(
   if (!name) return
   const bio = window.prompt('작성자 소개', author.bio)?.trim()
   if (!bio) return
+  const editorialPersona = window
+    .prompt(
+      '비공개 편집 페르소나 (에이전트 작성 지침)',
+      author.editorialPersona,
+    )
+    ?.trim()
+  if (editorialPersona === undefined) return
   const response = await adminFetch(
     `/api/authors/${encodeURIComponent(author.slug)}`,
     {
@@ -346,7 +362,7 @@ export async function editAuthor(
         'Content-Type': 'application/json',
         'If-Match': String(author.revision),
       },
-      body: JSON.stringify({ name, bio }),
+      body: JSON.stringify({ name, bio, editorialPersona }),
     },
   )
   setMessage(
@@ -445,6 +461,72 @@ export async function archiveTag(
     response.ok
       ? '태그를 보관했습니다.'
       : `태그 보관 실패 (${response.status}).`,
+  )
+  if (response.ok) await reload()
+}
+
+export async function createCategory(
+  nameInput: string,
+  setName: Setter<string>,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  const name = nameInput.trim()
+  if (!name) return
+  const response = await adminFetch('/api/categories', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  setMessage(
+    response.ok
+      ? '분류를 추가했습니다.'
+      : `분류 추가 실패 (${response.status}).`,
+  )
+  if (response.ok) {
+    setName('')
+    await reload()
+  }
+}
+export async function renameCategory(
+  category: AdminTag,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  const name = window.prompt('새 분류 이름', category.name)?.trim()
+  if (!name || name === category.name) return
+  const response = await adminFetch(
+    `/api/categories/${encodeURIComponent(category.slug)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'If-Match': String(category.revision),
+      },
+      body: JSON.stringify({ name }),
+    },
+  )
+  setMessage(
+    response.ok
+      ? '분류 이름을 변경했습니다.'
+      : `분류 변경 실패 (${response.status}).`,
+  )
+  if (response.ok) await reload()
+}
+export async function archiveCategory(
+  category: AdminTag,
+  setMessage: Setter<string>,
+  reload: () => Promise<void>,
+): Promise<void> {
+  if (!window.confirm(`“${category.name}” 분류를 보관할까요?`)) return
+  const response = await adminFetch(
+    `/api/categories/${encodeURIComponent(category.slug)}`,
+    { method: 'DELETE', headers: { 'If-Match': String(category.revision) } },
+  )
+  setMessage(
+    response.ok
+      ? '분류를 보관했습니다.'
+      : `분류 보관 실패 (${response.status}).`,
   )
   if (response.ok) await reload()
 }

@@ -5,19 +5,18 @@ import {
   AutomationApiError,
   withSiteAutomation,
 } from '../../../../../../lib/automation-auth'
+import { parseTagPatch } from '../../../../../../lib/api-input'
 import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
-import { parseAuthorPatch } from '../../../../../../lib/platform-api-input'
 import { getRepositoryForSite } from '../../../../../../lib/repository'
 
 function assertRevision(current: { revision: number }, request: Request): void {
-  if (revisionFrom(request, 'author') !== current.revision)
+  if (revisionFrom(request, 'category') !== current.revision)
     throw new AutomationApiError(
       'revision_conflict',
-      'The author changed; reload before updating or archiving',
+      'The category changed; reload it before updating or archiving',
       409,
     )
 }
-
 export async function GET(
   request: Request,
   context: { params: Promise<{ siteId: string; slug: string }> },
@@ -28,18 +27,17 @@ export async function GET(
     'editor',
     siteId,
     async (_identity, id) => {
-      const author = await getRepositoryForSite(siteId).getAuthor(slug)
-      return author
-        ? apiResponse({ siteId, author }, 200, id)
+      const category = await getRepositoryForSite(siteId).getCategory(slug)
+      return category
+        ? apiResponse({ siteId, category }, 200, id)
         : apiResponse(
-            { error: { code: 'not_found', message: 'Author not found' } },
+            { error: { code: 'not_found', message: 'Category not found' } },
             404,
             id,
           )
     },
   )
 }
-
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ siteId: string; slug: string }> },
@@ -48,31 +46,24 @@ export async function PATCH(
   return withSiteAutomation(request, 'editor', siteId, async (identity, id) => {
     try {
       const repository = getRepositoryForSite(siteId)
-      const current = await repository.getAuthor(slug)
+      const current = await repository.getCategory(slug)
       if (!current)
-        throw new AutomationApiError('not_found', 'Author not found', 404)
+        throw new AutomationApiError('not_found', 'Category not found', 404)
       assertRevision(current, request)
-      const patch = parseAuthorPatch(await parseJsonBody(request))
-      const author = await repository.saveAuthor(slug, {
-        slug: patch.slug,
-        name: patch.name ?? current.name,
-        bio: patch.bio ?? current.bio,
-        avatarUrl: patch.avatarUrl ?? current.avatarUrl,
-        active: patch.active ?? current.active,
-        editorialPersona: patch.editorialPersona ?? current.editorialPersona,
+      const category = await repository.saveCategory(slug, {
+        name: parseTagPatch(await parseJsonBody(request)).name ?? current.name,
       })
-      auditAutomation('content.site.author.updated', identity, {
+      auditAutomation('content.site.category.updated', identity, {
         siteId,
-        slug: author.slug,
-        revision: author.revision,
+        slug: category.slug,
+        revision: category.revision,
       })
-      return apiResponse({ siteId, author }, 200, id)
+      return apiResponse({ siteId, category }, 200, id)
     } catch (error) {
       return apiErrorResponse(error, id)
     }
   })
 }
-
 export async function DELETE(
   request: Request,
   context: { params: Promise<{ siteId: string; slug: string }> },
@@ -81,17 +72,17 @@ export async function DELETE(
   return withSiteAutomation(request, 'editor', siteId, async (identity, id) => {
     try {
       const repository = getRepositoryForSite(siteId)
-      const current = await repository.getAuthor(slug)
+      const current = await repository.getCategory(slug)
       if (!current)
-        throw new AutomationApiError('not_found', 'Author not found', 404)
+        throw new AutomationApiError('not_found', 'Category not found', 404)
       assertRevision(current, request)
-      const author = await repository.removeAuthor(slug)
-      auditAutomation('content.site.author.archived', identity, {
+      const category = await repository.removeCategory(slug)
+      auditAutomation('content.site.category.archived', identity, {
         siteId,
-        slug: author.slug,
-        revision: author.revision,
+        slug: category.slug,
+        revision: category.revision,
       })
-      return apiResponse({ siteId, author }, 200, id)
+      return apiResponse({ siteId, category }, 200, id)
     } catch (error) {
       return apiErrorResponse(error, id)
     }

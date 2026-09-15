@@ -12,6 +12,7 @@ export interface ArticleDocument {
   readonly authorPath: string
   readonly category: string
   readonly categoryPath: string
+  readonly tags?: readonly string[]
   readonly archivePath: string
   readonly publishedAt: string
   readonly updatedAt: string

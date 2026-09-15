@@ -29,6 +29,7 @@ export function draftInputFromPost(post: ManagedPost): PostDraftInput {
     status: post.status,
     publishedAt: post.publishedAt,
     categories: post.categories,
+    tags: post.tags,
     imageUrl: post.imageUrl,
     featured: post.featured,
     featuredRank: post.featuredRank,
@@ -56,6 +57,7 @@ const fields = new Set([
   'status',
   'publishedAt',
   'categories',
+  'tags',
   'imageUrl',
   'featured',
   'featuredRank',
@@ -96,21 +98,22 @@ export function stringField(
   return object[key] as string
 }
 
-function categoriesField(
+function taxonomyField(
   object: Record<string, unknown>,
+  key: 'categories' | 'tags',
   partial: boolean,
 ): readonly string[] | undefined {
-  if (!('categories' in object)) return partial ? undefined : []
+  if (!(key in object)) return partial ? undefined : []
   if (
-    !Array.isArray(object.categories) ||
-    object.categories.some((item) => typeof item !== 'string')
+    !Array.isArray(object[key]) ||
+    object[key].some((item) => typeof item !== 'string')
   )
     throw new AutomationApiError(
       'invalid_field',
-      'categories must be an array of strings',
+      `${key} must be an array of strings`,
       400,
     )
-  return object.categories as string[]
+  return object[key] as string[]
 }
 
 export function booleanField(
@@ -177,7 +180,8 @@ export function parsePostInput(value: unknown): PostDraftInput {
     seoDescription: stringField(object, 'seoDescription', true),
     status: statusField(object, false),
     publishedAt: stringField(object, 'publishedAt', false) ?? '',
-    categories: categoriesField(object, false) ?? [],
+    categories: taxonomyField(object, 'categories', false) ?? [],
+    tags: taxonomyField(object, 'tags', false) ?? [],
     imageUrl: stringField(object, 'imageUrl', false),
     featured: booleanField(object, 'featured', false),
     featuredRank: numberField(object, 'featuredRank', false),
@@ -200,7 +204,8 @@ export function parsePostPatch(value: unknown): PostPatchInput {
   const seoDescription = stringField(object, 'seoDescription', true)
   const status = statusField(object, true)
   const publishedAt = stringField(object, 'publishedAt', true)
-  const categories = categoriesField(object, true)
+  const categories = taxonomyField(object, 'categories', true)
+  const tags = taxonomyField(object, 'tags', true)
   const imageUrl = stringField(object, 'imageUrl', true)
   const featured = booleanField(object, 'featured', true)
   const featuredRank = numberField(object, 'featuredRank', true)
@@ -217,6 +222,7 @@ export function parsePostPatch(value: unknown): PostPatchInput {
   if (status !== undefined) patch.status = status
   if (publishedAt !== undefined) patch.publishedAt = publishedAt
   if (categories !== undefined) patch.categories = categories
+  if (tags !== undefined) patch.tags = tags
   if (imageUrl !== undefined) patch.imageUrl = imageUrl
   if (featured !== undefined) patch.featured = featured
   if (featuredRank !== undefined) patch.featuredRank = featuredRank

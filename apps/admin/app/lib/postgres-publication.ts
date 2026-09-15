@@ -24,6 +24,7 @@ function freshState(siteId: string): LocalState {
     siteId,
     posts: payload.posts,
     tags: payload.tags,
+    categories: payload.categories,
     settings: payload.settings,
     authors: payload.authors,
     snapshots: [],
@@ -59,7 +60,21 @@ export async function loadPostgresSiteState(
   if (!row) throw new Error(`Content state is unavailable: ${siteId}`)
   if (row.state.siteId !== siteId)
     throw new Error('Content repository site mismatch')
-  return { state: row.state, revision: Number(row.revision) }
+  return {
+    state: {
+      ...row.state,
+      categories: row.state.categories ?? row.state.tags,
+      posts: row.state.posts.map((post) => ({
+        ...post,
+        tags: post.tags ?? [],
+      })),
+      authors: row.state.authors.map((author) => ({
+        ...author,
+        editorialPersona: author.editorialPersona ?? '',
+      })),
+    },
+    revision: Number(row.revision),
+  }
 }
 
 function snapshotMedia(
@@ -122,6 +137,7 @@ async function createPostgresSnapshot(
     await articles.listUsing(database),
     projectPublicPluginSnapshot(await plugins.listUsing(database), siteId),
     snapshotMedia(await media.listApprovedUsing(database, siteId)),
+    state.categories,
   )
 }
 

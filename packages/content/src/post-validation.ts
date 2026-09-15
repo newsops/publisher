@@ -225,6 +225,7 @@ export function resolveValidatedPost(
 ): {
   fields: ResolvedPostFields
   categories: string[]
+  tags: string[]
   errors: string[]
 } {
   const errors: string[] = []
@@ -234,6 +235,7 @@ export function resolveValidatedPost(
   return {
     fields,
     categories: validatedCategories(input, allowed, errors),
+    tags: Array.isArray(input.tags) ? [...new Set(input.tags.map(String))] : [],
     errors,
   }
 }

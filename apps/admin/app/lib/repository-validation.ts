@@ -92,6 +92,11 @@ export function validatedAuthor(
     throw new ContentValidationError('author name is too long')
   if (bio.length > 500)
     throw new ContentValidationError('author bio is too long')
+  if (
+    (input.editorialPersona ?? current?.editorialPersona ?? '').trim().length >
+    4000
+  )
+    throw new ContentValidationError('editorialPersona is too long')
   const resolvedSlug =
     current?.slug ?? slug ?? input.slug ?? slugify(name, 'author')
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(resolvedSlug))
@@ -116,6 +121,11 @@ export function validatedAuthor(
     bio,
     avatarUrl,
     active: input.active !== false,
+    editorialPersona: (
+      input.editorialPersona ??
+      current?.editorialPersona ??
+      ''
+    ).trim(),
     revision: (current?.revision ?? 0) + 1,
     createdAt: current?.createdAt ?? now,
     updatedAt: now,
@@ -171,6 +181,7 @@ function inputFromPost(post: ManagedPost): PostDraftInput {
     status: post.status,
     publishedAt: post.publishedAt,
     categories: post.categories,
+    tags: post.tags,
     imageUrl: post.imageUrl,
     featured: post.featured,
     featuredRank: post.featuredRank,
@@ -184,6 +195,7 @@ export function validatedPost(
   allowedCategories: readonly string[],
   allowedAuthorSlugs: readonly string[],
   canonicalOrigin: string,
+  allowedTags: readonly string[] = allowedCategories,
 ): ManagedPost {
   let candidate = input
   if (current) {
@@ -217,6 +229,9 @@ export function validatedPost(
   })
   if (!result.ok || !result.value)
     throw new ContentValidationError(result.errors.join('; '))
+  for (const tag of result.value.tags)
+    if (!allowedTags.includes(tag))
+      throw new ContentValidationError(`unsupported tag: ${tag}`)
   return {
     ...result.value,
     id: id ?? result.value.id,
@@ -241,6 +256,7 @@ export function makeSnapshot(
   ),
   plugins = emptyPublicPluginSnapshot,
   media: readonly import('@publisher/content').SnapshotMedia[],
+  categories: readonly ManagedTaxonomyTerm[] = tags,
 ): { snapshot: ContentSnapshot; checksum: string } {
   const generatedAt = new Date().toISOString()
   const snapshot: ContentSnapshot = {
@@ -251,6 +267,7 @@ export function makeSnapshot(
     settings: publicSettings(settings),
     authors: authors.filter((author) => author.active).map(publicAuthor),
     tags: tags.filter((tag) => tag.active),
+    categories: categories.filter((category) => category.active),
     posts: posts
       .filter(
         (post) =>

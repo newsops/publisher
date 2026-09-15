@@ -106,6 +106,7 @@ export function createScaleFixture(count = 1_000): readonly ArticleDocument[] {
       authorPath: '/author/fixture/',
       category: 'Technology',
       categoryPath: '/search/label/Technology/',
+      tags: [],
       archivePath: '/2026/09/',
       publishedAt: `2026-09-${String((index % 28) + 1).padStart(2, '0')}T00:00:00.000Z`,
       updatedAt: '2026-09-11T00:00:00.000Z',

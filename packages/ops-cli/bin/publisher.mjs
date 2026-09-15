@@ -85,6 +85,81 @@ async function archiveManifest(directory) {
 }
 
 async function main() {
+  if (args[0] === 'taxonomy' && ['categories', 'tags'].includes(args[1])) {
+    const kind = args[1]
+    const action = args[2] ?? 'list'
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      if (action === 'list') {
+        const response =
+          kind === 'categories'
+            ? await api.listCategories(siteId)
+            : await api.listTags(siteId)
+        return emit(true, 'TAXONOMY', response.data ?? {})
+      }
+      const name = option('--name')
+      if (action !== 'create' || !name)
+        return emit(
+          false,
+          'USAGE',
+          {
+            command: `taxonomy ${kind} list|create --site <id> [--name <name>]`,
+          },
+          10,
+        )
+      if (!nonInteractive)
+        return emit(
+          false,
+          'NON_INTERACTIVE_REQUIRED',
+          { mutationAttempted: false },
+          10,
+        )
+      const response =
+        kind === 'categories'
+          ? await api.createCategory(siteId, { name, slug: option('--slug') })
+          : await api.createTag(siteId, { name, slug: option('--slug') })
+      return emit(true, 'TAXONOMY_CREATED', response.data ?? {})
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (args[0] === 'author' && args[1] === 'get') {
+    const siteId = option('--site'),
+      slug = option('--slug')
+    if (!siteId || !slug)
+      return emit(
+        false,
+        'INPUT_REQUIRED',
+        { field: !siteId ? '--site' : '--slug' },
+        10,
+      )
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      return emit(
+        true,
+        'AUTHOR_CONTEXT',
+        (await api.getAuthor(siteId, slug)).data ?? {},
+      )
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
   if (args[0] === 'site' && args[1] === 'list') {
     const api = client()
     if (!api)
@@ -449,6 +524,9 @@ async function main() {
         'site bootstrap --site <id> --non-interactive',
         'site guidance get --site <id> --json',
         'site guidance set --site <id> --file <path> --revision <n> --non-interactive --json',
+        'taxonomy categories|tags list --site <id> --json',
+        'taxonomy categories|tags create --site <id> --name <name> [--slug <slug>] --non-interactive --json',
+        'author get --site <id> --slug <author-slug> --json',
         'status',
         'publish',
         'operation get',

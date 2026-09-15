@@ -61,6 +61,21 @@ class RuntimeContentRepository implements ContentRepository {
   async removeTag(slug: string): Promise<ManagedTaxonomyTerm> {
     return (await this.active()).removeTag(slug)
   }
+  async listCategories(): Promise<readonly ManagedTaxonomyTerm[]> {
+    return (await this.active()).listCategories()
+  }
+  async getCategory(slug: string): Promise<ManagedTaxonomyTerm | undefined> {
+    return (await this.active()).getCategory(slug)
+  }
+  async saveCategory(
+    slug: string | undefined,
+    input: TaxonomyTermInput,
+  ): Promise<ManagedTaxonomyTerm> {
+    return (await this.active()).saveCategory(slug, input)
+  }
+  async removeCategory(slug: string): Promise<ManagedTaxonomyTerm> {
+    return (await this.active()).removeCategory(slug)
+  }
   async getSettings(): Promise<ManagedPublicationSettings> {
     return (await this.active()).getSettings()
   }

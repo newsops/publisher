@@ -56,6 +56,7 @@ async function createFileSnapshot(
       siteId,
     ),
     [],
+    state.categories,
   )
 }
 

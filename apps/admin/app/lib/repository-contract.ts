@@ -36,6 +36,13 @@ export interface ContentRepository {
     input: TaxonomyTermInput,
   ): Promise<ManagedTaxonomyTerm>
   removeTag(slug: string): Promise<ManagedTaxonomyTerm>
+  listCategories(): Promise<readonly ManagedTaxonomyTerm[]>
+  getCategory(slug: string): Promise<ManagedTaxonomyTerm | undefined>
+  saveCategory(
+    slug: string | undefined,
+    input: TaxonomyTermInput,
+  ): Promise<ManagedTaxonomyTerm>
+  removeCategory(slug: string): Promise<ManagedTaxonomyTerm>
   getSettings(): Promise<ManagedPublicationSettings>
   saveSettings(
     input: PublicationSettingsInput,

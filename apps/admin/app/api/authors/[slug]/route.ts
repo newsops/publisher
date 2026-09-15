@@ -60,6 +60,7 @@ export async function PATCH(
       bio: patch.bio ?? current.bio,
       avatarUrl: patch.avatarUrl ?? current.avatarUrl,
       active: patch.active ?? current.active,
+      editorialPersona: patch.editorialPersona ?? current.editorialPersona,
     })
     audit('content.author.updated', identity, {
       slug: author.slug,

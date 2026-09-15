@@ -21,6 +21,7 @@ interface PostEditorProps {
   selected: AdminPost
   setSelected: Dispatch<SetStateAction<AdminPost>>
   authors: AdminAuthor[]
+  categories: AdminTag[]
   tags: AdminTag[]
   update: UpdatePost
   save: () => Promise<void>
@@ -146,6 +147,16 @@ function AuthorField({
             </option>
           ))}
       </select>
+      {authors.find((author) => author.slug === selected.authorSlug)
+        ?.editorialPersona ? (
+        <small className="author-context">
+          Private editorial persona:{' '}
+          {
+            authors.find((author) => author.slug === selected.authorSlug)
+              ?.editorialPersona
+          }
+        </small>
+      ) : null}
     </label>
   )
 }
@@ -207,30 +218,33 @@ function PublishingFields({
   )
 }
 
-function TagPicker({
+function TaxonomyPicker({
   selected,
   tags,
   update,
+  field,
+  label,
 }: Readonly<
-  Pick<PostEditorProps, 'selected' | 'tags' | 'update'>
+  Pick<PostEditorProps, 'selected' | 'tags' | 'update'> & {
+    field: 'categories' | 'tags'
+    label: string
+  }
 >): ReactElement {
   return (
     <fieldset className="tag-picker">
-      <legend>Tags</legend>
+      <legend>{label}</legend>
       {tags.map((tag) => (
         <label className="checkbox" key={tag.slug}>
           <input
             type="checkbox"
             disabled={!tag.active}
-            checked={selected.categories.includes(tag.slug)}
+            checked={selected[field].includes(tag.slug)}
             onChange={(event) =>
               update(
-                'categories',
+                field,
                 event.target.checked
-                  ? [...selected.categories, tag.slug]
-                  : selected.categories.filter(
-                      (category) => category !== tag.slug,
-                    ),
+                  ? [...selected[field], tag.slug]
+                  : selected[field].filter((category) => category !== tag.slug),
               )
             }
           />
@@ -303,10 +317,19 @@ export default function PostEditor(
         authors={props.authors}
       />
       <PublishingFields selected={props.selected} update={props.update} />
-      <TagPicker
+      <TaxonomyPicker
+        selected={props.selected}
+        tags={props.categories}
+        update={props.update}
+        field="categories"
+        label="Categories (required)"
+      />
+      <TaxonomyPicker
         selected={props.selected}
         tags={props.tags}
         update={props.update}
+        field="tags"
+        label="Tags (optional)"
       />
       <SeoFields selected={props.selected} update={props.update} />
       <EditorActions

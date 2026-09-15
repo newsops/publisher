@@ -68,8 +68,20 @@ export interface PublisherAdminClient {
     siteId: string,
     input: unknown,
   ): Promise<PublisherApiReply<unknown>>
+  getAuthor(siteId: string, slug: string): Promise<PublisherApiReply<unknown>>
+  updateAuthor(
+    siteId: string,
+    slug: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
   listTags(siteId: string): Promise<PublisherApiReply<unknown>>
   createTag(siteId: string, input: unknown): Promise<PublisherApiReply<unknown>>
+  listCategories(siteId: string): Promise<PublisherApiReply<unknown>>
+  createCategory(
+    siteId: string,
+    input: unknown,
+  ): Promise<PublisherApiReply<unknown>>
   getOperation(siteId: string, id: string): Promise<PublisherApiReply<unknown>>
   publish(
     siteId: string,

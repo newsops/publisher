@@ -49,6 +49,7 @@ export interface PostDraftInput {
   readonly status?: ContentStatus
   readonly publishedAt: string
   readonly categories: readonly string[]
+  readonly tags?: readonly string[]
   readonly imageUrl?: string
   readonly featured?: boolean
   readonly featuredRank?: number | null
@@ -76,6 +77,7 @@ export interface AuthorProfileInput {
   readonly bio: string
   readonly avatarUrl?: string
   readonly active?: boolean
+  readonly editorialPersona?: string
 }
 
 export interface TaxonomyTermInput {
@@ -92,6 +94,7 @@ export interface ContentSnapshot {
   readonly settings: PublicationSettings
   readonly authors: readonly AuthorProfile[]
   readonly tags: readonly ManagedTaxonomyTerm[]
+  readonly categories: readonly ManagedTaxonomyTerm[]
   readonly posts: readonly NewsPost[]
   readonly articles: readonly Article[]
   readonly plugins: PublicPluginSnapshot
@@ -122,7 +125,7 @@ export function validatePostInput(
     readonly allowedAuthorSlugs?: readonly string[]
   } = {},
 ): ValidationResult<ManagedPost> {
-  const { fields, categories, errors } = resolveValidatedPost(
+  const { fields, categories, tags, errors } = resolveValidatedPost(
     input,
     allowed,
     context,
@@ -147,6 +150,7 @@ export function validatePostInput(
       publishedAt: fields.publishedAt,
       updatedAt: now,
       categories,
+      tags,
       imageUrl: input.imageUrl || undefined,
       featured: input.featured === true,
       featuredRank: input.featuredRank ?? undefined,
@@ -162,6 +166,7 @@ export function publicAuthor(author: ManagedAuthorProfile): AuthorProfile {
     revision: _revision,
     createdAt: _createdAt,
     updatedAt: _updatedAt,
+    editorialPersona: _editorialPersona,
     ...profile
   } = author
   return profile

@@ -73,6 +73,9 @@ export function parseArticle(value: unknown): Article | undefined {
       author: value.author,
       authorSlug: value.authorSlug,
       categories: requiredStringArray(value.categories, 'categories'),
+      tags: Array.isArray(value.tags)
+        ? requiredStringArray(value.tags, 'tags')
+        : [],
       imageUrl,
       featured: value.featured,
       featuredRank:
@@ -123,6 +126,9 @@ export function parsePost(value: unknown): NewsPost {
     publishedAt: requiredString(value.publishedAt, 'publishedAt'),
     updatedAt: requiredString(value.updatedAt, 'updatedAt'),
     categories: requiredStringArray(value.categories, 'categories'),
+    tags: Array.isArray(value.tags)
+      ? requiredStringArray(value.tags, 'tags')
+      : [],
     imageUrl,
     featured: value.featured,
     featuredRank: typeof featuredRank === 'number' ? featuredRank : undefined,
