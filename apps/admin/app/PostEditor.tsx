@@ -7,6 +7,7 @@ import {
 import { adminFetch } from './admin-client'
 import type {
   AdminAuthor,
+  AdminMedia,
   AdminPost,
   AdminTag,
   EditorialStatus,
@@ -23,6 +24,7 @@ interface PostEditorProps {
   authors: AdminAuthor[]
   categories: AdminTag[]
   tags: AdminTag[]
+  media: readonly AdminMedia[]
   update: UpdatePost
   save: () => Promise<void>
   remove: () => Promise<void>
@@ -31,7 +33,10 @@ interface PostEditorProps {
 function BasicPostFields({
   selected,
   update,
-}: Readonly<Pick<PostEditorProps, 'selected' | 'update'>>): ReactElement {
+  media,
+}: Readonly<
+  Pick<PostEditorProps, 'selected' | 'update' | 'media'>
+>): ReactElement {
   const [xUrl, setXUrl] = useState('')
   const [embedMessage, setEmbedMessage] = useState('')
   const [figure, setFigure] = useState({
@@ -42,6 +47,9 @@ function BasicPostFields({
     creditUrl: '',
   })
   const [figureMessage, setFigureMessage] = useState('')
+  const approvedMedia = media.flatMap((item) =>
+    item.state === 'approved' ? item.variants : [],
+  )
   const insertFigure = () => {
     if (!figure.src.trim() || !figure.alt.trim()) {
       setFigureMessage('Image source and alternative text are required.')
@@ -124,10 +132,33 @@ function BasicPostFields({
         <legend>Insert attributed image</legend>
         <label>
           Image source
+          <select
+            value={figure.src}
+            onChange={(event) =>
+              setFigure((current) => ({ ...current, src: event.target.value }))
+            }
+          >
+            <option value="">Select approved media…</option>
+            {approvedMedia.map((variant) => (
+              <option key={variant.sha256} value={variant.publicPath}>
+                {variant.mimeType} · {variant.width}×{variant.height}
+              </option>
+            ))}
+          </select>
+          <small>
+            Choose approved library media, or enter a permitted URL below.
+          </small>
+        </label>
+        <label>
+          External image source (optional)
           <input
             type="url"
-            value={figure.src}
-            placeholder="/media/image.webp or https://…"
+            value={
+              approvedMedia.some((variant) => variant.publicPath === figure.src)
+                ? ''
+                : figure.src
+            }
+            placeholder="https://…"
             onChange={(event) =>
               setFigure((current) => ({ ...current, src: event.target.value }))
             }
@@ -407,7 +438,11 @@ export default function PostEditor(
   return (
     <section className="editor">
       <h2>{props.selected.id ? 'Edit post' : 'New post'}</h2>
-      <BasicPostFields selected={props.selected} update={props.update} />
+      <BasicPostFields
+        selected={props.selected}
+        update={props.update}
+        media={props.media}
+      />
       <AuthorField
         selected={props.selected}
         setSelected={props.setSelected}

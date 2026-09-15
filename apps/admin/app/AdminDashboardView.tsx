@@ -163,6 +163,7 @@ function DashboardGrid({
         authors={state.authors}
         categories={state.categories}
         tags={state.tags}
+        media={state.media}
         update={actions.update}
         save={actions.savePost}
         remove={actions.removePost}

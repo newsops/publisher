@@ -34,6 +34,7 @@ function addVariantAction(
         slug: '',
         title: '',
         excerpt: '',
+        bodyMarkdown: '',
         bodyHtml: '',
         seoTitle: '',
         seoDescription: '',

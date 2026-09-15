@@ -217,6 +217,8 @@ The complete request/response contract is in
 only editable document field. It accepts CommonMark plus non-executable
 `figure` and `embed` directives; raw HTML, unsafe URLs, and unknown directives
 are rejected. The platform derives sanitized static HTML at publication time.
+Responses may include `bodyHtml` as a read-only derived publication projection;
+clients must never send it as editable source.
 
 Publication settings are a single managed record per deployment. Changing the
 canonical origin is a migration operation: update existing post `sourceUrl`

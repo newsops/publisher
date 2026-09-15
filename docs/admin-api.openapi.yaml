@@ -697,7 +697,13 @@ components:
         slug: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
         title: { type: string }
         excerpt: { type: string }
-        bodyMarkdown: { type: string }
+        bodyMarkdown:
+          type: string
+          description: Canonical editable CommonMark source with validated figure and embed directives.
+        bodyHtml:
+          type: string
+          readOnly: true
+          description: Derived sanitized static-publication projection. Never accepted as an editable request field.
         seoTitle: { type: string }
         seoDescription: { type: string }
         status: { type: string, enum: [draft, review, scheduled, published] }
