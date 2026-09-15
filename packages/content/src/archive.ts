@@ -4,7 +4,10 @@ import {
   type PostDraftInput,
 } from './editor'
 import type { PublicationSettings } from './types'
-import { renderEditorialMarkdown } from './editorial-markdown'
+import {
+  migrateLegacyHtmlToMarkdown,
+  renderEditorialMarkdown,
+} from './editorial-markdown'
 
 export interface ArchiveMediaEntry {
   readonly assetPath: string
@@ -257,10 +260,12 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
         : relativeAsset(post.imageAsset, `posts[${index}].imageAsset`)
     if (imageAsset && !mediaPaths.has(imageAsset))
       fail(`posts[${index}].imageAsset references unknown media`)
-    const bodyMarkdown = safeText(
-      post.bodyMarkdown,
-      `posts[${index}].bodyMarkdown`,
-    )
+    const bodyMarkdown =
+      typeof post.bodyMarkdown === 'string'
+        ? safeText(post.bodyMarkdown, `posts[${index}].bodyMarkdown`)
+        : migrateLegacyHtmlToMarkdown(
+            safeText(post.bodyHtml, `posts[${index}].bodyHtml`),
+          )
     const bodyHtml = renderEditorialMarkdown(bodyMarkdown)
     const inlineMediaAssets = bodyMediaAssets(
       post.bodyMediaAssets,
