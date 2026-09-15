@@ -15,6 +15,8 @@ import {
 import {
   getArticleVariantPath,
   getTheme,
+  parseEditorialMarkdown,
+  renderEditorialMarkdown,
   themes,
 } from '../../../packages/content/src/index.ts'
 
@@ -37,6 +39,7 @@ describe('content safety contract', () => {
         slug: 'article',
         title: 'Article',
         excerpt: 'Excerpt',
+        bodyMarkdown: 'Body',
         bodyHtml: '<p>Body</p>',
         author: 'Author',
         authorSlug: 'author',
@@ -96,7 +99,7 @@ describe('content safety contract', () => {
       slug: 'Not Stable',
       title: 'x',
       excerpt: 'x',
-      bodyHtml: '<p>x</p>',
+      bodyMarkdown: 'x',
       author: 'x',
       publishedAt: '2024-11-27T00:33:00.000Z',
       categories: ['General'],
@@ -106,7 +109,7 @@ describe('content safety contract', () => {
       slug: 'stable-post',
       title: 'x',
       excerpt: 'x',
-      bodyHtml: '<p>x</p>',
+      bodyMarkdown: 'x',
       author: 'x',
       publishedAt: '2024-11-27T00:33:00.000Z',
       categories: ['General'],
@@ -120,7 +123,7 @@ describe('content safety contract', () => {
       slug: 'long-seo-title',
       title: 'Article',
       excerpt: 'Excerpt',
-      bodyHtml: '<p>Body</p>',
+      bodyMarkdown: 'Body',
       author: 'Author',
       seoTitle: 'S'.repeat(71),
       publishedAt: '2024-11-27T00:33:00.000Z',
@@ -149,7 +152,7 @@ describe('content safety contract', () => {
       slug: 'ranked-post',
       title: 'x',
       excerpt: 'x',
-      bodyHtml: '<p>x</p>',
+      bodyMarkdown: 'x',
       author: 'x',
       publishedAt: '2024-11-27T00:33:00.000Z',
       categories: ['General'],
@@ -187,5 +190,24 @@ describe('content safety contract', () => {
     expect(
       fs.readFileSync(path.join(root, 'apps/site/app/styles.css'), 'utf8'),
     ).toContain(':focus-visible')
+  })
+
+  it('renders credited figures and static X embeds from non-executable Markdown', () => {
+    const markdown = `> A quoted source.\n\n:::figure{src="https://images.example.test/briefing.webp" alt="Product briefing" creditName="Example" creditUrl="https://example.test/source"}\nOfficial product image.\n:::\n\n:::embed{provider="x" url="https://x.com/example/status/123" quote="A source statement." authorName="Example"}\n:::`
+    const document = parseEditorialMarkdown(markdown)
+    expect(document.figures).toHaveLength(1)
+    expect(document.embeds).toHaveLength(1)
+    const html = renderEditorialMarkdown(markdown)
+    expect(html).toContain('<figure>')
+    expect(html).toContain('Source:')
+    expect(html).toContain('publisher-x-post')
+    expect(() => renderEditorialMarkdown('<script>alert(1)</script>')).toThrow(
+      'raw HTML',
+    )
+    expect(() =>
+      renderEditorialMarkdown(
+        ':::figure{src="http://bad.test/a.png" alt=""}\n:::',
+      ),
+    ).toThrow('figure alt is required')
   })
 })
