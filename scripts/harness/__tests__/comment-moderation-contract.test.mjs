@@ -55,7 +55,7 @@ describe('COMMENT-001 admin moderation boundary', () => {
     expect(upstreamCalls).toBe(0)
   })
 
-  it('forwards the server-only token for an authenticated list and update', async () => {
+  it('forwards the server-only token on the selected site-scoped list and update paths', async () => {
     const calls = []
     globalThis.fetch = async (input, init) => {
       calls.push({ input: String(input), headers: new Headers(init?.headers) })
@@ -73,6 +73,7 @@ describe('COMMENT-001 admin moderation boundary', () => {
         method: 'PATCH',
         headers: {
           ...identityHeaders(),
+          'x-admin-site-id': 'second-publication',
           origin: 'https://admin.test',
           'content-type': 'application/json',
         },
@@ -84,10 +85,10 @@ describe('COMMENT-001 admin moderation boundary', () => {
     expect(update.status).toBe(200)
     expect(calls).toHaveLength(2)
     expect(calls[0].input).toBe(
-      'https://comments.test/v1/moderation/comments?status=pending',
+      'https://comments.test/v1/sites/default/moderation/comments?status=pending',
     )
     expect(calls[1].input).toBe(
-      'https://comments.test/v1/moderation/comments/comment-1',
+      'https://comments.test/v1/sites/second-publication/moderation/comments/comment-1',
     )
     for (const call of calls)
       expect(call.headers.get('authorization')).toBe(
@@ -114,6 +115,21 @@ describe('COMMENT-001 admin moderation boundary', () => {
       { params: Promise.resolve({ id: 'comment-1' }) },
     )
     expect(response.status).toBe(403)
+    expect(upstreamCalls).toBe(0)
+  })
+
+  it('rejects an invalid selected site before contacting the comment service', async () => {
+    let upstreamCalls = 0
+    globalThis.fetch = async () => {
+      upstreamCalls += 1
+      return Response.json({ comments: [] })
+    }
+    const response = await GET(
+      new Request('https://admin.test/api/comments/moderation', {
+        headers: { ...identityHeaders(), 'x-admin-site-id': 'Invalid site' },
+      }),
+    )
+    expect(response.status).toBe(400)
     expect(upstreamCalls).toBe(0)
   })
 })

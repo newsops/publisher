@@ -5,8 +5,10 @@ import {
 } from '../../../lib/auth'
 import {
   forwardCommentResponse,
+  moderationListPath,
   requestCommentService,
 } from '../../../lib/comment-moderation'
+import { requestedSiteId } from '../../../lib/request-repository'
 
 export async function GET(request: Request): Promise<Response> {
   try {
@@ -19,7 +21,10 @@ export async function GET(request: Request): Promise<Response> {
         { status: 400, headers: { 'Cache-Control': 'no-store' } },
       )
     const response = await requestCommentService(
-      `/v1/moderation/comments?status=${status}`,
+      moderationListPath(
+        requestedSiteId(request),
+        status as 'pending' | 'approved' | 'rejected',
+      ),
     )
     return forwardCommentResponse(response)
   } catch (error) {

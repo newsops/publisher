@@ -171,7 +171,10 @@ comments` with that role before serving traffic.
    `COMMENTS_MODERATION_TOKEN`, and `HUMAN_VERIFICATION_SECRET` only as Worker
    secrets. The database URL is the dedicated Neon comments URL. Set the same
    moderation origin/token only in the admin runtime's secret store as
-   `COMMENTS_ORIGIN` and `COMMENTS_MODERATION_TOKEN`.
+   `COMMENTS_ORIGIN` and `COMMENTS_MODERATION_TOKEN`. The admin resolves the
+   selected publication and calls the Worker only through
+   `/v1/sites/:siteId/moderation/comments`; do not embed a site path in
+   `COMMENTS_ORIGIN`.
 3. Run `corepack pnpm --filter @publisher/comments build:worker` before
    deployment. It is a dry run and requires neither the Neon URL nor an account
    ID in source control. Deploy a preview first, verify preflight, reads,
