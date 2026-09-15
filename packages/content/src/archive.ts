@@ -5,7 +5,7 @@ import {
 } from './editor'
 import type { PublicationSettings } from './types'
 import {
-  migrateLegacyHtmlToMarkdown,
+  importPreReleaseHtmlToMarkdown,
   renderEditorialMarkdown,
 } from './editorial-markdown'
 
@@ -263,7 +263,7 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
     const bodyMarkdown =
       typeof post.bodyMarkdown === 'string'
         ? safeText(post.bodyMarkdown, `posts[${index}].bodyMarkdown`)
-        : migrateLegacyHtmlToMarkdown(
+        : importPreReleaseHtmlToMarkdown(
             safeText(post.bodyHtml, `posts[${index}].bodyHtml`),
           )
     const bodyHtml = renderEditorialMarkdown(bodyMarkdown)

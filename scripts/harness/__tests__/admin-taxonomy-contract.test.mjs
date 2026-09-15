@@ -144,7 +144,7 @@ describe('admin taxonomy contract', () => {
           slug: 'author-context',
           title: 'Author context',
           excerpt: 'A test post.',
-          bodyHtml: '<p>A test post.</p>',
+          bodyMarkdown: 'A test post.',
           author: author.name,
           authorSlug: author.slug,
           seoTitle: 'Author context',

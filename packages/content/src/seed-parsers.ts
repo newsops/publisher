@@ -1,7 +1,7 @@
 import { renderPluginContributions, type PublicPluginSnapshot } from './plugins'
 import { assertValidArticleVariant } from './article-adapter'
 import {
-  migrateLegacyHtmlToMarkdown,
+  importPreReleaseHtmlToMarkdown,
   renderEditorialMarkdown,
 } from './editorial-markdown'
 import type { Article, ArticleVariant, NewsPost } from './types'
@@ -116,13 +116,13 @@ export function parsePost(value: unknown): NewsPost {
     bodyMarkdown:
       typeof value.bodyMarkdown === 'string'
         ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
-        : migrateLegacyHtmlToMarkdown(
+        : importPreReleaseHtmlToMarkdown(
             requiredString(value.bodyHtml, 'bodyHtml'),
           ),
     bodyHtml: renderEditorialMarkdown(
       typeof value.bodyMarkdown === 'string'
         ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
-        : migrateLegacyHtmlToMarkdown(
+        : importPreReleaseHtmlToMarkdown(
             requiredString(value.bodyHtml, 'bodyHtml'),
           ),
     ),

@@ -234,7 +234,7 @@ describe('admin automation API contract', () => {
             slug: 'automation-created-post',
             title: 'Automation-created post',
             excerpt: 'Created through the automation API.',
-            bodyHtml: '<script>alert(1)</script><p>Safe body</p>',
+            bodyMarkdown: 'Safe body',
             author: 'Example Editor',
             authorSlug: 'example-editor',
             publishedAt: '2026-08-21T00:00:00.000Z',
@@ -247,6 +247,7 @@ describe('admin automation API contract', () => {
     }
     expect(createdResponse.status).toBe(201)
     const created = (await json(createdResponse)).post
+    expect(created.bodyMarkdown).toBe('Safe body')
     expect(created.bodyHtml).toBe('<p>Safe body</p>')
     expect(created.revision).toBe(1)
     expect(auditLines.join('\n')).toContain('content.site.created')

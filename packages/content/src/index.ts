@@ -43,7 +43,7 @@ export {
 export {
   EditorialMarkdownError,
   figureDirective,
-  migrateLegacyHtmlToMarkdown,
+  importPreReleaseHtmlToMarkdown,
   EditorialMigrationError,
   parseEditorialMarkdown,
   renderEditorialMarkdown,

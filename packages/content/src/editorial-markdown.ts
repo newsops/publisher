@@ -220,12 +220,12 @@ export function renderEditorialMarkdown(markdown: string): string {
   }).trim()
 }
 
-export function migrateLegacyHtmlToMarkdown(html: string): string {
+export function importPreReleaseHtmlToMarkdown(html: string): string {
   if (typeof html !== 'string' || !html.trim())
-    throw new EditorialMigrationError('legacy HTML body is empty')
+    throw new EditorialMigrationError('pre-release HTML body is empty')
   if (/<(?:script|style|iframe|object)\b/i.test(html))
     throw new EditorialMigrationError(
-      'legacy HTML contains unsupported executable markup',
+      'pre-release HTML contains unsupported executable markup',
     )
   const supported = html
     .replace(
@@ -239,7 +239,9 @@ export function migrateLegacyHtmlToMarkdown(html: string): string {
     )
     .trim()
   if (!supported || /<\/?[a-z][^>]*>/i.test(supported))
-    throw new EditorialMigrationError('legacy HTML contains unsupported markup')
+    throw new EditorialMigrationError(
+      'pre-release HTML contains unsupported markup',
+    )
   parseEditorialMarkdown(supported)
   return supported
 }
