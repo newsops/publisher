@@ -15,8 +15,10 @@ import {
 import {
   getArticleVariantPath,
   getTheme,
+  importPreReleaseHtmlToMarkdown,
   parseEditorialMarkdown,
   renderEditorialMarkdown,
+  serializeEditorialMarkdown,
   themes,
 } from '../../../packages/content/src/index.ts'
 
@@ -197,6 +199,12 @@ describe('content safety contract', () => {
     const document = parseEditorialMarkdown(markdown)
     expect(document.figures).toHaveLength(1)
     expect(document.embeds).toHaveLength(1)
+    expect(document.nodes.map((node) => node.type)).toEqual([
+      'blockquote',
+      'figure',
+      'embed',
+    ])
+    expect(serializeEditorialMarkdown(document)).toBe(document.markdown)
     const html = renderEditorialMarkdown(markdown)
     expect(html).toContain('<figure>')
     expect(html).toContain('Source:')
@@ -209,5 +217,39 @@ describe('content safety contract', () => {
         ':::figure{src="http://bad.test/a.png" alt=""}\n:::',
       ),
     ).toThrow('figure alt is required')
+    expect(() => renderEditorialMarkdown('[bad](javascript:alert(1))')).toThrow(
+      'link URLs must be relative paths or HTTPS URLs',
+    )
+    expect(() =>
+      renderEditorialMarkdown('![unattributed](https://example.test/a.webp)'),
+    ).toThrow('attributed figure directive')
+    expect(() =>
+      renderEditorialMarkdown(
+        '> :::figure{src="/media/briefing.webp" alt="Nested"}\n> :::',
+      ),
+    ).toThrow('directives must be top-level editorial blocks')
+  })
+
+  it('performs a one-time pre-release HTML figure conversion or stops with a named migration error', () => {
+    const migrated = importPreReleaseHtmlToMarkdown(
+      '<h2>Heading</h2><figure><img src="/media/briefing.webp" alt="Product briefing"><figcaption>Official image.</figcaption></figure><p>Body.</p>',
+    )
+    const document = parseEditorialMarkdown(migrated)
+    expect(document.figures).toEqual([
+      {
+        src: '/media/briefing.webp',
+        alt: 'Product briefing',
+        caption: 'Official image.',
+        credit: undefined,
+      },
+    ])
+    expect(() =>
+      importPreReleaseHtmlToMarkdown(
+        '<figure><img src="/media/briefing.webp"></figure>',
+      ),
+    ).toThrow('pre-release figure requires image src and alternative text')
+    expect(() =>
+      importPreReleaseHtmlToMarkdown('<iframe src="https://bad.test">'),
+    ).toThrow('pre-release HTML contains unsupported executable markup')
   })
 })

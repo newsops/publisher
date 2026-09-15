@@ -71,8 +71,9 @@ editorial review.
 
 ## Markdown editorial documents
 
-Article JSON uses `bodyMarkdown`, never `bodyHtml`. Agents should write
-CommonMark and can add an attributed image with:
+`bodyMarkdown` is the sole writable article document field. Responses can
+include read-only derived `bodyHtml` for publication inspection, but agents
+must write CommonMark and can add an attributed image with:
 
 ```md
 :::figure{src="/media/image.webp" alt="Concise image description" creditName="Source" creditUrl="https://source.example/image"}
@@ -82,6 +83,12 @@ Visible caption.
 
 The source and alternative text are required; a credit URL, when present, must
 be HTTPS. X source cards are stored as `:::embed{provider="x" url="https://x.com/.../status/..." quote="..." authorName="..."}`. Both directives are validated before a revision-controlled API/CLI mutation and rendered to static semantic HTML; agents must never submit raw HTML.
+
+The supported derived node set is paragraph, heading, list, block quote, code,
+thematic break, link, figure, and X embed. Links must be relative paths or
+HTTPS URLs. Plain Markdown image syntax is rejected so every published image
+has the required accessible figure attribution contract. The server returns
+canonical deterministic Markdown after validation.
 
 ## Archive recovery
 

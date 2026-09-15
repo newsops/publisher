@@ -6,8 +6,8 @@ import {
   publicAuthorPath,
   publicCategoryPath,
   publicPostPath,
-  sanitizeBodyHtml,
   getTheme,
+  renderEditorialMarkdown,
   type ContentSnapshot,
 } from '../../packages/content/src/index'
 import {
@@ -96,7 +96,8 @@ function articleInputs(snapshot: ContentSnapshot) {
       title: post.title,
       seoTitle: post.seoTitle,
       description: post.seoDescription,
-      bodyHtml: sanitizeBodyHtml(post.bodyHtml),
+      // Public HTML is always derived from the canonical Markdown source.
+      bodyHtml: renderEditorialMarkdown(post.bodyMarkdown),
       authorName: authors.get(post.authorSlug)?.name ?? post.author,
       authorPath: publicAuthorPath(post.authorSlug),
       category:

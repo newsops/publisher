@@ -47,8 +47,13 @@ export {
   EditorialMigrationError,
   parseEditorialMarkdown,
   renderEditorialMarkdown,
+  serializeEditorialMarkdown,
 } from './editorial-markdown'
-export type { EditorialDocument, FigureAttribution } from './editorial-markdown'
+export type {
+  EditorialDocument,
+  EditorialNode,
+  FigureAttribution,
+} from './editorial-markdown'
 export type {
   ContentSnapshot,
   ContentStatus,

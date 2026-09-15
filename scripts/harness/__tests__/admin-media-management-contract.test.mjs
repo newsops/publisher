@@ -35,4 +35,19 @@ describe('admin media management contract', () => {
     expect(panel).toContain('/api/media/${encodeURIComponent(item.id)}/preview')
     expect(panel).toContain('Uploading image…')
   })
+
+  it('offers approved library media in the attributed-image Markdown form', async () => {
+    const editor = await source('apps/admin/app/PostEditor.tsx')
+    const variants = await source('apps/admin/app/ArticleVariantEditor.tsx')
+
+    expect(editor).toContain('Select approved media…')
+    expect(editor).toContain('approvedMedia.map')
+    expect(editor).toContain('Alternative text')
+    expect(editor).toContain('Caption')
+    expect(editor).toContain('Source name')
+    expect(editor).toContain('Source URL')
+    expect(editor).toContain("'bodyMarkdown'")
+    expect(variants).toContain("'bodyMarkdown'")
+    expect(variants).not.toContain("'bodyHtml',")
+  })
 })

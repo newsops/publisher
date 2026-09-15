@@ -13,22 +13,22 @@ boundaries and providing identical API and CLI document contracts.
 
 ## Plan
 
-- [ ] TC-01: Define the versioned structured-Markdown document contract, AST,
+- [x] TC-01: Define the versioned structured-Markdown document contract, AST,
       parser validation, safe URL rules, directive allowlist, and required figure
       alternative text in `@publisher/content`.
-- [ ] TC-02: Implement figure persistence and safe semantic HTML rendering for
+- [x] TC-02: Implement figure persistence and safe semantic HTML rendering for
       image source, alternative text, optional caption, and optional named HTTPS
       source credit.
-- [ ] TC-03: Document the directive grammar and implement deterministic
+- [x] TC-03: Document the directive grammar and implement deterministic
       supported-node Markdown parse/serialize round trips with structured errors
       for unsupported directives.
 - [ ] TC-04: Replace the admin raw-HTML editing path with Markdown and figure
       controls; align authenticated admin API and `packages/ops-cli` reads/writes
       on normalized revision-controlled Markdown.
-- [ ] TC-05: Add one-time pre-release HTML-to-Markdown migration behavior and
+- [x] TC-05: Add one-time pre-release HTML-to-Markdown migration behavior and
       named editorial migration errors for unsupported legacy source, removing
       HTML canonical-write compatibility.
-- [ ] TC-06: Update static article, RSS, and public snapshot generation to use
+- [x] TC-06: Update static article, RSS, and public snapshot generation to use
       derived sanitized figure attribution without adding site database or editor
       runtime dependencies.
 - [ ] TC-07: Add contract, integration, migration, static-boundary, and
@@ -54,6 +54,14 @@ boundaries and providing identical API and CLI document contracts.
 - Added the admin's labelled figure insertion form for image source,
   alternative text, caption, source name, and source URL. The admin production
   build succeeds after the Markdown contract change.
+- Removed the remaining editable HTML path from language variants. The figure
+  form now selects approved media-library variants as well as permitted external
+  image sources, and static site RSS/Atom feeds derive their content from
+  Markdown instead of a checked-in HTML field.
+- Added deterministic AST serialization, URL/node rejection coverage, semantic
+  figure/source-card RSS coverage, and a one-time supported HTML figure import.
+  Full typecheck, build, test, and harness scan pass; authenticated browser
+  evidence remains the only open verification work.
 
 ## Decisions
 
@@ -63,7 +71,10 @@ boundaries and providing identical API and CLI document contracts.
 
 ## Blockers
 
-- None.
+- Authenticated browser evidence cannot yet be produced: no repository-local
+  test-account record or isolated PostgreSQL authentication fixture is
+  available. The local browser reached the login page at desktop width; no
+  production account or data was used for a test-only bootstrap.
 
 ## Result
 

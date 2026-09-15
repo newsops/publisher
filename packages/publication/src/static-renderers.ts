@@ -309,10 +309,10 @@ export function renderFeedXml(
   articles: readonly ArticleDocument[],
 ): string {
   const origin = input.origin.replace(/\/$/, '')
-  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>${escapeXml(input.publicationName)}</title><link>${escapeXml(origin + '/')}</link><description>${escapeXml(input.publicationName)}</description>${articles
+  return `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>${escapeXml(input.publicationName)}</title><link>${escapeXml(origin + '/')}</link><description>${escapeXml(input.publicationName)}</description>${articles
     .map(
       (article) =>
-        `<item><title>${escapeXml(article.title)}</title><link>${escapeXml(origin + article.path)}</link><guid>${escapeXml(origin + article.path)}</guid><pubDate>${escapeXml(new Date(article.publishedAt).toUTCString())}</pubDate><description>${escapeXml(article.description)}</description></item>`,
+        `<item><title>${escapeXml(article.title)}</title><link>${escapeXml(origin + article.path)}</link><guid>${escapeXml(origin + article.path)}</guid><pubDate>${escapeXml(new Date(article.publishedAt).toUTCString())}</pubDate><description>${escapeXml(article.description)}</description><content:encoded><![CDATA[${article.bodyHtml.replaceAll(']]>', ']]]]><![CDATA[>')}]]></content:encoded></item>`,
     )
     .join('')}</channel></rss>`
 }

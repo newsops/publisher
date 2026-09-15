@@ -11,6 +11,7 @@ function blankVariant(): AdminArticleVariant {
     slug: '',
     title: '',
     excerpt: '',
+    bodyMarkdown: '',
     bodyHtml: '',
     seoTitle: '',
     seoDescription: '',
@@ -91,18 +92,21 @@ export default function ArticleVariantEditor({
               'title',
               'slug',
               'excerpt',
-              'bodyHtml',
+              'bodyMarkdown',
               'seoTitle',
               'seoDescription',
             ] as const
           ).map((field) => (
             <label key={field}>
               {field}
-              {field === 'bodyHtml' ||
+              {field === 'bodyMarkdown' ||
               field === 'excerpt' ||
               field === 'seoDescription' ? (
                 <textarea
-                  className={field === 'bodyHtml' ? 'body' : undefined}
+                  aria-label={
+                    field === 'bodyMarkdown' ? 'Body Markdown' : field
+                  }
+                  className={field === 'bodyMarkdown' ? 'body' : undefined}
                   value={selected[field]}
                   onChange={(event) => update(field, event.target.value)}
                 />
@@ -112,6 +116,9 @@ export default function ArticleVariantEditor({
                   onChange={(event) => update(field, event.target.value)}
                 />
               )}
+              {field === 'bodyMarkdown' ? (
+                <small>CommonMark source. Raw HTML is not accepted.</small>
+              ) : null}
             </label>
           ))}
           <label>

@@ -29,6 +29,9 @@ export interface AdminArticleVariant {
   slug: string
   title: string
   excerpt: string
+  /** Canonical editable editorial source. */
+  bodyMarkdown: string
+  /** Derived server-side static-publication representation. */
   bodyHtml: string
   seoTitle: string
   seoDescription: string

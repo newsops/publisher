@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import fsSync from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { renderEditorialMarkdown } from '../packages/content/src/editorial-markdown.ts'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const publicRoot = path.join(root, 'apps/site/public')
@@ -143,7 +144,7 @@ const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://w
 const rssItems = posts
   .map(
     (post) =>
-      `<item><title>${escapeXml(post.title)}</title><link>${escapeXml(`${siteUrl}${postPath(post)}`)}</link><guid isPermaLink="true">${escapeXml(`${siteUrl}${postPath(post)}`)}</guid><pubDate>${escapeXml(new Date(post.publishedAt).toUTCString())}</pubDate><description>${escapeXml(post.excerpt)}</description><content:encoded>${cdata(post.bodyHtml)}</content:encoded>${post.categories.map((category) => `<category>${escapeXml(category)}</category>`).join('')}</item>`,
+      `<item><title>${escapeXml(post.title)}</title><link>${escapeXml(`${siteUrl}${postPath(post)}`)}</link><guid isPermaLink="true">${escapeXml(`${siteUrl}${postPath(post)}`)}</guid><pubDate>${escapeXml(new Date(post.publishedAt).toUTCString())}</pubDate><description>${escapeXml(post.excerpt)}</description><content:encoded>${cdata(renderEditorialMarkdown(post.bodyMarkdown))}</content:encoded>${post.categories.map((category) => `<category>${escapeXml(category)}</category>`).join('')}</item>`,
   )
   .join('')
 const rss = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>${escapeXml(publication.name)}</title><link>${siteUrl}</link><description>${escapeXml(publication.description)}</description><lastBuildDate>${escapeXml(new Date(latestUpdatedAt).toUTCString())}</lastBuildDate>${rssItems}</channel></rss>\n`
@@ -151,7 +152,7 @@ const rss = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:cont
 const atomEntries = posts
   .map(
     (post) =>
-      `<entry><id>tag:${escapeXml(new URL(siteUrl).hostname.replace(/^www\./, ''))},2026:post-${escapeXml(post.sourceId)}</id><published>${escapeXml(new Date(post.publishedAt).toISOString())}</published><updated>${escapeXml(new Date(post.updatedAt).toISOString())}</updated><title>${escapeXml(post.title)}</title><link href="${escapeXml(`${siteUrl}${postPath(post)}`)}" rel="alternate" type="text/html"/><category term="${escapeXml(post.categories[0])}"/><author><name>${escapeXml(post.author)}</name></author><content type="html">${cdata(post.bodyHtml)}</content></entry>`,
+      `<entry><id>tag:${escapeXml(new URL(siteUrl).hostname.replace(/^www\./, ''))},2026:post-${escapeXml(post.sourceId)}</id><published>${escapeXml(new Date(post.publishedAt).toISOString())}</published><updated>${escapeXml(new Date(post.updatedAt).toISOString())}</updated><title>${escapeXml(post.title)}</title><link href="${escapeXml(`${siteUrl}${postPath(post)}`)}" rel="alternate" type="text/html"/><category term="${escapeXml(post.categories[0])}"/><author><name>${escapeXml(post.author)}</name></author><content type="html">${cdata(renderEditorialMarkdown(post.bodyMarkdown))}</content></entry>`,
   )
   .join('')
 const atom = `<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom"><id>${siteUrl}/</id><title>${escapeXml(publication.name)}</title><updated>${escapeXml(new Date(latestUpdatedAt).toISOString())}</updated><link href="${siteUrl}/" rel="alternate" type="text/html"/><link href="${siteUrl}/feeds/posts/default.xml" rel="self" type="application/atom+xml"/>${atomEntries}</feed>\n`

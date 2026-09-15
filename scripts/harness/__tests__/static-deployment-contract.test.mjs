@@ -48,6 +48,11 @@ describe('static deployment contract', () => {
     expect(html).toContain('/sitemap.xml')
     expect(html).toContain('/feed.xml')
     expect(html).toContain('/author/example-editor/')
+    const feed = readOutput('feed.xml')
+    expect(feed).toContain(
+      '<content:encoded><![CDATA[<p>Generic sample content.</p>]]>',
+    )
+    expect(feed).not.toContain('<content:encoded><![CDATA[undefined]]>')
   })
 
   it('loads presentation synchronously and leaves scripts to data enhancement', () => {
