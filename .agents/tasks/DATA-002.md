@@ -47,6 +47,13 @@ boundaries and providing identical API and CLI document contracts.
 - Added `bodyMarkdown` API and admin-editor input, safe derived HTML rendering,
   credited figure output, and regression coverage for safe/unsafe figure
   inputs. Workspace typecheck and focused contracts pass.
+- Rebased active DATA-002 work onto the recreated repository's `origin/main`.
+  The content contract now carries canonical Markdown with generated static
+  HTML, rejects raw HTML on editor/API writes, and retains a named one-time
+  pre-release HTML migration path for checked-in seed/archive imports.
+- Added the admin's labelled figure insertion form for image source,
+  alternative text, caption, source name, and source URL. The admin production
+  build succeeds after the Markdown contract change.
 
 ## Decisions
 
