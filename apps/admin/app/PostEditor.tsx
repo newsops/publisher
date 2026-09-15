@@ -46,8 +46,8 @@ function BasicPostFields({
     }
     if (response.ok && data.embed?.html) {
       update(
-        'bodyHtml',
-        `${selected.bodyHtml}${selected.bodyHtml ? '\n' : ''}${data.embed.html}`,
+        'bodyMarkdown',
+        `${selected.bodyMarkdown}${selected.bodyMarkdown ? '\n\n' : ''}:::embed{provider="x" url="${xUrl}"}\n:::`,
       )
       setXUrl('')
       setEmbedMessage('X source card inserted. Save content to keep it.')
@@ -81,12 +81,13 @@ function BasicPostFields({
         />
       </label>
       <label>
-        Body HTML
+        Body Markdown
         <textarea
           className="body"
-          value={selected.bodyHtml}
-          onChange={(event) => update('bodyHtml', event.target.value)}
+          value={selected.bodyMarkdown}
+          onChange={(event) => update('bodyMarkdown', event.target.value)}
         />
+        <small>CommonMark source. Raw HTML is not accepted.</small>
       </label>
       <fieldset>
         <legend>Insert X source card</legend>

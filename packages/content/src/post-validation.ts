@@ -1,6 +1,7 @@
 import sanitizeHtml from 'sanitize-html'
 import type { ContentStatus, PostDraftInput } from './editor'
 import { publicPostPath } from './public-paths'
+import { renderEditorialMarkdown } from './editorial-markdown'
 
 const allowedBodyTags = [
   'a',
@@ -54,6 +55,7 @@ export interface ResolvedPostFields {
   readonly slug: string
   readonly title: string
   readonly excerpt: string
+  readonly bodyMarkdown: string
   readonly bodyHtml: string
   readonly author: string
   readonly authorSlug: string
@@ -125,11 +127,21 @@ function resolvePostFields(
   const canonicalOrigin = (
     canonicalOriginInput ?? 'https://www.publisher.com'
   ).replace(/\/$/, '')
+  const bodyMarkdown = text(input.bodyMarkdown, 'bodyMarkdown', errors)
+  let bodyHtml = ''
+  try {
+    bodyHtml = renderEditorialMarkdown(bodyMarkdown)
+  } catch (error) {
+    errors.push(
+      error instanceof Error ? error.message : 'bodyMarkdown is invalid',
+    )
+  }
   return {
     slug,
     title,
     excerpt,
-    bodyHtml: sanitizeBodyHtml(text(input.bodyHtml, 'bodyHtml', errors)),
+    bodyMarkdown,
+    bodyHtml,
     author,
     authorSlug: text(
       input.authorSlug ??

@@ -21,7 +21,7 @@ export function draftInputFromPost(post: ManagedPost): PostDraftInput {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
-    bodyHtml: post.bodyHtml,
+    bodyMarkdown: post.bodyMarkdown,
     author: post.author,
     authorSlug: post.authorSlug,
     seoTitle: post.seoTitle,
@@ -49,7 +49,7 @@ const fields = new Set([
   'slug',
   'title',
   'excerpt',
-  'bodyHtml',
+  'bodyMarkdown',
   'author',
   'authorSlug',
   'seoTitle',
@@ -173,7 +173,7 @@ export function parsePostInput(value: unknown): PostDraftInput {
     slug: stringField(object, 'slug', false) ?? '',
     title: stringField(object, 'title', false) ?? '',
     excerpt: stringField(object, 'excerpt', false) ?? '',
-    bodyHtml: stringField(object, 'bodyHtml', false) ?? '',
+    bodyMarkdown: stringField(object, 'bodyMarkdown', false) ?? '',
     author: stringField(object, 'author', false) ?? '',
     authorSlug: stringField(object, 'authorSlug', true),
     seoTitle: stringField(object, 'seoTitle', true),
@@ -197,7 +197,7 @@ export function parsePostPatch(value: unknown): PostPatchInput {
   const slug = stringField(object, 'slug', true)
   const title = stringField(object, 'title', true)
   const excerpt = stringField(object, 'excerpt', true)
-  const bodyHtml = stringField(object, 'bodyHtml', true)
+  const bodyMarkdown = stringField(object, 'bodyMarkdown', true)
   const author = stringField(object, 'author', true)
   const authorSlug = stringField(object, 'authorSlug', true)
   const seoTitle = stringField(object, 'seoTitle', true)
@@ -214,7 +214,7 @@ export function parsePostPatch(value: unknown): PostPatchInput {
   if (slug !== undefined) patch.slug = slug
   if (title !== undefined) patch.title = title
   if (excerpt !== undefined) patch.excerpt = excerpt
-  if (bodyHtml !== undefined) patch.bodyHtml = bodyHtml
+  if (bodyMarkdown !== undefined) patch.bodyMarkdown = bodyMarkdown
   if (author !== undefined) patch.author = author
   if (authorSlug !== undefined) patch.authorSlug = authorSlug
   if (seoTitle !== undefined) patch.seoTitle = seoTitle

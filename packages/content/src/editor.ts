@@ -41,7 +41,7 @@ export interface PostDraftInput {
   readonly slug: string
   readonly title: string
   readonly excerpt: string
-  readonly bodyHtml: string
+  readonly bodyMarkdown: string
   readonly author: string
   readonly authorSlug?: string
   readonly seoTitle?: string
@@ -142,6 +142,7 @@ export function validatePostInput(
       slug: fields.slug,
       title: fields.title,
       excerpt: fields.excerpt,
+      bodyMarkdown: fields.bodyMarkdown,
       bodyHtml: fields.bodyHtml,
       author: fields.author,
       authorSlug: fields.authorSlug,

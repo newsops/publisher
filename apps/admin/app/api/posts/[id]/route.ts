@@ -19,7 +19,8 @@ function parseInput(value: unknown): PostDraftInput {
     slug: typeof object.slug === 'string' ? object.slug : '',
     title: typeof object.title === 'string' ? object.title : '',
     excerpt: typeof object.excerpt === 'string' ? object.excerpt : '',
-    bodyHtml: typeof object.bodyHtml === 'string' ? object.bodyHtml : '',
+    bodyMarkdown:
+      typeof object.bodyMarkdown === 'string' ? object.bodyMarkdown : '',
     author: typeof object.author === 'string' ? object.author : '',
     authorSlug:
       typeof object.authorSlug === 'string' ? object.authorSlug : undefined,

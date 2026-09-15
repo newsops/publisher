@@ -6,6 +6,7 @@ export interface AdminPost {
   title: string
   slug: string
   excerpt: string
+  bodyMarkdown: string
   bodyHtml: string
   author: string
   authorSlug: string
@@ -139,6 +140,7 @@ export function blankPost(author?: AdminAuthor): AdminPost {
     title: '',
     slug: '',
     excerpt: '',
+    bodyMarkdown: '',
     bodyHtml: '',
     author: author?.name ?? '',
     authorSlug: author?.slug ?? '',

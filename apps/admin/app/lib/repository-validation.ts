@@ -173,7 +173,7 @@ function inputFromPost(post: ManagedPost): PostDraftInput {
     slug: post.slug,
     title: post.title,
     excerpt: post.excerpt,
-    bodyHtml: post.bodyHtml,
+    bodyMarkdown: post.bodyMarkdown,
     author: post.author,
     authorSlug: post.authorSlug,
     seoTitle: post.seoTitle,

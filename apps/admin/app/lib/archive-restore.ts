@@ -147,7 +147,7 @@ function managedPosts(
         ...post,
         seoTitle: normalizedArchiveSeoTitle(post.seoTitle),
         imageUrl: post.imageAsset ? mediaPaths.get(post.imageAsset) : undefined,
-        bodyHtml: rewriteBodyMediaReferences(post, mediaPaths),
+        bodyMarkdown: rewriteBodyMediaReferences(post, mediaPaths),
       },
       tags.map((tag) => tag.slug),
       authors.map((author) => author.slug),
@@ -162,16 +162,16 @@ function rewriteBodyMediaReferences(
   post: EditorialArchive['posts'][number],
   mediaPaths: ReadonlyMap<string, string>,
 ): string {
-  let bodyHtml = post.bodyHtml
+  let bodyMarkdown = post.bodyMarkdown
   for (const [reference, assetPath] of Object.entries(
     post.bodyMediaAssets ?? {},
   )) {
     const publicPath = mediaPaths.get(assetPath)
     if (!publicPath)
       throw new Error(`Approved media is unavailable: ${assetPath}`)
-    bodyHtml = bodyHtml.split(reference).join(publicPath)
+    bodyMarkdown = bodyMarkdown.split(reference).join(publicPath)
   }
-  return bodyHtml
+  return bodyMarkdown
 }
 
 function normalizedArchiveSeoTitle(

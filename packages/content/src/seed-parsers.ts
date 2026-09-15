@@ -1,5 +1,9 @@
 import { renderPluginContributions, type PublicPluginSnapshot } from './plugins'
 import { assertValidArticleVariant } from './article-adapter'
+import {
+  migrateLegacyHtmlToMarkdown,
+  renderEditorialMarkdown,
+} from './editorial-markdown'
 import type { Article, ArticleVariant, NewsPost } from './types'
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,7 +36,7 @@ function parseArticleVariant(value: unknown): ArticleVariant {
     slug: optionalString(value.slug),
     title: optionalString(value.title),
     excerpt: optionalString(value.excerpt),
-    bodyHtml: optionalString(value.bodyHtml),
+    bodyMarkdown: optionalString(value.bodyMarkdown),
     seoTitle: optionalString(value.seoTitle),
     seoDescription: optionalString(value.seoDescription),
     status:
@@ -109,7 +113,19 @@ export function parsePost(value: unknown): NewsPost {
     slug: requiredString(value.slug, 'slug'),
     title: requiredString(value.title, 'title'),
     excerpt: requiredString(value.excerpt, 'excerpt'),
-    bodyHtml: requiredString(value.bodyHtml, 'bodyHtml'),
+    bodyMarkdown:
+      typeof value.bodyMarkdown === 'string'
+        ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
+        : migrateLegacyHtmlToMarkdown(
+            requiredString(value.bodyHtml, 'bodyHtml'),
+          ),
+    bodyHtml: renderEditorialMarkdown(
+      typeof value.bodyMarkdown === 'string'
+        ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
+        : migrateLegacyHtmlToMarkdown(
+            requiredString(value.bodyHtml, 'bodyHtml'),
+          ),
+    ),
     author: requiredString(value.author, 'author'),
     authorSlug:
       typeof value.authorSlug === 'string'
