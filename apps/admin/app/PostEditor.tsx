@@ -34,6 +34,37 @@ function BasicPostFields({
 }: Readonly<Pick<PostEditorProps, 'selected' | 'update'>>): ReactElement {
   const [xUrl, setXUrl] = useState('')
   const [embedMessage, setEmbedMessage] = useState('')
+  const [figure, setFigure] = useState({
+    src: '',
+    alt: '',
+    caption: '',
+    creditName: '',
+    creditUrl: '',
+  })
+  const [figureMessage, setFigureMessage] = useState('')
+  const insertFigure = () => {
+    if (!figure.src.trim() || !figure.alt.trim()) {
+      setFigureMessage('Image source and alternative text are required.')
+      return
+    }
+    const attributes = [
+      `src="${figure.src.trim().replaceAll('"', '\\"')}"`,
+      `alt="${figure.alt.trim().replaceAll('"', '\\"')}"`,
+      ...(figure.creditName.trim()
+        ? [`creditName="${figure.creditName.trim().replaceAll('"', '\\"')}"`]
+        : []),
+      ...(figure.creditUrl.trim()
+        ? [`creditUrl="${figure.creditUrl.trim().replaceAll('"', '\\"')}"`]
+        : []),
+    ]
+    const directive = `:::figure{${attributes.join(' ')}}\n${figure.caption.trim()}\n:::`
+    update(
+      'bodyMarkdown',
+      `${selected.bodyMarkdown}${selected.bodyMarkdown ? '\n\n' : ''}${directive}`,
+    )
+    setFigure({ src: '', alt: '', caption: '', creditName: '', creditUrl: '' })
+    setFigureMessage('Figure inserted into the Markdown document.')
+  }
   const insertXPost = async () => {
     const response = await adminFetch('/api/embeds/x', {
       method: 'POST',
@@ -89,6 +120,71 @@ function BasicPostFields({
         />
         <small>CommonMark source. Raw HTML is not accepted.</small>
       </label>
+      <fieldset>
+        <legend>Insert attributed image</legend>
+        <label>
+          Image source
+          <input
+            type="url"
+            value={figure.src}
+            placeholder="/media/image.webp or https://…"
+            onChange={(event) =>
+              setFigure((current) => ({ ...current, src: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          Alternative text
+          <input
+            value={figure.alt}
+            onChange={(event) =>
+              setFigure((current) => ({ ...current, alt: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          Caption
+          <input
+            value={figure.caption}
+            onChange={(event) =>
+              setFigure((current) => ({
+                ...current,
+                caption: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Source name
+          <input
+            value={figure.creditName}
+            onChange={(event) =>
+              setFigure((current) => ({
+                ...current,
+                creditName: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <label>
+          Source URL
+          <input
+            type="url"
+            value={figure.creditUrl}
+            placeholder="https://…"
+            onChange={(event) =>
+              setFigure((current) => ({
+                ...current,
+                creditUrl: event.target.value,
+              }))
+            }
+          />
+        </label>
+        <button type="button" className="secondary" onClick={insertFigure}>
+          Insert image
+        </button>
+        {figureMessage ? <p role="status">{figureMessage}</p> : null}
+      </fieldset>
       <fieldset>
         <legend>Insert X source card</legend>
         <label>
