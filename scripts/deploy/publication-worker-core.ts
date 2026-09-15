@@ -7,6 +7,7 @@ import {
   publicCategoryPath,
   publicPostPath,
   sanitizeBodyHtml,
+  getTheme,
   type ContentSnapshot,
 } from '../../packages/content/src/index'
 import {
@@ -52,34 +53,10 @@ export function snapshotFromBytes(bytes: Uint8Array): ContentSnapshot {
 }
 
 async function selectedTheme(snapshot: ContentSnapshot) {
-  const themes = JSON.parse(
-    await readFile(
-      path.join(repositoryRoot, 'packages/content/src/data/themes.json'),
-      'utf8',
-    ),
-  ) as readonly { id: string; version: string; css: string }[]
-  const presentation = JSON.parse(
-    await readFile(
-      path.join(
-        repositoryRoot,
-        'packages/content/src/data/theme-presentation.json',
-      ),
-      'utf8',
-    ),
-  ) as { rules?: unknown }
-  const selected = themes.find(
-    (theme) => theme.id === snapshot.settings.themeId,
-  )
-  if (!selected) throw new Error(`Unknown theme: ${snapshot.settings.themeId}`)
-  if (
-    !Array.isArray(presentation.rules) ||
-    !presentation.rules.every((rule) => typeof rule === 'string')
-  )
-    throw new Error('Theme presentation registry has no valid rules')
-  return {
-    ...selected,
-    css: `${selected.css}\n${presentation.rules.join('\n')}`,
-  }
+  const theme = getTheme(snapshot.settings.themeId)
+  if (theme.id !== snapshot.settings.themeId)
+    throw new Error(`Unknown theme: ${snapshot.settings.themeId}`)
+  return theme
 }
 
 async function materializedMedia(

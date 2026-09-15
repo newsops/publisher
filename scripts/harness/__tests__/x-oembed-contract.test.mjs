@@ -4,6 +4,7 @@ import {
   resolveXPostOEmbed,
 } from '../../../apps/admin/app/lib/x-oembed.ts'
 import { sanitizeBodyHtml } from '../../../packages/content/src/editor.ts'
+import { getTheme } from '../../../packages/content/src/themes.ts'
 
 const canonical = 'https://x.com/thsottiaux/status/2097559315150426222'
 const fixture = {
@@ -55,5 +56,9 @@ describe('X oEmbed editorial contract', () => {
           }),
       }),
     ).rejects.toMatchObject({ code: 'x_oembed_unsafe_response', status: 502 })
+  })
+
+  it('keeps the card stylesheet in the shared theme contract', () => {
+    expect(getTheme('editorial').css).toContain('.publisher-x-post')
   })
 })
