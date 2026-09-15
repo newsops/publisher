@@ -213,6 +213,26 @@ async function main() {
       nonInteractive,
     })
   }
+  if (args[0] === 'embed' && args[1] === 'x' && args[2] === 'resolve') {
+    const siteId = option('--site')
+    const url = option('--url')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!url) return emit(false, 'INPUT_REQUIRED', { field: '--url' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.resolveXPostEmbed(siteId, url)
+      return emit(true, 'X_EMBED_RESOLVED', response.data ?? {})
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
   if (args[0] === 'content' && args[1] === 'restore') {
     const archiveResult = await archiveManifest(option('--archive'))
     if ('error' in archiveResult)
@@ -434,6 +454,7 @@ async function main() {
         'operation get',
         'auth login --device',
         'content inspect --archive <directory>',
+        'embed x resolve --site <id> --url <canonical-x-status-url> --json',
         'content restore --archive <directory> --site <id> --expected-revision <n> --idempotency-key <key> --non-interactive',
       ],
     },

@@ -1,4 +1,10 @@
-import type { Dispatch, ReactElement, SetStateAction } from 'react'
+import {
+  useState,
+  type Dispatch,
+  type ReactElement,
+  type SetStateAction,
+} from 'react'
+import { adminFetch } from './admin-client'
 import type {
   AdminAuthor,
   AdminPost,
@@ -25,6 +31,31 @@ function BasicPostFields({
   selected,
   update,
 }: Readonly<Pick<PostEditorProps, 'selected' | 'update'>>): ReactElement {
+  const [xUrl, setXUrl] = useState('')
+  const [embedMessage, setEmbedMessage] = useState('')
+  const insertXPost = async () => {
+    const response = await adminFetch('/api/embeds/x', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: xUrl }),
+    })
+    const data = (await response.json().catch(() => ({}))) as {
+      embed?: { html?: string }
+      error?: { message?: string } | string
+    }
+    if (response.ok && data.embed?.html) {
+      update(
+        'bodyHtml',
+        `${selected.bodyHtml}${selected.bodyHtml ? '\n' : ''}${data.embed.html}`,
+      )
+      setXUrl('')
+      setEmbedMessage('X source card inserted. Save content to keep it.')
+      return
+    }
+    const error =
+      typeof data.error === 'string' ? data.error : data.error?.message
+    setEmbedMessage(error ?? `Could not resolve X post (${response.status}).`)
+  }
   return (
     <>
       <label>
@@ -56,6 +87,26 @@ function BasicPostFields({
           onChange={(event) => update('bodyHtml', event.target.value)}
         />
       </label>
+      <fieldset>
+        <legend>Insert X source card</legend>
+        <label>
+          Canonical X post URL
+          <input
+            type="url"
+            placeholder="https://x.com/handle/status/123"
+            value={xUrl}
+            onChange={(event) => setXUrl(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => void insertXPost()}
+        >
+          Resolve and insert
+        </button>
+        {embedMessage ? <p role="status">{embedMessage}</p> : null}
+      </fieldset>
     </>
   )
 }

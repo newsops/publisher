@@ -44,6 +44,7 @@ const allowedBodyTags = [
 const allowedBodyAttributes = {
   '*': ['dir', 'lang'],
   a: ['href', 'title'],
+  figure: ['class', 'data-publisher-x-post'],
   img: ['alt', 'decoding', 'height', 'loading', 'src', 'title', 'width'],
   td: ['colspan', 'rowspan'],
   th: ['colspan', 'rowspan', 'scope'],

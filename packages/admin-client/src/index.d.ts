@@ -44,6 +44,10 @@ export interface PublisherAdminClient {
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
   listPosts(siteId: string): Promise<PublisherApiReply<unknown>>
+  resolveXPostEmbed(
+    siteId: string,
+    url: string,
+  ): Promise<PublisherApiReply<unknown>>
   createPost(
     siteId: string,
     input: unknown,

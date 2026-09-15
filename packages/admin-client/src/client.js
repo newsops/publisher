@@ -123,6 +123,14 @@ export function createPublisherAdminClient(options) {
   const listPosts = (siteId) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/posts`)
 
+  /** @param {string} siteId @param {string} url */
+  const resolveXPostEmbed = (siteId, url) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/embeds/x`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url }),
+    })
+
   /** @param {string} siteId @param {unknown} input */
   const createPost = (siteId, input) =>
     request(`/api/v2/sites/${encodeURIComponent(siteId)}/posts`, {
@@ -241,6 +249,7 @@ export function createPublisherAdminClient(options) {
     getAgentGuidance,
     updateAgentGuidance,
     listPosts,
+    resolveXPostEmbed,
     createPost,
     updatePost,
     deletePost,
