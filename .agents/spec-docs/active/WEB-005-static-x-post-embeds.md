@@ -60,7 +60,7 @@ Define a content-owned resolved X-post embed record and sanitizer transform. The
 - [x] TC-02: `pnpm --filter @publisher/site test` renders a deterministic accessible X-post card from a resolved oEmbed fixture containing the canonical source link and quote text, with no `platform.twitter.com`, iframe, or script in output.
 - [x] TC-03: Admin UI and `publisher` CLI article create/update paths invoke the same oEmbed resolution contract and report identical invalid-URL or unavailable-provider diagnostics.
 - [x] TC-04: `pnpm --filter @publisher/site build` exits 0 with an article containing an X-post card and no runtime database or third-party X dependency.
-- [ ] TC-05: Browser verification at desktop and 390px mobile widths shows the X-post card, source link, and surrounding article layout without horizontal overflow or layout shift.
+- [x] TC-05: Browser verification at desktop and 390px mobile widths shows the X-post card, source link, and surrounding article layout without horizontal overflow or layout shift.
 
 ## Test Plan
 
@@ -105,4 +105,4 @@ The task plan maps every Completion Criterion to implementation work: resolver s
 
 `apps/admin/app/lib/x-oembed.ts` validates canonical X status URLs, imposes a five-second author-time timeout, rejects malformed/unsafe provider markup, and returns a platform-owned semantic figure. Both the authenticated browser API and the scoped automation API invoke that resolver; `publisher embed x resolve` calls the same automation route. The admin post editor offers Resolve and insert.
 
-The 180-test harness run, full typecheck, build, scan, and production resolver call passed. The production `aitrendtimes.com` article contains two resolved cards and no iframe, provider widget script, or reader-time X runtime. Its live stylesheet contains the card's responsive rules. Browser-surface verification remains pending because no browser surface is available in this environment.
+The 180-test harness run, full typecheck, build, scan, and production resolver call passed. The production `aitrendtimes.com` article contains two resolved cards and no iframe, provider widget script, or reader-time X runtime. Its live stylesheet contains the card's responsive rules. Chrome visual verification passed on desktop and in the iPhone XR 414px device toolbar: both cards and source links render, and the mobile runtime measurement reported `viewport: 421`, `scrollWidth: 421`, `xCards: 2`.
