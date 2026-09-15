@@ -72,13 +72,13 @@ function BasicPostFields({
       body: JSON.stringify({ url: xUrl }),
     })
     const data = (await response.json().catch(() => ({}))) as {
-      embed?: { html?: string }
+      embed?: { url?: string; quote?: string; authorName?: string }
       error?: { message?: string } | string
     }
-    if (response.ok && data.embed?.html) {
+    if (response.ok && data.embed?.url) {
       update(
         'bodyMarkdown',
-        `${selected.bodyMarkdown}${selected.bodyMarkdown ? '\n\n' : ''}:::embed{provider="x" url="${xUrl}"}\n:::`,
+        `${selected.bodyMarkdown}${selected.bodyMarkdown ? '\n\n' : ''}:::embed{provider="x" url="${data.embed.url}" quote="${(data.embed.quote ?? '').replaceAll('"', '\\"')}" authorName="${(data.embed.authorName ?? '').replaceAll('"', '\\"')}"}\n:::`,
       )
       setXUrl('')
       setEmbedMessage('X source card inserted. Save content to keep it.')

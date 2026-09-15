@@ -34,6 +34,14 @@ export interface EditorialDocument {
   readonly version: 1
   readonly markdown: string
   readonly figures: readonly FigureAttribution[]
+  readonly embeds: readonly EditorialEmbed[]
+}
+
+export interface EditorialEmbed {
+  readonly provider: 'x'
+  readonly url: string
+  readonly quote?: string
+  readonly authorName?: string
 }
 
 function fail(code: string, message: string): never {
@@ -83,6 +91,7 @@ export function parseEditorialMarkdown(markdown: string): EditorialDocument {
     .use(remarkDirective)
     .parse(markdown) as { children?: unknown[] }
   const figures: FigureAttribution[] = []
+  const embeds: EditorialEmbed[] = []
   for (const node of tree.children ?? []) {
     if (!node || typeof node !== 'object') continue
     const directive = node as {
@@ -91,6 +100,27 @@ export function parseEditorialMarkdown(markdown: string): EditorialDocument {
       attributes?: Record<string, unknown>
     }
     if (!directive.type?.includes('Directive')) continue
+    if (directive.name === 'embed') {
+      const attrs = directive.attributes ?? {}
+      if (attrs.provider !== 'x')
+        fail('unsupported_directive', 'only the x embed provider is supported')
+      const url = safeFigureSource(attrs.url)
+      if (!url.startsWith('https://'))
+        fail('unsafe_url', 'embed URL must use HTTPS')
+      embeds.push({
+        provider: 'x',
+        url,
+        quote:
+          typeof attrs.quote === 'string'
+            ? attrs.quote.trim() || undefined
+            : undefined,
+        authorName:
+          typeof attrs.authorName === 'string'
+            ? attrs.authorName.trim() || undefined
+            : undefined,
+      })
+      continue
+    }
     if (directive.name !== 'figure')
       fail(
         'unsupported_directive',
@@ -108,7 +138,7 @@ export function parseEditorialMarkdown(markdown: string): EditorialDocument {
       credit: safeCredit(attrs.creditUrl, creditName || undefined),
     })
   }
-  return { version: 1, markdown: markdown.trim(), figures }
+  return { version: 1, markdown: markdown.trim(), figures, embeds }
 }
 
 function escapeHtml(value: string): string {
@@ -140,6 +170,7 @@ export function renderEditorialMarkdown(markdown: string): string {
   const figures = new Map(
     document.figures.map((figure) => [figure.src, figure]),
   )
+  const embeds = new Map(document.embeds.map((embed) => [embed.url, embed]))
   const processor = unified()
     .use(remarkParse)
     .use(remarkDirective)
@@ -148,7 +179,15 @@ export function renderEditorialMarkdown(markdown: string): string {
       root.children = (root.children ?? []).map((node) => {
         const directive = node as {
           name?: string
-          attributes?: { src?: string }
+          attributes?: { src?: string; url?: string }
+        }
+        if (directive.name === 'embed') {
+          const embed = embeds.get(directive.attributes?.url ?? '')
+          if (!embed) return node
+          return {
+            type: 'html',
+            value: `<figure class="publisher-x-post" data-publisher-x-post="true"><blockquote><p>${escapeHtml(embed.quote ?? 'View this post on X.')}</p></blockquote><figcaption><a href="${escapeHtml(embed.url)}">${escapeHtml(embed.authorName ? `${embed.authorName} on X` : 'View source on X')}</a></figcaption></figure>`,
+          }
         }
         if (directive.name !== 'figure') return node
         const figure = figures.get(directive.attributes?.src ?? '')
@@ -174,6 +213,7 @@ export function renderEditorialMarkdown(markdown: string): string {
     allowedAttributes: {
       a: ['href'],
       img: ['src', 'alt', 'loading', 'decoding'],
+      figure: ['class', 'data-publisher-x-post'],
     },
     allowedSchemes: ['https'],
     allowProtocolRelative: false,
