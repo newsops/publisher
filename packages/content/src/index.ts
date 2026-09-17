@@ -93,6 +93,7 @@ export {
   renderPluginContributions,
   staticMarkerPlugin,
   validateGoogleAnalyticsConfiguration,
+  googleAnalyticsRuntimeSource,
   validatePluginInstallation,
   validatePluginInstallations,
 } from './plugins'

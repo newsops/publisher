@@ -151,6 +151,7 @@ export async function publicationInputs(
       slugs: articles.slice(0, 10).map((article) => article.slug),
     },
     theme: await selectedTheme(snapshot),
+    plugins: snapshot.plugins,
     media: await materializedMedia(snapshot, store),
     ...(commentOrigin
       ? {

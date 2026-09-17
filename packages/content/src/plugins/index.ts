@@ -215,6 +215,7 @@ export const staticMarkerPlugin: PluginDefinition = {
 }
 
 export {
+  googleAnalyticsRuntimeSource,
   googleAnalyticsPlugin,
   validateGoogleAnalyticsConfiguration,
 } from './google-analytics'

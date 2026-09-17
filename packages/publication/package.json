@@ -16,6 +16,9 @@
     "typecheck": "tsc --noEmit",
     "test": "node -e \"process.exit(0)\""
   },
+  "dependencies": {
+    "@publisher/content": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.0.0"

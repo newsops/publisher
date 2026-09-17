@@ -22,6 +22,40 @@ function safeLocalPath(value: unknown): value is string {
   )
 }
 
+function cspDirectives(value: string): Map<string, Set<string>> {
+  return new Map(
+    value
+      .split(';')
+      .map((directive) => directive.trim().split(/\s+/))
+      .filter(([name]) => Boolean(name))
+      .map(([name, ...tokens]) => [name!, new Set(tokens)]),
+  )
+}
+
+function isSafeCsp(value: string): boolean {
+  const baseline = cspDirectives(BASELINE_CSP)
+  const actual = cspDirectives(value)
+  const allowedExtras = new Map<string, Set<string>>([
+    ['script-src', new Set(['https://www.googletagmanager.com'])],
+    ['connect-src', new Set(['https://www.google-analytics.com'])],
+  ])
+  for (const [directive, tokens] of baseline) {
+    const observed = actual.get(directive)
+    if (!observed) return false
+    for (const token of tokens) if (!observed.has(token)) return false
+    for (const token of observed) {
+      if (tokens.has(token)) continue
+      if (!allowedExtras.get(directive)?.has(token)) return false
+    }
+  }
+  for (const [directive, tokens] of actual) {
+    if (!baseline.has(directive)) return false
+    for (const token of tokens)
+      if (token === '*' || token.includes('unsafe-')) return false
+  }
+  return true
+}
+
 function verifyHtml(body: string, article: boolean): void {
   if (!/^<!doctype html>/i.test(body) || !body.includes('<h1'))
     throw new Error('Candidate HTML is missing its semantic document shell')
@@ -74,10 +108,28 @@ function mustReadEntry(
   )
 }
 
-function verifyStaticHostPolicy(bodies: ReadonlyMap<string, Uint8Array>): void {
+function verifyStaticHostPolicy(
+  bodies: ReadonlyMap<string, Uint8Array>,
+): string {
   const body = bodies.get('/_headers')
-  if (!body || text(body) !== STATIC_HOST_HEADERS)
+  if (!body)
     throw new Error('Candidate static-host policy is missing or invalid')
+  const value = text(body)
+  if (
+    !value.startsWith(
+      STATIC_HOST_HEADERS.slice(0, STATIC_HOST_HEADERS.indexOf(BASELINE_CSP)),
+    )
+  )
+    throw new Error('Candidate static-host policy is missing or invalid')
+  const line = value
+    .split('\n')
+    .find((item) => item.startsWith('  Content-Security-Policy: '))
+  if (!line)
+    throw new Error('Candidate static-host policy is missing or invalid')
+  const csp = line.slice('  Content-Security-Policy: '.length)
+  if (!isSafeCsp(csp))
+    throw new Error('Candidate static-host policy is missing or invalid')
+  return csp
 }
 
 async function readVerifiedBodies(
@@ -127,7 +179,10 @@ async function readVerifiedBodies(
   return bodies
 }
 
-function verifyReleasePolicy(bodies: ReadonlyMap<string, Uint8Array>): void {
+function verifyReleasePolicy(
+  bodies: ReadonlyMap<string, Uint8Array>,
+  expectedCsp: string,
+): void {
   const body = bodies.get('/.well-known/publisher/release-policy.json')
   if (!body) throw new Error('Candidate release policy is missing')
   const policy = JSON.parse(text(body)) as {
@@ -136,7 +191,7 @@ function verifyReleasePolicy(bodies: ReadonlyMap<string, Uint8Array>): void {
   }
   if (
     policy.schemaVersion !== 1 ||
-    policy.contentSecurityPolicy !== BASELINE_CSP
+    policy.contentSecurityPolicy !== expectedCsp
   )
     throw new Error('Candidate release policy does not match the baseline CSP')
 }
@@ -209,8 +264,8 @@ export async function verifyPublicationCandidate(
   if (paths.size !== manifest.entries.length)
     throw new Error('Candidate manifest contains duplicate paths')
   const bodies = await readVerifiedBodies(manifest, store, previous, paths)
-  verifyStaticHostPolicy(bodies)
-  verifyReleasePolicy(bodies)
+  const csp = verifyStaticHostPolicy(bodies)
+  verifyReleasePolicy(bodies, csp)
   verifyRuntimeManifest(bodies, paths)
   verifyCommentPointers(manifest, bodies, paths)
   for (const required of [

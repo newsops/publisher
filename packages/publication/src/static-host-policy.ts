@@ -45,9 +45,9 @@ export function createStaticHostPolicyRecipe(): ArtifactRecipe {
     cacheClass: 'runtime-pointer',
     dependencyKeys: ['headers:csp', 'headers:static-cache'],
     render: (read) => {
-      read('headers:csp')
+      const csp = read('headers:csp')
       read('headers:static-cache')
-      return STATIC_HOST_HEADERS
+      return STATIC_HOST_HEADERS.replace(BASELINE_CSP, csp)
     },
   }
 }

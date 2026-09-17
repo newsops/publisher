@@ -19,7 +19,11 @@ import {
   validatePopularityProjection,
   assertBuildJobTransition,
 } from '../../../packages/publication/src/index.ts'
-import { getTheme } from '../../../packages/content/src/index.ts'
+import {
+  createPluginInstallation,
+  getTheme,
+  projectPublicPluginSnapshot,
+} from '../../../packages/content/src/index.ts'
 
 class MemoryArtifactStore {
   objects = new Map()
@@ -1159,5 +1163,81 @@ describe('WEB-008 incremental publication contract', () => {
       "default-src 'self'; base-uri 'self'; connect-src 'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; media-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'self'",
     )
     expect(BASELINE_CSP).not.toMatch(/https?:|\*|unsafe-/)
+  })
+
+  it('carries a granted public plugin through HTML, runtime, and CSP output', async () => {
+    const store = new MemoryArtifactStore()
+    const plugins = projectPublicPluginSnapshot(
+      [
+        {
+          ...createPluginInstallation('default', 'google.analytics', {
+            measurementId: 'G-ABC12345',
+            consent: 'granted',
+          }),
+          state: 'enabled',
+        },
+      ],
+      'default',
+    )
+    const result = await build(store, 'plugin-granted', inputs({ plugins }))
+    const htmlEntry = result.manifest.entries.find(
+      (entry) => entry.kind === 'index-html',
+    )
+    const html = new TextDecoder().decode(
+      store.objects.get(htmlEntry.objectKey).body,
+    )
+    expect(html).toContain('publisher-google-analytics-id')
+    expect(html).toContain('/plugin-runtime/google-analytics.js')
+    const runtime = result.manifest.entries.find(
+      (entry) => entry.path === '/plugin-runtime/google-analytics.js',
+    )
+    expect(runtime).toBeDefined()
+    const headers = new TextDecoder().decode(
+      store.objects.get(
+        result.manifest.entries.find((entry) => entry.path === '/_headers')
+          .objectKey,
+      ).body,
+    )
+    expect(headers).toContain('https://www.googletagmanager.com')
+    expect(headers).toContain('https://www.google-analytics.com')
+    await verifyPublicationCandidate(result.manifest, store)
+  })
+
+  it('keeps denied analytics byte-inert and provider-neutral', async () => {
+    const store = new MemoryArtifactStore()
+    const plugins = projectPublicPluginSnapshot(
+      [
+        {
+          ...createPluginInstallation('default', 'google.analytics', {
+            measurementId: 'G-ABC12345',
+            consent: 'denied',
+          }),
+          state: 'enabled',
+        },
+      ],
+      'default',
+    )
+    const result = await build(store, 'plugin-denied', inputs({ plugins }))
+    const htmlEntry = result.manifest.entries.find(
+      (entry) => entry.kind === 'index-html',
+    )
+    const html = new TextDecoder().decode(
+      store.objects.get(htmlEntry.objectKey).body,
+    )
+    expect(html).not.toContain('publisher-google-analytics-id')
+    expect(
+      result.manifest.entries.some(
+        (entry) => entry.path === '/plugin-runtime/google-analytics.js',
+      ),
+    ).toBe(false)
+    const headers = new TextDecoder().decode(
+      store.objects.get(
+        result.manifest.entries.find((entry) => entry.path === '/_headers')
+          .objectKey,
+      ).body,
+    )
+    expect(headers).not.toContain('googletagmanager.com')
+    expect(headers).not.toContain('google-analytics.com')
+    await verifyPublicationCandidate(result.manifest, store)
   })
 })

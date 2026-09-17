@@ -1,4 +1,8 @@
 import type { ArtifactRecipe } from './release-manifest'
+import {
+  googleAnalyticsRuntimeSource,
+  renderPluginContributions,
+} from '@publisher/content'
 import type { StaticIndexGraph } from './static-indexes'
 import { contentDigest } from './static-policy'
 import type { PublicationInputs } from './static-types'
@@ -78,6 +82,20 @@ export function appendRuntimeRecipes(
   recipes.push(
     runtimeScript('/site-runtime/comment-bootstrap.v1.js', commentBootstrap),
   )
+  const pluginHead = input.plugins
+    ? renderPluginContributions(input.plugins).head
+    : []
+  if (
+    pluginHead.some(
+      (token) => token.src === '/plugin-runtime/google-analytics.js',
+    )
+  )
+    recipes.push(
+      runtimeScript(
+        '/plugin-runtime/google-analytics.js',
+        googleAnalyticsRuntimeSource,
+      ),
+    )
   if (input.commentRuntime) {
     recipes.push(runtimeScript('/site-runtime/comments.v1.js', liveComments))
     if (

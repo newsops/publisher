@@ -215,7 +215,10 @@ export async function setPluginState(
   setMessage: Setter<string>,
   reload: () => Promise<void>,
 ): Promise<void> {
-  const response = await adminFetch('/api/plugins/' + pluginId + '/' + state, {
+  // The route contract uses the action name `enable`, while the domain state
+  // exposed to the UI is `enabled`.
+  const action = state === 'enabled' ? 'enable' : 'disable'
+  const response = await adminFetch('/api/plugins/' + pluginId + '/' + action, {
     method: 'POST',
     headers: { 'If-Match': String(revision) },
   })

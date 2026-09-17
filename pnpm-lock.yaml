@@ -225,6 +225,10 @@ importers:
         version: 5.9.3
 
   packages/publication:
+    dependencies:
+      '@publisher/content':
+        specifier: workspace:*
+        version: link:../content
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

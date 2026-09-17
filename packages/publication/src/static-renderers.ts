@@ -1,3 +1,7 @@
+import {
+  renderPluginContributions,
+  type PublicPluginSnapshot,
+} from '@publisher/content'
 import type { sanitizeCommentProjection } from './projections'
 import type { ArticleDocument, PublicationInputs } from './static-types'
 
@@ -38,6 +42,18 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;')
+}
+
+function renderPluginHead(snapshot: PublicPluginSnapshot | undefined): string {
+  if (!snapshot) return ''
+  const contributions = renderPluginContributions(snapshot)
+  return contributions.head
+    .map((token) =>
+      token.kind === 'meta'
+        ? `<meta name="${escapeHtml(token.name ?? '')}" content="${escapeHtml(token.content ?? '')}">`
+        : `<script${token.async === false ? '' : ' async'} src="${escapeHtml(token.src ?? '')}"></script>`,
+    )
+    .join('')
 }
 
 function longDate(value: string): string {
@@ -97,7 +113,7 @@ function renderHead(
   const socialMetadata = article
     ? `<meta property="og:type" content="article"><meta property="og:title" content="${escapeHtml(article.seoTitle)}">${article.imageUrl ? `<meta property="og:image" content="${escapeHtml(input.origin.replace(/\/$/, '') + article.imageUrl)}">` : ''}`
     : `<meta property="og:type" content="website"><meta property="og:title" content="${escapeHtml(title)}">`
-  return `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(documentTitle)}</title>${metadata}${socialMetadata}<link rel="canonical" href="${escapeHtml(canonical)}"><link rel="stylesheet" href="${escapeHtml(baselinePath)}"><link rel="stylesheet" href="/theme-runtime/current.css">`
+  return `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(documentTitle)}</title>${metadata}${socialMetadata}<link rel="canonical" href="${escapeHtml(canonical)}"><link rel="stylesheet" href="${escapeHtml(baselinePath)}"><link rel="stylesheet" href="/theme-runtime/current.css">${renderPluginHead(input.plugins)}`
 }
 
 function renderSiteHeader(

@@ -1,10 +1,38 @@
 import type { ArtifactRecipe } from './release-manifest'
+import { pluginProviderOrigins } from '@publisher/content'
 import {
   BASELINE_CSP,
   DEFAULT_BASELINE_CSS,
   contentDigest,
 } from './static-policy'
 import type { PublicationInputs } from './static-types'
+
+function appendOrigins(
+  csp: string,
+  directive: string,
+  origins: readonly string[],
+): string {
+  if (origins.length === 0) return csp
+  const addition = origins.join(' ')
+  const expression = new RegExp(`(${directive} [^;]+)`)
+  if (!expression.test(csp))
+    throw new Error(`CSP has no ${directive} directive`)
+  return csp.replace(expression, (_match, current) => `${current} ${addition}`)
+}
+
+export function publicationCsp(input: PublicationInputs): string {
+  const plugins = input.plugins
+  if (!plugins) return BASELINE_CSP
+  return appendOrigins(
+    appendOrigins(
+      BASELINE_CSP,
+      'script-src',
+      pluginProviderOrigins(plugins, 'script'),
+    ),
+    'connect-src',
+    pluginProviderOrigins(plugins, 'connect'),
+  )
+}
 import {
   createStaticHostPolicyRecipe,
   IMMUTABLE_CACHE_CONTROL,
@@ -23,7 +51,7 @@ export function createBasePublicationGraph(
   const baseline = `${input.baselineVersion}\u0000${input.baselineCss ?? DEFAULT_BASELINE_CSS}`
   const baselinePath = `/theme-runtime/immutable/baseline.${contentDigest(baseline)}.css`
   const dependencies: Record<string, string> = {
-    'headers:csp': BASELINE_CSP,
+    'headers:csp': publicationCsp(input),
     'headers:static-cache': 'static-cache-v1',
     'template:semantic': input.semanticVersion,
     'runtime:version': input.runtimeVersion,
