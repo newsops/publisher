@@ -59,16 +59,21 @@ export default function ProgressivePostFeed({
       ) : (
         initialPosts.map((post) => (
           <article className="post-card" key={post.slug}>
-            <Link
-              className="post-image"
-              href={post.path}
-              tabIndex={-1}
-              aria-hidden="true"
-            >
-              {post.imageUrl ? (
+            {post.imageUrl ? (
+              <Link
+                className="post-image"
+                href={post.path}
+                tabIndex={-1}
+                aria-hidden="true"
+              >
                 <img src={post.imageUrl} alt="" loading="lazy" />
-              ) : null}
-            </Link>
+              </Link>
+            ) : (
+              <div
+                className="post-image post-image-placeholder"
+                aria-hidden="true"
+              />
+            )}
             <div className="post-copy">
               <Link
                 className="category"

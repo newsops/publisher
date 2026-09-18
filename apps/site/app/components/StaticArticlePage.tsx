@@ -73,7 +73,13 @@ function ArticleHeader({ article }: { article: StaticArticlePresentation }) {
         {category}
       </Link>
       <h1>{article.title}</h1>
+      {article.description ? (
+        <p className="standfirst">{article.description}</p>
+      ) : null}
       <div className="byline">
+        <span className="byline-avatar" aria-hidden="true">
+          {article.authorName.trim().charAt(0)}
+        </span>
         <span>
           By{' '}
           <Link href={`/author/${article.authorSlug}/`}>
@@ -81,7 +87,20 @@ function ArticleHeader({ article }: { article: StaticArticlePresentation }) {
           </Link>
         </span>
         <span aria-hidden="true">·</span>
-        <span>{longDate(article.publishedAt)}</span>
+        <span>
+          Published{' '}
+          <time dateTime={article.publishedAt}>
+            {longDate(article.publishedAt)}
+          </time>
+        </span>
+        {article.updatedAt.slice(0, 10) !== article.publishedAt.slice(0, 10) ? (
+          <span className="updated-time">
+            Updated{' '}
+            <time dateTime={article.updatedAt}>
+              {longDate(article.updatedAt)}
+            </time>
+          </span>
+        ) : null}
       </div>
     </div>
   )
@@ -125,6 +144,11 @@ export default function StaticArticlePage({
       <main className="container post-body" lang={article.language}>
         <ArticleStructuredData article={article} />
         <ArticleHeader article={article} />
+        {article.imageUrl ? (
+          <figure className="article-figure">
+            <img src={article.imageUrl} alt="" fetchPriority="high" />
+          </figure>
+        ) : null}
         <article
           className="prose"
           dangerouslySetInnerHTML={{
@@ -133,7 +157,7 @@ export default function StaticArticlePage({
         />
         <ArticleTaxonomy article={article} />
         {article.showRecent ? (
-          <aside className="sidebar" data-runtime-projection="recent">
+          <aside className="article-related" data-runtime-projection="recent">
             <h2>Recent stories</h2>
             <p>
               <Link href="/recent/">Browse the latest published stories</Link>

@@ -31,14 +31,17 @@ export default function SiteChrome({
   const activeTags = tags.filter((tag) => tag.active)
   return (
     <div className="site-shell" id="top">
-      <header>
+      <header className="site-header">
         <div className="topbar">
           <div className="container topbar-inner">
             <span className="topbar-date">
               {latest ? `Latest update · ${longDate(latest.publishedAt)}` : ''}
             </span>
-            <nav>
+            <nav aria-label="Utility navigation">
               <ul className="topbar-nav">
+                <li>
+                  <Link href="/recent/">Recent</Link>
+                </li>
                 <li>
                   <Link href="/about.html">About us</Link>
                 </li>
@@ -51,14 +54,25 @@ export default function SiteChrome({
         </div>
 
         <div className="main-header">
-          <Link className="brand" href="/">
-            {publication.name}
-          </Link>
+          <div className="container main-header-inner">
+            <Link className="brand" href="/">
+              {publication.name}
+            </Link>
+            <form className="masthead-search" role="search" action="/search">
+              <input
+                type="search"
+                name="q"
+                aria-label="Search articles"
+                placeholder="Search"
+              />
+              <button type="submit">Search</button>
+            </form>
+          </div>
         </div>
 
         <div className="section-nav">
           <div className="container section-nav-inner">
-            <nav>
+            <nav aria-label="Essential navigation">
               <ul className="main-nav">
                 <li>
                   <Link href="/">Home</Link>
@@ -82,7 +96,7 @@ export default function SiteChrome({
       {children}
 
       <footer className="site-footer">
-        <div className="container footer-main">
+        <div className="container footer-main" data-brand={publication.name}>
           <div className="footer-col">
             <h2>Sections</h2>
             {activeTags.map((tag) => (
@@ -99,6 +113,7 @@ export default function SiteChrome({
           <div className="footer-col">
             <h2>Follow</h2>
             <Link href="/feed.xml">RSS feed</Link>
+            <Link href="/recent/">Recent stories</Link>
             <Link href="/search">All articles</Link>
           </div>
         </div>
