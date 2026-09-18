@@ -39,18 +39,18 @@ credentials, arbitrary fields, URLs, HTML, and JavaScript. The measurement ID
 is public; management credentials never belong in this configuration.
 
 `denied` is the default and compiles no tag token or Google CSP source. With
-`granted`, the static artifact contains only a platform-owned local loader and
-the exact Google provider origins. That loader does **not** make a Google
-request until the approved consent layer either sets
-`window.__publisherConsent = { analytics: true }` before it runs or dispatches
-`new CustomEvent('publisher:consent', { detail: { analytics: true } })`.
-It safely ignores a denied or absent signal.
+`granted`, the operator has confirmed visitor tracking authorization for the
+publication, and the static artifact contains a platform-owned local loader and
+the exact Google provider origins. The loader activates the asynchronous Google
+tag on page load unless explicitly denied by an external CMP or consent layer
+(`window.__publisherConsent = { analytics: false }`). If an external CMP
+subsequently dispatches `new CustomEvent('publisher:consent', { detail: { analytics: true } })`,
+the loader initializes the tag.
 
-This is Google basic consent behavior: the platform does not ship a consent
-banner, infer consent, or use advanced Consent Mode/cookieless pings. Operators
-must connect an approved CMP or consent UI, document its signal integration,
-and disable or publish `denied` until that work is verified. See Google's
-[basic vs. advanced consent guidance](https://developers.google.com/tag-platform/security/concepts/consent-mode)
+Operators who require a jurisdiction-specific CMP may configure their consent
+UI to set `window.__publisherConsent.analytics = false` before the page scripts
+execute, or emit the documented `publisher:consent` event upon visitor opt-in.
+See Google's [basic vs. advanced consent guidance](https://developers.google.com/tag-platform/security/concepts/consent-mode)
 and [gtag.js setup requirements](https://developers.google.com/tag-platform/gtagjs).
 
 ## Installation and release

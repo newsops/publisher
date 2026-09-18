@@ -419,9 +419,9 @@ Analytics 설정은 공개 식별자인 `G-…` measurement ID와
 HTML, JavaScript는 거부한다.
 
 - 기본값 `denied`는 Google 태그·Google CSP origin을 산출물에 넣지 않는다.
-- `granted`여도 공개 사이트가 요청을 즉시 전송하지 않는다. 승인된 CMP 또는
-  consent UI가 `window.__publisherConsent.analytics = true`를 설정하거나
-  `publisher:consent` 이벤트를 보내야 loader가 태그를 만든다.
+- `granted`는 운영자의 방문자 분석 승인을 나타내며, 외부 CMP나 동의 UI가 명시적으로
+  `window.__publisherConsent.analytics = false`를 지정하지 않는 한 플랫폼 소유 로더가
+  페이지 로드 시 태그를 즉시 활성화한다. 외부 CMP의 `publisher:consent` 이벤트도 함께 지원한다.
 - 차단·실패 상황에서도 정적 기사와 SEO 산출물은 그대로 남는다.
 
 ## Google AdSense의 명시적 결정 지점

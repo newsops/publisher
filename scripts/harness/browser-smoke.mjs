@@ -121,6 +121,10 @@ async function inspect(
     await client.send('Network.setBlockedURLs', {
       urls: ['https://www.googletagmanager.com/gtag/*'],
     })
+  if (googleAnalyticsMode === 'consent-off')
+    await client.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: 'window.__publisherConsent = { analytics: false }',
+    })
   if (googleAnalyticsMode === 'blocked')
     await client.send('Page.addScriptToEvaluateOnNewDocument', {
       source: 'window.__publisherConsent = { analytics: true }',

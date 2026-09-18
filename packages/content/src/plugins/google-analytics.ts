@@ -36,11 +36,10 @@ export const googleAnalyticsRuntimeSource = `;(() => {
     document.head.append(tag)
   }
 
-  if (window.__publisherConsent?.analytics === true) loadGoogleTag()
-  else
-    window.addEventListener('publisher:consent', (event) => {
-      if (event.detail?.analytics === true) loadGoogleTag()
-    })
+  if (window.__publisherConsent?.analytics !== false) loadGoogleTag()
+  window.addEventListener('publisher:consent', (event) => {
+    if (event.detail?.analytics === true) loadGoogleTag()
+  })
 })()`
 
 function isRecord(value: unknown): value is Record<string, unknown> {
