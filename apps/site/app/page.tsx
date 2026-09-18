@@ -26,7 +26,7 @@ export default function HomePage() {
       />
       {featured ? (
         <PostIndexPage
-          title="Top stories"
+          title="Latest stories"
           allPosts={trailingPosts(posts)}
           page={1}
           exclude={featured.slug}
@@ -51,23 +51,6 @@ function FeaturedPost() {
   const path = getPostPath(featured)
   return (
     <article className="lead">
-      <Link
-        className="category"
-        href={`/search/label/${featured.categories[0]}`}
-      >
-        {featured.categories[0]}
-      </Link>
-      <h1 className="lead-title">
-        <Link href={path}>{featured.title}</Link>
-      </h1>
-      <p className="lead-excerpt">{featured.excerpt}</p>
-      <p className="meta">
-        By{' '}
-        <Link href={`/author/${featured.authorSlug}/`}>
-          {author?.name ?? featured.author}
-        </Link>{' '}
-        · {longDate(featured.publishedAt)}
-      </p>
       {featured.imageUrl ? (
         <Link
           className="lead-figure"
@@ -77,7 +60,31 @@ function FeaturedPost() {
         >
           <img src={featured.imageUrl} alt="" fetchPriority="high" />
         </Link>
-      ) : null}
+      ) : (
+        <div
+          className="lead-figure post-image-placeholder"
+          aria-hidden="true"
+        />
+      )}
+      <div className="lead-copy">
+        <Link
+          className="category"
+          href={`/search/label/${featured.categories[0]}`}
+        >
+          {featured.categories[0]}
+        </Link>
+        <h1 className="lead-title">
+          <Link href={path}>{featured.title}</Link>
+        </h1>
+        <p className="lead-excerpt">{featured.excerpt}</p>
+        <p className="meta">
+          By{' '}
+          <Link href={`/author/${featured.authorSlug}/`}>
+            {author?.name ?? featured.author}
+          </Link>{' '}
+          · {longDate(featured.publishedAt)}
+        </p>
+      </div>
     </article>
   )
 }

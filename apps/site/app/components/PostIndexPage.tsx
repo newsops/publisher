@@ -165,19 +165,7 @@ export default function PostIndexPage({
         </section>
       </div>
 
-      <aside className="sidebar">
-        <section>
-          <h2>Search</h2>
-          <form action="/search" className="field-row">
-            <input
-              name="q"
-              aria-label="Search articles"
-              placeholder="Search articles"
-            />
-            <button type="submit">Go</button>
-          </form>
-        </section>
-
+      <aside className="sidebar editorial-rail">
         <section>
           <h2>Editor's picks</h2>
           {editorialPicks.length > 0 ? (
