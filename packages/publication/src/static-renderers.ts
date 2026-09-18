@@ -264,7 +264,7 @@ export function renderArticleHtml(
     image: article.imageUrl ? [`${origin}${article.imageUrl}`] : undefined,
   }).replaceAll('<', '\\u003c')
   const heroImage = article.imageUrl
-    ? `<figure class="article-figure"><img src="${escapeHtml(article.imageUrl)}" alt="${escapeHtml(article.imageAlt ?? '')}" fetchpriority="high" decoding="async">${article.imageAlt ? `<figcaption>${escapeHtml(article.imageAlt)}</figcaption>` : ''}</figure>`
+    ? `<figure class="article-figure"><img src="${escapeHtml(article.imageUrl)}" alt="${escapeHtml(article.imageAlt ?? '')}" fetchpriority="high" decoding="async"></figure>`
     : ''
   const hasCommentProjection =
     input.embedApprovedComments ||
