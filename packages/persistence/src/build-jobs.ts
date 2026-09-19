@@ -1,19 +1,23 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import {
-  assertBuildJobTransition,
-  type BuildJob,
-  type BuildJobRepository,
-  type BuildJobStatus,
-  type EnqueueBuildJobInput,
+import type {
+  BuildJob,
+  BuildJobRepository,
+  BuildJobStatus,
+  EnqueueBuildJobInput,
 } from '@publisher/publication'
 import {
-  postgresPool,
   runPostgresTransaction,
   type PostgresPool,
   type PostgresQueryable,
-} from '@publisher/persistence'
+} from './postgres'
+
+/**
+ * Build-job storage adapters (ARCH-002). They guarantee compare-and-swap on
+ * the expected status only; the publication state machine is applied by
+ * `guardBuildJobTransitions` from `@publisher/publication` at composition.
+ */
 
 function assertSameRequest(job: BuildJob, input: EnqueueBuildJobInput): void {
   if (
@@ -26,11 +30,7 @@ function assertSameRequest(job: BuildJob, input: EnqueueBuildJobInput): void {
 }
 
 export class PostgresBuildJobRepository implements BuildJobRepository {
-  constructor(
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
-  ) {}
+  constructor(private readonly pool: PostgresPool) {}
 
   async enqueueUsing(
     database: PostgresQueryable,
@@ -162,7 +162,6 @@ export class PostgresBuildJobRepository implements BuildJobRepository {
     status: BuildJobStatus,
     failureReason?: string,
   ): Promise<BuildJob> {
-    assertBuildJobTransition(expected, status)
     const result = await this.pool.query<BuildJob>(
       `UPDATE publisher_admin.build_jobs
        SET status = $3, failure_reason = $4, updated_at = CURRENT_TIMESTAMP
@@ -267,7 +266,6 @@ export class FileBuildJobRepository implements BuildJobRepository {
     status: BuildJobStatus,
     failureReason?: string,
   ): Promise<BuildJob> {
-    assertBuildJobTransition(expected, status)
     const jobs = await this.read()
     const index = jobs.findIndex((job) => job.jobId === jobId)
     if (index < 0 || jobs[index]!.status !== expected)

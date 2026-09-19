@@ -16,6 +16,7 @@ export {
   type PutObjectInput,
 } from './object-storage'
 export {
+  analyseImagePixels,
   checksumAddressedMediaKey,
   createImageVariants,
   PostgresMediaRepository,
@@ -32,3 +33,7 @@ export {
   type PersistenceScope,
 } from './recovery'
 export { applyMigrations, type MigrationScope } from './migrations'
+export {
+  FileBuildJobRepository,
+  PostgresBuildJobRepository,
+} from './build-jobs'

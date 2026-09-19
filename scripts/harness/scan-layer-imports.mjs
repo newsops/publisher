@@ -96,6 +96,17 @@ for (const file of listSourceFiles()) {
   const source = fs.readFileSync(path.join(root, file), 'utf8')
   for (const { specifier, typeOnly } of importsOf(source)) {
     const target = classify(file, specifier)
+    if (
+      file.startsWith('packages/') &&
+      target.kind === 'layer' &&
+      target.target?.startsWith('apps/')
+    ) {
+      violations.push({
+        key: `${file} -> ${specifier}`,
+        detail: 'packages never import applications',
+      })
+      continue
+    }
     if (allowed(layerId, target, typeOnly, specifier)) continue
     const targetName =
       target.kind === 'layer'

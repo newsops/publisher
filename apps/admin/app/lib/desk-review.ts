@@ -13,11 +13,11 @@ import {
   type ManagedPost,
 } from '@publisher/content'
 import {
+  analyseImagePixels,
   objectStoreFromEnvironment,
   PostgresMediaRepository,
   type MediaMetadata,
 } from '@publisher/persistence'
-import sharp from 'sharp'
 import { getAgentGuidanceRepository } from './agent-guidance'
 import { ApiRequestError } from './api-error'
 import { getRepositoryForSite } from './repository'
@@ -40,30 +40,7 @@ export type DeskImageFactsResolver = (
   post: ManagedPost,
 ) => Promise<DeskImageFacts | undefined>
 
-/** Pixel analysis shared by the resolver and tests: deviation and similarity. */
-export async function analyseImagePixels(
-  body: Uint8Array,
-  compareWith?: Uint8Array,
-): Promise<{
-  readonly channelDeviation: number
-  readonly duplicatesCompared?: boolean
-}> {
-  const stats = await sharp(body).stats()
-  const channelDeviation =
-    stats.channels.reduce((sum, channel) => sum + channel.stdev, 0) /
-    stats.channels.length
-  if (!compareWith) return { channelDeviation }
-  const thumb = (source: Uint8Array) =>
-    sharp(source).resize(32, 32, { fit: 'fill' }).greyscale().raw().toBuffer()
-  const [left, right] = await Promise.all([thumb(body), thumb(compareWith)])
-  let difference = 0
-  for (let index = 0; index < left.length; index += 1)
-    difference += Math.abs(left[index]! - right[index]!)
-  return {
-    channelDeviation,
-    duplicatesCompared: difference / left.length < 8,
-  }
-}
+export { analyseImagePixels }
 
 function firstFigureSource(bodyMarkdown: string): string | undefined {
   try {

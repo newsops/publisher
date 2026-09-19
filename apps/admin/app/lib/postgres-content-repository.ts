@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { BuildJob } from '@publisher/publication'
-import { PostgresBuildJobRepository } from './build-job-repository'
+import { PostgresBuildJobRepository } from '@publisher/persistence'
 import {
   ContentValidationError,
   type AuthorProfileInput,

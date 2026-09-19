@@ -1,6 +1,6 @@
 import { projectPublicPluginSnapshot } from '@publisher/content'
 import type { ArticleRepository } from './article-repository'
-import { FileBuildJobRepository } from './build-job-repository'
+import { FileBuildJobRepository } from '@publisher/persistence'
 import { FilePluginRepository } from './plugin-repository'
 import { deliverSnapshot } from './publisher'
 import type { PublishResult } from './repository-contract'

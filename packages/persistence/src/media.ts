@@ -294,3 +294,33 @@ export class PostgresMediaRepository {
     return result.rows.map(mapMedia)
   }
 }
+
+/**
+ * Pixel facts for editorial checks (EDIT-001): the average channel standard
+ * deviation flags near-blank pictures, and a 32×32 greyscale difference
+ * against a second image flags a repeated picture.
+ */
+export async function analyseImagePixels(
+  body: Uint8Array,
+  compareWith?: Uint8Array,
+): Promise<{
+  readonly channelDeviation: number
+  readonly duplicatesCompared?: boolean
+}> {
+  const sharp = await imageProcessor()
+  const stats = await sharp(body).stats()
+  const channelDeviation =
+    stats.channels.reduce((sum, channel) => sum + channel.stdev, 0) /
+    stats.channels.length
+  if (!compareWith) return { channelDeviation }
+  const thumb = (source: Uint8Array) =>
+    sharp(source).resize(32, 32, { fit: 'fill' }).greyscale().raw().toBuffer()
+  const [left, right] = await Promise.all([thumb(body), thumb(compareWith)])
+  let difference = 0
+  for (let index = 0; index < left.length; index += 1)
+    difference += Math.abs(left[index]! - right[index]!)
+  return {
+    channelDeviation,
+    duplicatesCompared: difference / left.length < 8,
+  }
+}

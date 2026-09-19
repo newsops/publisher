@@ -41,6 +41,7 @@ export {
 } from './projections'
 export {
   assertBuildJobTransition,
+  guardBuildJobTransitions,
   InMemoryBuildJobRepository,
   type BuildJob,
   type BuildJobRepository,

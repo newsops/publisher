@@ -13,10 +13,10 @@ import {
 } from '../../../packages/content/src/index.ts'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
 import {
-  analyseImagePixels,
   decideDesk,
   deskReportFor,
 } from '../../../apps/admin/app/lib/desk-review.ts'
+import { analyseImagePixels } from '../../../packages/persistence/src/index.ts'
 import {
   GET as rawDeskGet,
   POST as rawDeskPost,

@@ -18,7 +18,9 @@ import {
   verifyPublicationCandidate,
   validatePopularityProjection,
   assertBuildJobTransition,
+  guardBuildJobTransitions,
 } from '../../../packages/publication/src/index.ts'
+import { FileBuildJobRepository } from '../../../packages/persistence/src/index.ts'
 import {
   createPluginInstallation,
   getTheme,
@@ -151,6 +153,31 @@ describe('WEB-008 incremental publication contract', () => {
     expect(() => assertBuildJobTransition('running', 'verifying')).not.toThrow()
     expect(() => assertBuildJobTransition('verifying', 'ready')).not.toThrow()
     expect(() => assertBuildJobTransition('ready', 'published')).not.toThrow()
+  })
+
+  it('guards a storage adapter that only compare-and-swaps on status', async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'publisher-jobs-'))
+    try {
+      const jobs = guardBuildJobTransitions(
+        new FileBuildJobRepository(directory),
+      )
+      const queued = await jobs.enqueue({
+        siteId: 'default',
+        snapshotId: 'snapshot-guard',
+        snapshotChecksum: 'c'.repeat(64),
+        idempotencyKey: 'guard-request',
+      })
+      await expect(
+        jobs.transition(queued.jobId, 'queued', 'published'),
+      ).rejects.toThrow('Invalid build job transition')
+      const running = await jobs.claimNext('default')
+      expect(running.status).toBe('running')
+      await expect(
+        jobs.transition(running.jobId, 'queued', 'failed'),
+      ).rejects.toThrow('Build job status conflict')
+    } finally {
+      await rm(directory, { recursive: true, force: true })
+    }
   })
 
   it('requeues only a failed job and preserves its attempt count', async () => {

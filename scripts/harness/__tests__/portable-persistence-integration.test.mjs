@@ -10,6 +10,7 @@ import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import S3rver from 's3rver'
 import {
   S3CompatibleObjectStore,
+  PostgresBuildJobRepository,
   PostgresMediaRepository,
   applyMigrations,
   createLogicalBackup,
@@ -26,7 +27,6 @@ import {
 import { PostgresContentRepository } from '../../../apps/admin/app/lib/postgres-content-repository.ts'
 import { PostgresArticleRepository } from '../../../apps/admin/app/lib/postgres-article-repository.ts'
 import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/postgres-publication.ts'
-import { PostgresBuildJobRepository } from '../../../apps/admin/app/lib/build-job-repository.ts'
 import { InMemoryBuildJobRepository } from '../../../packages/publication/src/index.ts'
 import { reconcileCheckedInFixture } from '../../../packages/persistence/scripts/reconcile.ts'
 import {

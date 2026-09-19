@@ -134,7 +134,7 @@
     },
     {
       "id": "operations",
-      "service": "apps/admin/app/lib/build-job-repository.ts",
+      "service": "packages/persistence/src/build-jobs.ts",
       "browser": [],
       "automation": ["sites/[siteId]/operations/[id]"],
       "client": ["getOperation"],
