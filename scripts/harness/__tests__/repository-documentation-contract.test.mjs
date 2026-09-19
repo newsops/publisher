@@ -65,8 +65,8 @@ describe('repository handoff documentation contract', () => {
     const cssSources = [
       read('apps/site/app/styles.css'),
       read('packages/publication/src/static-policy.ts'),
-      read('packages/content/src/themes/editorial.ts'),
-      read('packages/content/src/themes/signal.ts'),
+      read('packages/publication/src/themes/editorial.ts'),
+      read('packages/publication/src/themes/signal.ts'),
     ].join('\n')
     expect(cssSources).not.toContain('beditorm')
   })

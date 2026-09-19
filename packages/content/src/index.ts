@@ -148,8 +148,7 @@ export type {
   PublicPluginSlot,
   PublicPluginSnapshot,
 } from './plugins'
-export { getTheme, isThemeId, themes } from './themes'
-export type { ThemeDefinition } from './themes'
+export { isThemeId, themeIds, type ThemeId } from './theme-ids'
 export {
   publicArchiveMonthPath,
   publicAuthorPath,

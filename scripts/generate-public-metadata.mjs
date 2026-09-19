@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import fsSync from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderEditorialMarkdown } from '../packages/content/src/editorial-markdown.ts'
+import { renderEditorialMarkdown } from '../packages/content/src/index.ts'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const publicRoot = path.join(root, 'apps/site/public')

@@ -7,9 +7,9 @@ apps/
 └── comments/   @publisher/comments — optional isolated comment service
 
 packages/
-├── content/    @publisher/content — content types, seed snapshot, slug rules
+├── content/    @publisher/content — content types, seed snapshot, slug rules, theme ids
 ├── persistence/ @publisher/persistence — PostgreSQL, S3 API, media, recovery
-├── publication/ @publisher/publication — incremental build and activation
+├── publication/ @publisher/publication — renderers, theme stylesheets, incremental build and activation
 ├── admin-client/ @publisher/admin-client — reusable authenticated Admin API client
 ├── ops-cli/ @publisher/ops-cli — command-line adapter over admin-client
 └── config/                         — shared configuration reserved for later extraction
