@@ -1,5 +1,6 @@
 import {
   authors as seedAuthors,
+  deskFixtureApproval,
   posts as seedPosts,
   publication as seedPublication,
   tags as seedTags,
@@ -55,6 +56,9 @@ export function initialPosts(): ManagedPost[] {
     status: 'published',
     revision: 1,
     createdAt: post.updatedAt,
+    // The generic starter fixture is desk-approved as shipped so a fresh
+    // installation can publish; any edit invalidates this approval.
+    deskReview: deskFixtureApproval(post, undefined, post.updatedAt),
   }))
 }
 

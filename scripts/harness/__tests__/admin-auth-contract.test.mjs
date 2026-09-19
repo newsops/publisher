@@ -91,6 +91,7 @@ describe('admin authentication contract', () => {
         ADMIN_DATA_DIR: '.data/test-fixture',
         ADMIN_DEV_TOKEN: 'fixture-token',
         ADMIN_PUBLISHERS: 'publisher@example.test',
+        ADMIN_OWNERS: 'owner@example.test',
       },
       async () => {
         await expect(
@@ -99,6 +100,17 @@ describe('admin authentication contract', () => {
           email: 'publisher@example.test',
           roles: ['editor', 'publisher'],
         })
+        await expect(
+          requireIdentity(
+            new Request('http://admin.test/api/media', {
+              headers: {
+                'x-admin-dev-token': 'fixture-token',
+                'x-admin-dev-email': 'owner@example.test',
+              },
+            }),
+            'owner',
+          ),
+        ).resolves.toMatchObject({ roles: ['owner', 'editor', 'publisher'] })
       },
     )
     await withEnvironment(

@@ -9,18 +9,22 @@ export class PublisherApiError extends Error {
   /**
    * @param {'REMOTE_ERROR' | 'MALFORMED_RESPONSE'} code
    * @param {number | undefined} [status]
+   * @param {unknown} [body] The server's JSON error envelope, when it sent one.
    */
-  constructor(code, status) {
+  constructor(code, status, body) {
     super(code)
     this.name = 'PublisherApiError'
     this.code = code
     this.status = status
+    this.body = body
   }
 
   toJSON() {
-    return this.status === undefined
-      ? { code: this.code }
-      : { code: this.code, status: this.status }
+    return {
+      code: this.code,
+      ...(this.status === undefined ? {} : { status: this.status }),
+      ...(this.body === undefined ? {} : { body: this.body }),
+    }
   }
 }
 
@@ -51,7 +55,13 @@ export function createPublisherAdminClient(options) {
     })
 
     if (!response.ok) {
-      throw new PublisherApiError('REMOTE_ERROR', response.status)
+      let body
+      try {
+        body = await response.json()
+      } catch {
+        body = undefined
+      }
+      throw new PublisherApiError('REMOTE_ERROR', response.status, body)
     }
 
     try {
@@ -156,6 +166,30 @@ export function createPublisherAdminClient(options) {
           'if-match': `"${revision}"`,
         },
         body: JSON.stringify(input),
+      },
+    )
+
+  /** @param {string} siteId @param {string} postId */
+  const getDeskReport = (siteId, postId) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/posts/${encodeURIComponent(postId)}/desk`,
+    )
+
+  /**
+   * @param {string} siteId @param {string} postId
+   * @param {{ action: 'approve' | 'request-changes', checklist?: unknown, note?: string }} decision
+   * @param {number} revision
+   */
+  const decideDesk = (siteId, postId, decision, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/posts/${encodeURIComponent(postId)}/desk`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(decision),
       },
     )
 
@@ -358,6 +392,8 @@ export function createPublisherAdminClient(options) {
     createPost,
     getPost,
     updatePost,
+    getDeskReport,
+    decideDesk,
     deletePost,
     listAuthors,
     createAuthor,

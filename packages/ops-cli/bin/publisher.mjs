@@ -579,6 +579,178 @@ async function main() {
       return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
     }
   }
+  if (args[0] === 'post' && args[1] === 'submit') {
+    const siteId = option('--site')
+    const postId = option('--post')
+    const revision = option('--revision')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!postId) return emit(false, 'INPUT_REQUIRED', { field: '--post' }, 10)
+    if (!revision)
+      return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+    if (!nonInteractive)
+      return emit(
+        false,
+        'NON_INTERACTIVE_REQUIRED',
+        { mutationAttempted: false },
+        10,
+      )
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const updated = await api.updatePost(
+        siteId,
+        postId,
+        { status: 'review' },
+        Number(revision),
+      )
+      const report = await api.getDeskReport(siteId, postId)
+      return emit(true, 'POST_SUBMITTED', {
+        siteId,
+        post: updated.data?.post,
+        desk: report.data,
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (args[0] === 'desk' && args[1] === 'list') {
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.listPosts(siteId)
+      const posts = (response.data?.posts ?? []).filter(
+        (post) => post.status === 'review' || post.status === 'draft',
+      )
+      return emit(true, 'DESK_QUEUE', {
+        siteId,
+        posts: posts.map((post) => ({
+          id: post.id,
+          slug: post.slug,
+          title: post.title,
+          status: post.status,
+          revision: post.revision,
+          updatedAt: post.updatedAt,
+          review: post.deskReview,
+        })),
+      })
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (args[0] === 'desk' && args[1] === 'report') {
+    const siteId = option('--site')
+    const postId = option('--post')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!postId) return emit(false, 'INPUT_REQUIRED', { field: '--post' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      const response = await api.getDeskReport(siteId, postId)
+      return emit(true, 'DESK_REPORT', response.data ?? {})
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+  if (
+    args[0] === 'desk' &&
+    (args[1] === 'approve' || args[1] === 'request-changes')
+  ) {
+    const siteId = option('--site')
+    const postId = option('--post')
+    const revision = option('--revision')
+    const note = option('--note')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    if (!postId) return emit(false, 'INPUT_REQUIRED', { field: '--post' }, 10)
+    if (!revision)
+      return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+    if (args[1] === 'request-changes' && !note)
+      return emit(false, 'INPUT_REQUIRED', { field: '--note' }, 10)
+    if (!nonInteractive)
+      return emit(
+        false,
+        'NON_INTERACTIVE_REQUIRED',
+        { mutationAttempted: false },
+        10,
+      )
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    try {
+      let checklist
+      if (args[1] === 'approve') {
+        // Every item must be attested explicitly: --check <id> per item, or
+        // --checklist-file with [{ id, checked, note? }]. Nothing is implied.
+        const file = option('--checklist-file')
+        const checked = args
+          .map((value, index) =>
+            value === '--check' ? args[index + 1] : undefined,
+          )
+          .filter((value) => typeof value === 'string')
+        checklist = file
+          ? JSON.parse(await readFile(file, 'utf8'))
+          : checked.map((id) => ({ id, checked: true }))
+        if (!Array.isArray(checklist) || checklist.length === 0)
+          return emit(
+            false,
+            'INPUT_REQUIRED',
+            { field: '--check <id> ... | --checklist-file <path>' },
+            10,
+          )
+      }
+      const response = await api.decideDesk(
+        siteId,
+        postId,
+        {
+          action: args[1],
+          ...(checklist ? { checklist } : {}),
+          ...(note ? { note } : {}),
+        },
+        Number(revision),
+      )
+      return emit(
+        true,
+        args[1] === 'approve' ? 'DESK_APPROVED' : 'DESK_CHANGES_REQUESTED',
+        response.data ?? {},
+      )
+    } catch (error) {
+      const data = apiErrorData(error)
+      const deskCode = data.body?.error?.code
+      if (
+        deskCode === 'desk_checks_failed' ||
+        deskCode === 'desk_checklist_incomplete'
+      ) {
+        // The report explains what to improve; the loop continues until it passes.
+        const { code: _remote, ...rest } = data
+        return emit(false, 'DESK_REJECTED', { ...rest, reason: deskCode }, 30)
+      }
+      return emit(false, 'REMOTE_ERROR', data, 30)
+    }
+  }
   if (args[0] === 'publish') {
     if (args.includes('--requires-authority') && nonInteractive)
       return emit(
@@ -678,6 +850,11 @@ async function main() {
         'post plan --site <id> --author <author-slug> --json',
         'post create --site <id> --input <post.json> [--author <author-slug>] --non-interactive --json',
         'post update --site <id> --post <post-id> --input <patch.json> --revision <n> [--author <author-slug>] --non-interactive --json',
+        'post submit --site <id> --post <post-id> --revision <n> --non-interactive --json',
+        'desk list --site <id> --json',
+        'desk report --site <id> --post <post-id> --json',
+        'desk approve --site <id> --post <post-id> --revision <n> --check <item-id>... [--note <text>] --non-interactive --json',
+        'desk request-changes --site <id> --post <post-id> --revision <n> --note <text> --non-interactive --json',
         'status',
         'publish',
         'operation get',

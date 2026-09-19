@@ -415,6 +415,188 @@ describe('agent operations CLI contract', () => {
     )
   })
 
+  it('runs the desk loop: submit, report, rejected approval, attested approval', async () => {
+    const calls = []
+    const checklist = ['facts-verified', 'headline-accurate']
+    await withServer(
+      (request, response) => {
+        let raw = ''
+        request.on('data', (chunk) => (raw += chunk))
+        request.on('end', () => {
+          calls.push({
+            method: request.method,
+            url: request.url,
+            ifMatch: request.headers['if-match'],
+            body: raw ? JSON.parse(raw) : undefined,
+          })
+          response.setHeader('content-type', 'application/json')
+          if (request.method === 'PATCH') {
+            response.end(
+              JSON.stringify({
+                siteId: 'default',
+                post: { id: 'p1', status: 'review', revision: 2 },
+              }),
+            )
+            return
+          }
+          if (request.method === 'GET') {
+            response.end(
+              JSON.stringify({
+                siteId: 'default',
+                postId: 'p1',
+                revision: 2,
+                status: 'review',
+                report: {
+                  checks: [
+                    { id: 'image.present', level: 'fail', message: 'x' },
+                  ],
+                  checklist: checklist.map((id) => ({ id, label: id })),
+                  approvalValid: false,
+                },
+              }),
+            )
+            return
+          }
+          const attested = (JSON.parse(raw).checklist ?? []).map(
+            (item) => item.id,
+          )
+          if (attested.length < checklist.length) {
+            response.statusCode = 409
+            response.end(
+              JSON.stringify({
+                error: {
+                  code: 'desk_checklist_incomplete',
+                  message: 'missing',
+                },
+                report: { checks: [], checklist: [] },
+              }),
+            )
+            return
+          }
+          response.end(
+            JSON.stringify({
+              siteId: 'default',
+              postId: 'p1',
+              revision: 3,
+              status: 'review',
+              report: { approvalValid: true, review: { status: 'approved' } },
+            }),
+          )
+        })
+      },
+      async (origin) => {
+        const environment = {
+          PUBLISHER_ADMIN_ORIGIN: origin,
+          PUBLISHER_API_TOKEN: 'test-token',
+        }
+        const submitted = await runAsync(
+          [
+            'post',
+            'submit',
+            '--site',
+            'default',
+            '--post',
+            'p1',
+            '--revision',
+            '1',
+            '--non-interactive',
+            '--json',
+          ],
+          environment,
+        )
+        expect(submitted.status).toBe(0)
+        expect(submitted.body.code).toBe('POST_SUBMITTED')
+        expect(submitted.body.desk.report.checks[0].id).toBe('image.present')
+        expect(calls[0]).toMatchObject({
+          method: 'PATCH',
+          url: '/api/v2/sites/default/posts/p1',
+          ifMatch: '"1"',
+          body: { status: 'review' },
+        })
+        const report = await runAsync(
+          ['desk', 'report', '--site', 'default', '--post', 'p1', '--json'],
+          environment,
+        )
+        expect(report.body.code).toBe('DESK_REPORT')
+        expect(report.body.report.checklist).toHaveLength(2)
+        const rejected = await runAsync(
+          [
+            'desk',
+            'approve',
+            '--site',
+            'default',
+            '--post',
+            'p1',
+            '--revision',
+            '2',
+            '--check',
+            'facts-verified',
+            '--non-interactive',
+            '--json',
+          ],
+          environment,
+        )
+        expect(rejected.status).toBe(30)
+        expect(rejected.body.code).toBe('DESK_REJECTED')
+        expect(rejected.body.body.error.code).toBe('desk_checklist_incomplete')
+        const approved = await runAsync(
+          [
+            'desk',
+            'approve',
+            '--site',
+            'default',
+            '--post',
+            'p1',
+            '--revision',
+            '2',
+            '--check',
+            'facts-verified',
+            '--check',
+            'headline-accurate',
+            '--note',
+            'ok',
+            '--non-interactive',
+            '--json',
+          ],
+          environment,
+        )
+        expect(approved.status).toBe(0)
+        expect(approved.body.code).toBe('DESK_APPROVED')
+        expect(approved.body.report.approvalValid).toBe(true)
+        expect(calls.at(-1)).toMatchObject({
+          method: 'POST',
+          url: '/api/v2/sites/default/posts/p1/desk',
+          ifMatch: '"2"',
+          body: {
+            action: 'approve',
+            note: 'ok',
+            checklist: [
+              { id: 'facts-verified', checked: true },
+              { id: 'headline-accurate', checked: true },
+            ],
+          },
+        })
+        const interactive = await runAsync(
+          [
+            'desk',
+            'approve',
+            '--site',
+            'default',
+            '--post',
+            'p1',
+            '--revision',
+            '2',
+            '--check',
+            'facts-verified',
+            '--json',
+          ],
+          environment,
+        )
+        expect(interactive.body.code).toBe('NON_INTERACTIVE_REQUIRED')
+      },
+    )
+  })
+
   it('discovers a device flow without leaking tokens or persisting credentials', async () => {
     const requests = []
     await withServer(

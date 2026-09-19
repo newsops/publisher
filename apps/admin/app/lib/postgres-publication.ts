@@ -14,7 +14,7 @@ import { PostgresPluginRepository } from './postgres-plugin-repository'
 import { deliverSnapshot } from './publisher'
 import type { PublishResult } from './repository-contract'
 import { initialPayload, type LocalState } from './repository-seed'
-import { makeSnapshot } from './repository-validation'
+import { makeSnapshot, withDeskGateUpgrade } from './repository-validation'
 
 export interface StoredPostgresState {
   readonly state: LocalState
@@ -68,9 +68,11 @@ export async function loadPostgresSiteState(
       ...row.state,
       categories: row.state.categories ?? row.state.tags,
       posts: row.state.posts.map((post) =>
-        withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
-          onImportError: 'lenient',
-        }),
+        withDeskGateUpgrade(
+          withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
+            onImportError: 'lenient',
+          }),
+        ),
       ),
       authors: row.state.authors.map((author) => ({
         ...author,

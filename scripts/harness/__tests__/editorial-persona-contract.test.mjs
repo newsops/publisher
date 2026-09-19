@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
+import { deskFixtureApproval } from '../../../packages/content/src/index.ts'
 
 let directory
 
@@ -35,13 +36,19 @@ describe('DATA-001 editorial taxonomy and private author persona', () => {
       authorSlug: 'reporter',
       seoTitle: 'Persona contract',
       seoDescription: 'A focused contract fixture.',
-      status: 'published',
+      status: 'review',
       publishedAt: '2026-09-15T00:00:00.000Z',
       categories: ['models'],
       tags: ['openai'],
     })
     expect(post.categories).toEqual(['models'])
     expect(post.tags).toEqual(['openai'])
+    // Publication requires a desk approval bound to this content (EDIT-001).
+    const approved = await repository.reviewPost(
+      post.id,
+      deskFixtureApproval(post),
+    )
+    await repository.save(post.id, { ...approved, status: 'published' })
 
     const published = await repository.publish('persona-contract-publication')
     expect(published.snapshot.categories.map((item) => item.slug)).toContain(

@@ -49,6 +49,29 @@ export {
   serializeEditorialMarkdown,
 } from './editorial-markdown'
 export {
+  DESK_CHECKLIST,
+  DESK_LIMITS,
+  buildDeskReport,
+  deskApprovalValid,
+  deskChecksPass,
+  deskContentFingerprint,
+  deskFixtureApproval,
+  runDeskChecks,
+  validateDeskChecklist,
+} from './desk-review'
+export type {
+  DeskCheck,
+  DeskCheckContext,
+  DeskCheckLevel,
+  DeskChecklistAttestation,
+  DeskChecklistItem,
+  DeskImageFacts,
+  DeskReport,
+  DeskReview,
+  DeskReviewStatus,
+  DeskReviewer,
+} from './desk-review'
+export {
   hasCanonicalBody,
   importHtmlBodyToMarkdown,
   importPreReleaseHtmlToMarkdown,

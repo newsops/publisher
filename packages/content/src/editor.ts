@@ -8,6 +8,7 @@ import type {
   PublicationSettings,
 } from './types'
 import type { PublicPluginSnapshot } from './plugins'
+import type { DeskReview } from './desk-review'
 import { resolveValidatedPost } from './post-validation'
 
 export { sanitizeBodyHtml } from './post-validation'
@@ -28,6 +29,8 @@ export interface ManagedPost extends NewsPost {
   readonly status: ContentStatus
   readonly revision: number
   readonly createdAt: string
+  /** Private desk decision (EDIT-001); never part of the public snapshot. */
+  readonly deskReview?: DeskReview
 }
 
 export interface ManagedArticle extends Article {
@@ -190,6 +193,7 @@ export function asPublishedPost(post: ManagedPost): NewsPost {
     status: _status,
     revision: _revision,
     createdAt: _createdAt,
+    deskReview: _deskReview,
     ...published
   } = post
   return published

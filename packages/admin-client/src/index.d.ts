@@ -14,7 +14,9 @@ export interface PublisherApiReply<T> {
 export class PublisherApiError extends Error {
   readonly code: 'REMOTE_ERROR' | 'MALFORMED_RESPONSE'
   readonly status?: number
-  toJSON(): { code: string; status?: number }
+  /** The server's JSON error envelope, when it sent one. */
+  readonly body?: unknown
+  toJSON(): { code: string; status?: number; body?: unknown }
 }
 
 export interface PublisherAdminClient {
@@ -57,6 +59,20 @@ export interface PublisherAdminClient {
     siteId: string,
     postId: string,
     input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  getDeskReport(
+    siteId: string,
+    postId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  decideDesk(
+    siteId: string,
+    postId: string,
+    decision: {
+      action: 'approve' | 'request-changes'
+      checklist?: readonly { id: string; checked: boolean; note?: string }[]
+      note?: string
+    },
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
   deletePost(

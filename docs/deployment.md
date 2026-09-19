@@ -132,6 +132,9 @@ Admin:
 ```text
 ADMIN_PUBLIC_ORIGIN=https://admin.publisher.com
 ADMIN_PUBLISHERS=publisher@example.com
+# Local file-backed development only (ignored in production): grants the
+# fixture identity owner access to the browser admin.
+# ADMIN_OWNERS=owner@example.com
 DATABASE_URL=postgresql://admin_user:...@db.example/admin
 ADMIN_BOOTSTRAP_SECRET=replace-with-a-long-random-one-time-secret
 OBJECT_STORAGE_ENDPOINT=https://objects.example

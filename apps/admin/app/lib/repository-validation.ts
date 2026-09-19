@@ -19,6 +19,9 @@ import {
   validatePostInput,
   validateFeaturedRanks,
   withCanonicalBody,
+  deskApprovalValid,
+  deskContentFingerprint,
+  type DeskReview,
 } from '@publisher/content'
 
 export function validatedSettings(
@@ -235,11 +238,61 @@ export function validatedPost(
   for (const tag of result.value.tags)
     if (!allowedTagSlugs.has(tag.toLowerCase()))
       throw new ContentValidationError(`unsupported tag: ${tag}`)
-  return {
+  const post: ManagedPost = {
     ...result.value,
     id: id ?? result.value.id,
     revision: current ? current.revision + 1 : result.value.revision,
     createdAt: current?.createdAt ?? result.value.createdAt,
+    // The desk decision survives edits; deskApprovalValid decides whether it
+    // still applies to the edited content.
+    ...(current?.deskReview ? { deskReview: current.deskReview } : {}),
+  }
+  assertDeskGate(post)
+  return post
+}
+
+/**
+ * EDIT-001: a story reaches readers only with a desk approval bound to its
+ * current content. Draft and review posts are unrestricted.
+ */
+export function assertDeskGate(post: ManagedPost): void {
+  if (post.status !== 'published' && post.status !== 'scheduled') return
+  if (deskApprovalValid(post)) return
+  throw new ContentValidationError(
+    `post ${post.slug} requires a desk approval for its current content before it can be ${post.status}`,
+  )
+}
+
+/** Records a desk decision on a stored post without touching its content. */
+export function withDeskReview(
+  current: ManagedPost,
+  review: DeskReview,
+): ManagedPost {
+  return {
+    ...current,
+    deskReview: review,
+    revision: current.revision + 1,
+  }
+}
+
+/**
+ * Upgrade rule for records that predate the desk gate: a published or
+ * scheduled post without an approval returns to review so the desk sees it.
+ */
+export function withDeskGateUpgrade(post: ManagedPost): ManagedPost {
+  if (post.status !== 'published' && post.status !== 'scheduled') return post
+  if (deskApprovalValid(post)) return post
+  return {
+    ...post,
+    status: 'review',
+    deskReview: {
+      status: 'pending',
+      contentFingerprint: deskContentFingerprint(post),
+      checklist: [],
+      reviewer: { kind: 'upgrade', id: 'desk-gate' },
+      note: 'Returned to review when the desk gate was introduced',
+      reviewedAt: post.updatedAt,
+    },
   }
 }
 
@@ -325,6 +378,7 @@ export function makeSnapshot(
       )
       .map((post) => {
         try {
+          assertDeskGate(post)
           return withCanonicalBody(asPublishedPost(post), post.slug)
         } catch (error) {
           throw new ContentValidationError(
