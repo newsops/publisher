@@ -29,6 +29,17 @@ publisher operation get <operation-id> --json
 publisher auth login --device --json
 ```
 
+## Surfaces
+
+`publisher` is the CLI surface of the admin. Every command wraps one
+`@publisher/admin-client` method, which calls one Automation API operation
+(`/api/v2/sites/{siteId}/**`); the admin page reaches the same services through
+browser routes. `scripts/harness/surface-map.json` registers each capability
+across the three surfaces and `pnpm harness:scan` fails when a command,
+client method, or route is missing without a declared reason. Commands with
+no server counterpart (`doctor`, `auth login`, `content inspect`) are
+declared CLI-only there.
+
 ## Per-publication guidance
 
 An operator can retain private editorial instructions for each publication.

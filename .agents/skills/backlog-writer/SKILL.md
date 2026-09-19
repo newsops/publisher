@@ -154,7 +154,7 @@ NFR 횡단 관심사: `i18n` · `a11y` · `async` · `auth`
 
 ### `## Architecture Review`
 
-- **Affected Scope:** 변경되는 모든 패키지, 레이어, 파일 나열
+- **Affected Scope:** 변경되는 모든 패키지, 레이어, 파일 나열. 각 경로에 `scripts/harness/layer-map.json`의 계층 id(`L0`~`L5`)를 표기한다 — `scan-spec-contract.mjs`가 태그 없는 스펙을 FAIL 처리한다. 새 라우트·클라이언트 메서드·CLI 명령은 `surface-map.json` 등록 계획을 적는다.
 - **Alternatives Considered:** 최소 2개. 각각 한 줄 설명 + Pro + Con
 - **Decision:** 선택한 대안과 이유. 트레이드오프 참조.
 - **Architecture Review Checklist:** 4개 항목 모두 `[x]` 필요

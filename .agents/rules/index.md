@@ -4,6 +4,7 @@
 | -------------------- | ------------------------- | --------------------------------------------------------------------- |
 | Spec workflow        | `spec-workflow.md`        | Spec before public behavior changes                                   |
 | Static boundary      | `static-boundary.md`      | Public site has no runtime server dependency                          |
+| Layer boundaries     | `layer-boundaries.md`     | Six layers, one import direction, three access surfaces, ratchet base |
 | Fail loud            | `fail-loud.md`            | Unknown or failed checks cannot be treated as success                 |
 | Self verification    | `self-verify-first.md`    | Verify locally before requesting manual checks                        |
 | Browser verification | `browser-verification.md` | UI changes require browser verification                               |

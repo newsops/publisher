@@ -8,6 +8,9 @@ Publisher is a static-first news publication with a separately deployed admin su
 - Keep public site builds deterministic and independent from runtime secrets.
 - Run `pnpm build`, `pnpm typecheck`, `pnpm test`, and `pnpm harness:scan` before declaring foundation work complete.
 - Run browser verification after UI changes.
+- Respect `.agents/rules/layer-boundaries.md`: `scripts/harness/layer-map.json`
+  and `surface-map.json` are the layer and surface authority; never add to
+  `layer-baseline.json`, only remove from it.
 - Do not use Git worktrees in this repository.
 - For every deploy, setup, hosting, provider-selection, or onboarding request,
   read `docs/ai-assisted-deployment.ko.md` before provider-specific docs or

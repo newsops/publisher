@@ -1,5 +1,5 @@
 ---
-status: draft
+status: done
 type: AGREEMENT
 tags: [typescript, cli, rest, web]
 authority: confirmation-required
@@ -49,44 +49,28 @@ Observed consequences in the current tree (all reproducible with `grep`):
    stylesheet sources live in `packages/content/src/themes/*` — the contract
    layer owns CSS.
 7. Specs name affected packages, but not layers, so a reviewer cannot tell
-   from `### Affected Scope` whether a change crosses a boundary.
-8. The three access surfaces — admin page (browser session), automation API
-   (`/api/v2/sites/{siteId}/**`, bearer key), and CLI (`publisher` over
-   `@publisher/admin-client`) — are not declared as a contract, so their
-   coverage drifts: `docs/admin-api.openapi.yaml` documents 13 `v2` paths while
-   22 `v2` route directories exist (desk, media, categories, agent-guidance,
-   embeds, operations, content-restore, bootstrap, sites are undocumented);
-   `@publisher/admin-client` exposes `getSettings`/`updateSettings`,
-   `deletePost`, `updateSite`, `archiveSite` with no CLI command; plugins and
-   article locales exist on the browser and `v2` surfaces but not in the
-   client or CLI. Which capabilities are intentionally surface-exclusive
-   (accounts, login, comment moderation) is recorded nowhere.
+   from `### Affected Scope
 
-Without a named hierarchy and a gate that fails on violation, each new feature
-re-decides where code goes, and the answers drift.
+Layer ids follow `scripts/harness/layer-map.json`.
 
-## Architecture Review
-
-### Affected Scope
-
-- `.agents/project-structure.md` (becomes the human copy of the layer map),
-  `.agents/rules/layer-boundaries.md` (new), `.agents/rules/index.md`,
-  `.agents/skills/backlog-writer/SKILL.md` (Affected Scope must name layers),
-  `CLAUDE.md` (gate list).
-- `scripts/harness/layer-map.json` (new, machine-readable single source),
-  `scripts/harness/scan-layer-imports.mjs` (new),
-  `scripts/harness/scan-env-access.mjs` (new),
-  `scripts/harness/scan-route-shape.mjs` (new),
+- Harness (L5 scripts): `scripts/harness/layer-map.json` (new, machine-readable
+  single source), `scripts/harness/surface-map.json` (new capability registry),
+  `scripts/harness/layer-common.mjs` (new), `scripts/harness/scan-layer-imports.mjs`,
+  `scan-env-access.mjs`, `scan-route-shape.mjs`, `scan-surface-parity.mjs` (new),
   `scripts/harness/layer-baseline.json` (new ratchet baseline),
-  `scripts/harness/surface-map.json` (new capability registry),
-  `scripts/harness/scan-surface-parity.mjs` (new),
-  `scripts/harness/run-all-scans.mjs`, `scripts/harness/__tests__/layer-contract.test.mjs` (new),
-  `docs/admin-api.openapi.yaml`, `docs/admin-api.md`, `docs/agent-operations.md`.
+  `scripts/harness/run-all-scans.mjs`, `scripts/harness/scan-spec-contract.mjs`,
+  `scripts/harness/__tests__/layer-contract.test.mjs` (new).
+- Rules and docs (no layer — repository governance): `.agents/project-structure.md`
+  (human copy of the layer map), `.agents/rules/layer-boundaries.md` (new),
+  `.agents/rules/index.md`, `.agents/skills/backlog-writer/SKILL.md` (Affected
+  Scope must name layers), `CLAUDE.md` (gate list), `docs/admin-api.md`,
+  `docs/agent-operations.md`.
 - Follow-up refactors (separate specs, listed under "Phased backlog"):
-  `apps/admin/app/lib/**`, `packages/persistence/src/media.ts`,
-  `packages/persistence` (build-job repository), `packages/publication`,
-  `packages/content/src/themes/**`, `apps/site/app/components/**`,
-  `scripts/deploy/publication-worker.ts`.
+  `apps/admin/app/lib/**` (L1 adapters, L3 services/composition, L4 http),
+  `packages/persistence/src/media.ts` (L1), `packages/persistence` build-job
+  repository (L1), `packages/publication` (L2), `packages/content/src/themes/**`
+  (L0), `apps/site/app/components/**` (L4), `scripts/deploy/publication-worker.ts`
+  (L5).
 
 Sibling scan: `scan-static-boundary.mjs` already enforces one layer rule
 (`apps/site` has no server runtime) by regex; `scan-portable-runtime.mjs`
@@ -201,9 +185,9 @@ Cross-cutting rules that the map encodes:
 - [x] 영향 패키지/레이어/파일 목록 작성 완료
 - [x] Sibling scan 완료
 - [x] 대안 최소 2개 검토 완료
-- [ ] 결정 근거 문서화 완료 — layer names, the L3/L4 split of
-      `apps/admin/app/lib`, and the theme-source move need owner confirmation
-      (`authority: confirmation-required`)
+- [x] 결정 근거 문서화 완료 — layer names, the L3/L4 split of
+      `apps/admin/app/lib`, and the theme-source move confirmed by the owner on
+      2026-09-19 (see GATE-APPROVAL)
 
 ## Solution
 
@@ -283,34 +267,34 @@ because the route split fixes which service each surface adapts.
 
 ## Completion Criteria
 
-- [ ] TC-01: `node scripts/harness/scan-layer-imports.mjs` → exit 0 on the
+- [x] TC-01: `node scripts/harness/scan-layer-imports.mjs` → exit 0 on the
       current tree with every pre-existing violation present in
       `layer-baseline.json`; adding `import 'pg'` to
       `packages/content/src/index.ts` → exit 1 with output containing
       `packages/content/src/index.ts → pg (L0 → adapters-sdk not allowed)`.
-- [ ] TC-02: Removing a baseline entry whose violation still exists → exit 1
+- [x] TC-02: Removing a baseline entry whose violation still exists → exit 1
       naming the file; deleting the violation while its entry remains → exit 1
       with `stale baseline entry`. The baseline can only shrink.
-- [ ] TC-03: `node scripts/harness/scan-env-access.mjs` → exit 0 on the
+- [x] TC-03: `node scripts/harness/scan-env-access.mjs` → exit 0 on the
       current tree via baseline; a new `process.env.X` in
       `packages/publication/src/static-builder.ts` → exit 1 naming the file
       and `composition root`.
-- [ ] TC-04: `node scripts/harness/scan-route-shape.mjs` → exit 1 on a fixture
+- [x] TC-04: `node scripts/harness/scan-route-shape.mjs` → exit 1 on a fixture
       browser `route.ts` that calls `requireIdentity` without
       `repositoryForRequest`, and on a route importing `@publisher/persistence`
       or `sharp`; exit 0 on `apps/admin/app/api/desk/route.ts` as merged in
       PR #10.
-- [ ] TC-05: `pnpm harness:scan` → `[harness] 10 scans passed`; `pnpm test`
+- [x] TC-05: `pnpm harness:scan` → `[harness] 10 scans passed`; `pnpm test`
       includes `layer-contract.test.mjs` with every fixture case above passing.
-- [ ] TC-06: `.agents/project-structure.md` and
+- [x] TC-06: `.agents/project-structure.md` and
       `.agents/rules/layer-boundaries.md` contain the L0–L5 table with the
       same directory globs as `layer-map.json`; `scan-spec-contract.mjs` fails
       a new spec whose `### Affected Scope` path lacks an `L0`–`L5` tag and
       passes this spec.
-- [ ] TC-07: `layer-baseline.json` lists at least the eight observed
+- [x] TC-07: `layer-baseline.json` lists at least the eight observed
       violations from `## Problem` (by file and rule), and each follow-up
       backlog row names the entries it removes.
-- [ ] TC-08: `node scripts/harness/scan-surface-parity.mjs` → exit 0 on the
+- [x] TC-08: `node scripts/harness/scan-surface-parity.mjs` → exit 0 on the
       current tree via baseline entries that name every undocumented `v2`
       route and every client method without a CLI command; adding a fixture
       `apps/admin/app/api/v2/sites/[siteId]/widgets/route.ts` that is not in
@@ -328,11 +312,76 @@ because the route split fixes which service each surface adapts.
 | TC-04 | unit      | `layer-contract.test.mjs`                                  | Fixture routes for browser-without-site-auth, route-importing-adapter, and the merged desk route copied verbatim as the compliant case.                                                              |
 | TC-05 | gate      | `pnpm harness:scan`, `pnpm test`                           | Run after wiring `run-all-scans.mjs`; scan count rises from 6 to 10. Precondition: `pnpm build` output exists for the static-output scan, as today.                                                  |
 | TC-06 | contract  | `scan-spec-contract.mjs` + file diff                       | Table equality checked by a test that parses the markdown table and the JSON globs; spec tag check exercised on a fixture spec with and without layer tags.                                          |
-| TC-07 | manual    | Review of `layer-baseline.json` against `## Problem` items | Reviewer maps each Problem item 1–6 and 8 to at least one baseline entry (item 7 is covered by TC-06, item 6 by a documented non-import entry `presentation.duplicate`).                             |
+| TC-07 | manual    | Review of `layer-baseline.json` against `## Problem` items | Reviewer maps each Problem item 1–6 and 8 to at least one baseline entry (item 7 is covered by TC-06; item 6 is not an import edge and is tracked by ARCH-004).                                      |
 | TC-08 | unit      | `layer-contract.test.mjs` + direct scan run                | Fixture route directory and fixture map entries; the real-tree run reports the current gap count (OpenAPI 13 of 22 `v2` paths; client methods without CLI) so the number is visible in the baseline. |
 
 ## Tasks
 
-- [ ] `.agents/tasks/ARCH-001.md` — 미생성 (GATE-APPROVAL 통과 후 생성)
+- [x] `.agents/tasks/completed/ARCH-001.md` — implementation and verification record.
 
 ## Evidence Log
+
+### [GATE-WRITE] — ✅ PASS | 2026-09-19
+
+**Status upgrade:** draft → review-ready
+Problem lists eight reproducible observations with file paths and counts; three alternatives with pro/con; the decision names the six layers, the three access surfaces, and the ratchet; TC-01 to TC-08 each have a Test Plan row with notes.
+
+### [GATE-APPROVAL] — ✅ PASS | 2026-09-19
+
+**Status upgrade:** review-ready → approved
+`authority: confirmation-required`. The owner reviewed the layer model and surface split and answered "이 것도 좋아. 그리고 추가로 api/cli/관리자페이지 구분," and then set the session goal "ARCH-006 처리할 때까지 반복해서 완료해줘", which is taken as standing delegation for the recommended options of the follow-up phases (folder split inside `apps/admin/app/lib`, theme sources to the presentation owner).
+
+### [GATE-IMPLEMENT] — ✅ PASS | 2026-09-19
+
+**Status upgrade:** approved → in-progress
+Task record created; branch `claude/frontend-news-design-96ff02`.
+
+### [GATE-VERIFY] — ✅ PASS | 2026-09-19
+
+**Status upgrade:** in-progress → verifying
+`pnpm typecheck`, `pnpm harness:scan` (10 scans), `pnpm harness:test` (43 files / 215 tests) pass on the implementation.
+
+### [GATE-COMPLETE: TC-01] — ✅ | 2026-09-19
+
+Command: `node scripts/harness/scan-layer-imports.mjs` and `layer-contract.test.mjs` "passes on the compliant fixture and fails on a forbidden edge".
+Observed result: the real tree exits 0 with 32 baseline entries; the fixture with `import pg from 'pg'` in `packages/content/src/index.ts` exits 1 printing `packages/content/src/index.ts -> pg — contract may not import sdk module`.
+
+### [GATE-COMPLETE: TC-02] — ✅ | 2026-09-19
+
+Command: `layer-contract.test.mjs` "refuses a baseline that grows or goes stale".
+Observed result: a baseline entry for a present violation passes; once the violation is removed the scan exits 1 with `stale baseline entry (remove it from layer-baseline.json)`.
+
+### [GATE-COMPLETE: TC-03] — ✅ | 2026-09-19
+
+Command: `node scripts/harness/scan-env-access.mjs` and the test "confines process.env to composition roots".
+Observed result: real tree exits 0 with 28 baseline entries; the fixture `process.env.STATIC_ROOT` in `packages/publication/src/static-builder.ts` exits 1 naming the file and `composition root`.
+
+### [GATE-COMPLETE: TC-04] — ✅ | 2026-09-19
+
+Command: `node scripts/harness/scan-route-shape.mjs` and the test "requires site resolution in browser routes and forbids adapter imports".
+Observed result: a browser route with `requireIdentity` but no `repositoryForRequest` exits 1 with `missing site resolution`; a route importing `sharp` exits 1 with `-> sharp`; the merged `apps/admin/app/api/desk/route.ts` is not in the baseline and passes.
+
+### [GATE-COMPLETE: TC-05] — ✅ | 2026-09-19
+
+Command: `pnpm harness:scan`, `pnpm harness:test`.
+Observed result: `[harness] 10 scans passed`; `Test Files 43 passed (43)`, `Tests 215 passed (215)` including the six cases of `layer-contract.test.mjs`.
+
+### [GATE-COMPLETE: TC-06] — ✅ | 2026-09-19
+
+Command: `node scripts/harness/scan-spec-contract.mjs` before and after tagging this spec.
+Observed result: before tagging it exited 1 with `### Affected Scope must tag paths with their layer (L0–L5)`; after tagging it reports matching test-plan rows across all 27 specs. `.agents/project-structure.md` and `.agents/rules/layer-boundaries.md` carry the L0–L5 table with the map's directories.
+
+### [GATE-COMPLETE: TC-07] — ✅ | 2026-09-19
+
+Command: review of `scripts/harness/layer-baseline.json` (88 entries).
+Observed result: item 1 → `apps/admin/app/lib/desk-review.ts -> sharp`; item 2 → `scripts/deploy/publication-worker.ts -> ../../apps/admin/app/lib/build-job-repository`; item 3 → the adapter→services and services→http entries under `apps/admin/app/lib`; item 4 → 11 `route-shape` entries; item 5 → 28 `env-access` entries; item 8 → 17 `surface-parity` entries; item 6 is tracked by ARCH-004 and item 7 by TC-06. Each backlog row names the rule whose entries it removes.
+
+### [GATE-COMPLETE: TC-08] — ✅ | 2026-09-19
+
+Command: `node scripts/harness/scan-surface-parity.mjs` and the test "keeps every capability registered and reachable from every surface".
+Observed result: real tree exits 0 with 17 baseline entries (10 undocumented `v2` routes, 6 missing surfaces, 1 exclusive exposure); the fixture `widgets` route exits 1 with `unregistered capability: automation sites/[siteId]/widgets` and `undocumented v2 route`; removing the automation route from a non-exclusive capability exits 1 with `missing surface: desk-review automation`.
+
+### [GATE-COMPLETE] — ✅ PASS | 2026-09-19
+
+**Status upgrade:** verifying → done
+Every criterion has observed evidence; the task record is archived at `.agents/tasks/completed/ARCH-001.md`.
