@@ -27,6 +27,8 @@ import {
   validatedPost,
   validatedSettings,
   validatedTag,
+  referencesTerm,
+  upsertTaxonomyTerm,
 } from './repository-validation'
 import { assertSiteId } from './site-registry'
 import {
@@ -208,7 +210,10 @@ export class PostgresContentRepository implements ContentRepository {
         current,
         input,
         categories
-          .filter((tag) => tag.active || current?.categories.includes(tag.slug))
+          .filter(
+            (tag) =>
+              tag.active || referencesTerm(current?.categories, tag.slug),
+          )
           .map((tag) => tag.slug),
         authors
           .filter(
@@ -217,7 +222,9 @@ export class PostgresContentRepository implements ContentRepository {
           .map((author) => author.slug),
         state.settings.canonicalOrigin,
         tags
-          .filter((tag) => tag.active || current?.tags.includes(tag.slug))
+          .filter(
+            (tag) => tag.active || referencesTerm(current?.tags, tag.slug),
+          )
           .map((tag) => tag.slug),
       )
       const posts = current
@@ -235,18 +242,8 @@ export class PostgresContentRepository implements ContentRepository {
     input: TaxonomyTermInput,
   ): Promise<ManagedTaxonomyTerm> {
     return this.mutate((state) => {
-      const tags = [...state.tags]
-      const current = slug
-        ? tags.find((tag) => tag.slug.toLowerCase() === slug.toLowerCase())
-        : undefined
-      if (slug && !current) throw new Error('Tag not found')
-      const tag = validatedTag(slug, input, current)
-      if (!current && tags.some((item) => item.slug === tag.slug))
-        throw new ContentValidationError('Tag already exists')
-      const next = current
-        ? tags.map((item) => (item.slug === current.slug ? tag : item))
-        : [...tags, tag]
-      return { state: { ...state, tags: next }, result: tag }
+      const { terms, term } = upsertTaxonomyTerm(state.tags, slug, input, 'Tag')
+      return { state: { ...state, tags: terms }, result: term }
     })
   }
 
@@ -278,22 +275,13 @@ export class PostgresContentRepository implements ContentRepository {
     input: TaxonomyTermInput,
   ): Promise<ManagedTaxonomyTerm> {
     return this.mutate((state) => {
-      const categories = [...state.categories]
-      const current = slug
-        ? categories.find(
-            (item) => item.slug.toLowerCase() === slug.toLowerCase(),
-          )
-        : undefined
-      if (slug && !current) throw new Error('Category not found')
-      const category = validatedTag(slug, input, current)
-      if (!current && categories.some((item) => item.slug === category.slug))
-        throw new ContentValidationError('Category already exists')
-      const next = current
-        ? categories.map((item) =>
-            item.slug === current.slug ? category : item,
-          )
-        : [...categories, category]
-      return { state: { ...state, categories: next }, result: category }
+      const { terms, term } = upsertTaxonomyTerm(
+        state.categories,
+        slug,
+        input,
+        'Category',
+      )
+      return { state: { ...state, categories: terms }, result: term }
     })
   }
 

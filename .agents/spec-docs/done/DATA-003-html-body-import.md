@@ -82,6 +82,18 @@ source rather than its re-serialization.
 - [x] 대안 최소 2개 검토 완료
 - [x] 결정 근거 문서화 완료
 
+### Addendum — imported taxonomy references (2026-09-19)
+
+The same imported records reference taxonomy terms by their original
+spelling (`Hardware`), while the platform normalizes new term slugs to lower
+case. Post validation therefore rejected every edit on an imported site, and
+a removed term could not be recreated. Post category and tag references are
+now matched case-insensitively while the stored spelling (and its public
+path) is kept; creating a term whose slug matches a deactivated term
+reactivates it; an explicit `slug` in the create request is honoured. Covered
+by `admin-taxonomy-contract.test.mjs`,
+`matches imported category spellings case-insensitively and honours an explicit slug`.
+
 ## Solution
 
 Add `packages/content/src/html-body-import.ts` with the importer,

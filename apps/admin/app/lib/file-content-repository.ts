@@ -26,6 +26,8 @@ import {
   validatedSettings,
   validatedTag,
   assertUniqueFeaturedRanks,
+  referencesTerm,
+  upsertTaxonomyTerm,
 } from './repository-validation'
 
 export class FileContentRepository implements ContentRepository {
@@ -207,11 +209,13 @@ export class FileContentRepository implements ContentRepository {
     if (id && !current) throw new Error('Post not found')
     const categories = state.categories
     const allowedCategories = categories
-      .filter((tag) => tag.active || current?.categories.includes(tag.slug))
+      .filter(
+        (tag) => tag.active || referencesTerm(current?.categories, tag.slug),
+      )
       .map((tag) => tag.slug)
     const tags = state.tags
     const allowedTags = tags
-      .filter((tag) => tag.active || current?.tags.includes(tag.slug))
+      .filter((tag) => tag.active || referencesTerm(current?.tags, tag.slug))
       .map((tag) => tag.slug)
     const authors = state.authors
     const allowedAuthors = authors
@@ -241,19 +245,9 @@ export class FileContentRepository implements ContentRepository {
     input: TaxonomyTermInput,
   ): Promise<ManagedTaxonomyTerm> {
     const state = await this.readState()
-    const tags = state.tags
-    const current = slug
-      ? tags.find((tag) => tag.slug.toLowerCase() === slug.toLowerCase())
-      : undefined
-    if (slug && !current) throw new Error('Tag not found')
-    const candidate = validatedTag(slug, input, current)
-    if (!current && tags.some((tag) => tag.slug === candidate.slug))
-      throw new ContentValidationError('Tag already exists')
-    const nextTags = current
-      ? tags.map((tag) => (tag.slug === current.slug ? candidate : tag))
-      : [...tags, candidate]
-    await this.writeState({ ...state, tags: nextTags })
-    return candidate
+    const { terms, term } = upsertTaxonomyTerm(state.tags, slug, input, 'Tag')
+    await this.writeState({ ...state, tags: terms })
+    return term
   }
 
   async removeTag(slug: string): Promise<ManagedTaxonomyTerm> {
@@ -281,21 +275,14 @@ export class FileContentRepository implements ContentRepository {
     input: TaxonomyTermInput,
   ): Promise<ManagedTaxonomyTerm> {
     const state = await this.readState()
-    const categories = state.categories
-    const current = slug
-      ? categories.find(
-          (item) => item.slug.toLowerCase() === slug.toLowerCase(),
-        )
-      : undefined
-    if (slug && !current) throw new Error('Category not found')
-    const category = validatedTag(slug, input, current)
-    if (!current && categories.some((item) => item.slug === category.slug))
-      throw new ContentValidationError('Category already exists')
-    const next = current
-      ? categories.map((item) => (item.slug === current.slug ? category : item))
-      : [...categories, category]
-    await this.writeState({ ...state, categories: next })
-    return category
+    const { terms, term } = upsertTaxonomyTerm(
+      state.categories,
+      slug,
+      input,
+      'Category',
+    )
+    await this.writeState({ ...state, categories: terms })
+    return term
   }
 
   async removeCategory(slug: string): Promise<ManagedTaxonomyTerm> {
