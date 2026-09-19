@@ -339,6 +339,81 @@ export function createPublisherAdminClient(options) {
       headers: { 'idempotency-key': idempotencyKey },
     })
 
+  /** @param {string} siteId */
+  const listPlugins = (siteId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/plugins`)
+
+  /** @param {string} siteId @param {{ pluginId: string, configuration?: Record<string, unknown> }} input */
+  const createPlugin = (siteId, input) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/plugins`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+
+  /** @param {string} siteId @param {string} pluginId */
+  const getPlugin = (siteId, pluginId) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+    )
+
+  /** @param {string} siteId @param {string} pluginId @param {Record<string, unknown>} configuration @param {number} revision */
+  const configurePlugin = (siteId, pluginId, configuration, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify({ configuration }),
+      },
+    )
+
+  /** @param {string} siteId @param {string} pluginId @param {'validate' | 'enable' | 'disable'} action @param {number} revision @param {Record<string, unknown>} [configuration] */
+  const runPluginAction = (siteId, pluginId, action, revision, configuration) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(
+          configuration === undefined ? { action } : { action, configuration },
+        ),
+      },
+    )
+
+  /** @param {string} siteId @param {string} articleId */
+  const getArticle = (siteId, articleId) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/articles/${encodeURIComponent(articleId)}`,
+    )
+
+  /** @param {string} siteId @param {string} articleId @param {unknown} variant @param {number} revision */
+  const putArticleVariant = (siteId, articleId, variant, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/articles/${encodeURIComponent(articleId)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'content-type': 'application/json',
+          'if-match': `"${revision}"`,
+        },
+        body: JSON.stringify(variant),
+      },
+    )
+
+  /** @param {string} siteId @param {string} articleId @param {string} locale @param {number} revision */
+  const deleteArticleVariant = (siteId, articleId, locale, revision) =>
+    request(
+      `/api/v2/sites/${encodeURIComponent(siteId)}/articles/${encodeURIComponent(articleId)}?locale=${encodeURIComponent(locale)}`,
+      { method: 'DELETE', headers: { 'if-match': `"${revision}"` } },
+    )
+
   /** @param {string} id */
   /**
    * @param {string} siteId
@@ -415,5 +490,13 @@ export function createPublisherAdminClient(options) {
     uploadMedia,
     approveMedia,
     restoreContent,
+    listPlugins,
+    createPlugin,
+    getPlugin,
+    configurePlugin,
+    runPluginAction,
+    getArticle,
+    putArticleVariant,
+    deleteArticleVariant,
   })
 }

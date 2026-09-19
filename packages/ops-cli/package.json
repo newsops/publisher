@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@publisher/admin-client": "workspace:*",
+    "@publisher/content": "workspace:*",
     "tsx": "^4.20.5"
   }
 }

@@ -111,21 +111,6 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/ArticleResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v2/sites/{siteId}/posts:
-    parameters:
-      - { name: siteId, in: path, required: true, schema: { type: string } }
-    get:
-      operationId: listSitePosts
-      summary: List posts for an authorized site
-      responses:
-        '200': { $ref: '#/components/responses/PostsResponse' }
-        '403': { $ref: '#/components/responses/ErrorResponse' }
-    post:
-      operationId: createSitePost
-      summary: Create a post for an authorized site
-      requestBody: { $ref: '#/components/requestBodies/PostInput' }
-      responses:
-        '201': { $ref: '#/components/responses/PostResponse' }
   /api/v2/sites/{siteId}/publish:
     parameters:
       - { name: siteId, in: path, required: true, schema: { type: string } }
@@ -319,11 +304,223 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/AuthorResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v2/sites/{siteId}/publish:
+  /api/v2/sites:
+    get:
+      operationId: listSites
+      summary: List active publications
+      responses:
+        '200': { $ref: '#/components/responses/SitesResponse' }
     post:
-      operationId: publishSnapshot
-      summary: Create an immutable snapshot and enqueue its build job
-      description: Requires a publisher role and returns without running the static build.
+      operationId: createSite
+      summary: Create a publication (publisher role)
+      requestBody: { $ref: '#/components/requestBodies/SiteInput' }
+      responses:
+        '201': { $ref: '#/components/responses/SiteResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getSite
+      summary: Read one publication
+      responses:
+        '200': { $ref: '#/components/responses/SiteResponse' }
+        '404': { $ref: '#/components/responses/ErrorResponse' }
+    patch:
+      operationId: updateSite
+      summary: Update a publication's name, origin, or theme
+      requestBody: { $ref: '#/components/requestBodies/SitePatch' }
+      responses:
+        '200': { $ref: '#/components/responses/SiteResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+    delete:
+      operationId: archiveSite
+      summary: Archive a publication
+      responses:
+        '200': { $ref: '#/components/responses/SiteResponse' }
+        '404': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/bootstrap:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: bootstrapSite
+      summary: Create the empty content state for a publication
+      responses:
+        '200': { $ref: '#/components/responses/BootstrapResponse' }
+        '201': { $ref: '#/components/responses/BootstrapResponse' }
+  /api/v2/sites/{siteId}/agent-guidance:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getAgentGuidance
+      summary: Read private editorial guidance for agents
+      responses:
+        '200': { $ref: '#/components/responses/AgentGuidanceResponse' }
+    patch:
+      operationId: updateAgentGuidance
+      summary: Replace the guidance text with optimistic concurrency
+      parameters:
+        - {
+            name: If-Match,
+            in: header,
+            required: true,
+            schema: { type: string },
+          }
+      requestBody: { $ref: '#/components/requestBodies/AgentGuidanceInput' }
+      responses:
+        '200': { $ref: '#/components/responses/AgentGuidanceResponse' }
+        '409': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/categories:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: listCategories
+      summary: List primary categories
+      responses:
+        '200': { $ref: '#/components/responses/TagsResponse' }
+    post:
+      operationId: createCategory
+      summary: Create a primary category
+      requestBody: { $ref: '#/components/requestBodies/TagInput' }
+      responses:
+        '201': { $ref: '#/components/responses/TagResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/categories/{slug}:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+      - { name: slug, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getCategory
+      summary: Read a category
+      responses:
+        '200': { $ref: '#/components/responses/TagResponse' }
+        '404': { $ref: '#/components/responses/ErrorResponse' }
+    patch:
+      operationId: updateCategory
+      summary: Rename a category with If-Match
+      parameters:
+        - {
+            name: If-Match,
+            in: header,
+            required: true,
+            schema: { type: string },
+          }
+      requestBody: { $ref: '#/components/requestBodies/TagPatch' }
+      responses:
+        '200': { $ref: '#/components/responses/TagResponse' }
+        '409': { $ref: '#/components/responses/ErrorResponse' }
+    delete:
+      operationId: archiveCategory
+      summary: Archive a category with If-Match
+      parameters:
+        - {
+            name: If-Match,
+            in: header,
+            required: true,
+            schema: { type: string },
+          }
+      responses:
+        '200': { $ref: '#/components/responses/TagResponse' }
+        '409': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/posts/{id}/desk:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getDeskReport
+      summary: Desk report — automated checks, self-check list, site guidance
+      responses:
+        '200': { $ref: '#/components/responses/DeskReportResponse' }
+        '404': { $ref: '#/components/responses/ErrorResponse' }
+    post:
+      operationId: decideDesk
+      summary: Approve the post for publication or request changes (publisher role)
+      parameters:
+        - {
+            name: If-Match,
+            in: header,
+            required: true,
+            schema: { type: string },
+          }
+      requestBody: { $ref: '#/components/requestBodies/DeskDecisionInput' }
+      responses:
+        '200': { $ref: '#/components/responses/DeskReportResponse' }
+        '409':
+          {
+            description: Automated checks failed or the checklist is incomplete; the report is returned,
+            content:
+              {
+                application/json:
+                  { schema: { $ref: '#/components/schemas/DeskRejection' } },
+              },
+          }
+  /api/v2/sites/{siteId}/media:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: uploadMedia
+      summary: Upload an image as pending media (publisher role)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                sha256: { type: string }
+      responses:
+        '201': { $ref: '#/components/responses/MediaResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+    put:
+      operationId: approveMedia
+      summary: Approve pending media and generate public variants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mediaId]
+              properties: { mediaId: { type: string } }
+      responses:
+        '200': { $ref: '#/components/responses/MediaResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/embeds/x:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: resolveXPostEmbed
+      summary: Resolve a canonical X post URL into a static embed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties: { url: { type: string, format: uri } }
+      responses:
+        '200': { $ref: '#/components/responses/XEmbedResponse' }
+        '400': { $ref: '#/components/responses/ErrorResponse' }
+        '503': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/operations/{id}:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getOperation
+      summary: Read a publication build job or archive restore operation
+      responses:
+        '200': { $ref: '#/components/responses/OperationResponse' }
+        '404': { $ref: '#/components/responses/ErrorResponse' }
+  /api/v2/sites/{siteId}/content-restore:
+    parameters:
+      - { name: siteId, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: restoreContent
+      summary: Restore a local archive into an empty publication (publisher role)
       parameters:
         - {
             name: Idempotency-Key,
@@ -331,17 +528,11 @@ paths:
             required: true,
             schema: { type: string },
           }
+      requestBody: { $ref: '#/components/requestBodies/ContentRestoreInput' }
       responses:
-        '202':
-          {
-            description: Publish result,
-            content:
-              {
-                application/json:
-                  { schema: { $ref: '#/components/schemas/PublishResult' } },
-              },
-          }
-        '403': { $ref: '#/components/responses/ErrorResponse' }
+        '200': { $ref: '#/components/responses/OperationResponse' }
+        '202': { $ref: '#/components/responses/OperationResponse' }
+        '409': { $ref: '#/components/responses/ErrorResponse' }
 components:
   securitySchemes:
     bearerAuth:
@@ -349,6 +540,49 @@ components:
       scheme: bearer
       bearerFormat: Publisher automation key
   requestBodies:
+    SiteInput:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: '#/components/schemas/SiteInput' } },
+        }
+    SitePatch:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: '#/components/schemas/SitePatch' } },
+        }
+    AgentGuidanceInput:
+      required: true
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [instructions],
+                  properties:
+                    { instructions: { type: string, maxLength: 12000 } },
+                },
+            },
+        }
+    DeskDecisionInput:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: '#/components/schemas/DeskDecision' } },
+        }
+    ContentRestoreInput:
+      required: true
+      content:
+        {
+          application/json:
+            { schema: { $ref: '#/components/schemas/ContentRestoreRequest' } },
+        }
     PostInput:
       required: true
       content:
@@ -413,6 +647,132 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/PluginActionInput' }
   responses:
+    SiteResponse:
+      description: One publication
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [site],
+                  properties: { site: { $ref: '#/components/schemas/Site' } },
+                },
+            },
+        }
+    SitesResponse:
+      description: Active publications
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [sites],
+                  properties:
+                    {
+                      sites:
+                        {
+                          type: array,
+                          items: { $ref: '#/components/schemas/Site' },
+                        },
+                    },
+                },
+            },
+        }
+    BootstrapResponse:
+      description: Bootstrap outcome
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [site, created],
+                  properties:
+                    {
+                      site: { $ref: '#/components/schemas/Site' },
+                      created: { type: boolean },
+                    },
+                },
+            },
+        }
+    AgentGuidanceResponse:
+      description: Private editorial guidance
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [siteId, agentContext],
+                  properties:
+                    {
+                      siteId: { type: string },
+                      agentContext:
+                        { $ref: '#/components/schemas/AgentGuidance' },
+                    },
+                },
+            },
+        }
+    DeskReportResponse:
+      description: Desk report for a post
+      content:
+        {
+          application/json:
+            { schema: { $ref: '#/components/schemas/DeskReportEnvelope' } },
+        }
+    MediaResponse:
+      description: Media item
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [siteId, media],
+                  properties:
+                    {
+                      siteId: { type: string },
+                      media: { $ref: '#/components/schemas/Media' },
+                    },
+                },
+            },
+        }
+    XEmbedResponse:
+      description: Static X post embed
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [embed],
+                  properties: { embed: { type: object } },
+                },
+            },
+        }
+    OperationResponse:
+      description: Operation state
+      content:
+        {
+          application/json:
+            {
+              schema:
+                {
+                  type: object,
+                  required: [operation],
+                  properties:
+                    { operation: { $ref: '#/components/schemas/Operation' } },
+                },
+            },
+        }
     ErrorResponse:
       description: Structured API error
       content:
@@ -560,6 +920,131 @@ components:
                 type: array
                 items: { $ref: '#/components/schemas/PluginInstallation' }
   schemas:
+    Site:
+      type: object
+      required: [siteId, name, canonicalOrigin, themeId, active]
+      properties:
+        siteId: { type: string }
+        name: { type: string }
+        canonicalOrigin: { type: string, format: uri }
+        themeId: { type: string }
+        active: { type: boolean }
+    SiteInput:
+      type: object
+      required: [siteId, name, canonicalOrigin]
+      properties:
+        siteId: { type: string, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        name: { type: string }
+        canonicalOrigin: { type: string, format: uri }
+        themeId: { type: string }
+    SitePatch:
+      type: object
+      properties:
+        name: { type: string }
+        canonicalOrigin: { type: string, format: uri }
+        themeId: { type: string }
+    AgentGuidance:
+      type: object
+      required: [instructions, revision, updatedAt]
+      properties:
+        instructions: { type: string }
+        revision: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    DeskCheck:
+      type: object
+      required: [id, level, message]
+      properties:
+        id: { type: string }
+        level: { type: string, enum: [pass, warn, fail] }
+        message: { type: string }
+    DeskChecklistItem:
+      type: object
+      required: [id, label, description]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        description: { type: string }
+    DeskReport:
+      type: object
+      required: [checks, checklist, approvalValid]
+      properties:
+        checks:
+          { type: array, items: { $ref: '#/components/schemas/DeskCheck' } }
+        checklist:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/DeskChecklistItem' },
+          }
+        guidance: { type: string }
+        approvalValid: { type: boolean }
+        review: { type: object }
+    DeskReportEnvelope:
+      type: object
+      required: [siteId, postId, revision, status, report]
+      properties:
+        siteId: { type: string }
+        postId: { type: string }
+        revision: { type: integer }
+        status: { type: string }
+        report: { $ref: '#/components/schemas/DeskReport' }
+    DeskDecision:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [approve, request-changes] }
+        checklist:
+          type: array
+          items:
+            type: object
+            required: [id, checked]
+            properties:
+              id: { type: string }
+              checked: { type: boolean }
+              note: { type: string }
+        note: { type: string }
+    DeskRejection:
+      type: object
+      required: [error, report]
+      properties:
+        error: { $ref: '#/components/schemas/Error' }
+        report: { $ref: '#/components/schemas/DeskReport' }
+    Media:
+      type: object
+      required: [id, siteId, state, sha256, mimeType, width, height, variants]
+      properties:
+        id: { type: string }
+        siteId: { type: string }
+        state: { type: string, enum: [pending, approved] }
+        sha256: { type: string }
+        mimeType: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+        variants:
+          type: array
+          items:
+            type: object
+            properties:
+              publicPath: { type: string }
+              width: { type: integer }
+              height: { type: integer }
+              mimeType: { type: string }
+    Operation:
+      type: object
+      required: [id, kind, status, terminal, retryable, updatedAt]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [publication, archive_restore] }
+        status: { type: string }
+        terminal: { type: boolean }
+        retryable: { type: boolean }
+        updatedAt: { type: string, format: date-time }
+        result: { type: object }
+    ContentRestoreRequest:
+      type: object
+      required: [expectedRevision, archive]
+      properties:
+        expectedRevision: { type: integer }
+        archive: { type: object, description: Serialized content archive }
     PluginCreateInput:
       type: object
       required: [pluginId, configuration]

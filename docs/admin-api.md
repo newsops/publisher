@@ -136,6 +136,17 @@ browser-only; build-job polling and archive restore are automation-only;
 | `POST`   | `/api/v2/sites/{siteId}/publish`          | publisher    | Create a snapshot and enqueue an idempotent job |
 | `GET`    | `/api/v2/sites/{siteId}/posts/:id/desk`   | editor       | Desk report: checks, checklist, guidance, state |
 | `POST`   | `/api/v2/sites/{siteId}/posts/:id/desk`   | publisher    | `approve` or `request-changes` with `If-Match`  |
+| `GET`    | `/api/v2/sites`                           | editor       | List active publications                        |
+| `POST`   | `/api/v2/sites`                           | publisher    | Create a publication                            |
+| `GET`    | `/api/v2/sites/{siteId}`                  | editor       | Read one publication                            |
+| `PATCH`  | `/api/v2/sites/{siteId}`                  | publisher    | Update name, canonical origin, or theme         |
+| `DELETE` | `/api/v2/sites/{siteId}`                  | publisher    | Archive a publication                           |
+| `POST`   | `/api/v2/sites/{siteId}/bootstrap`        | publisher    | Create the empty content state                  |
+| `POST`   | `/api/v2/sites/{siteId}/media`            | publisher    | Upload a pending image (multipart `file`)       |
+| `PUT`    | `/api/v2/sites/{siteId}/media`            | publisher    | Approve pending media by `mediaId`              |
+| `POST`   | `/api/v2/sites/{siteId}/embeds/x`         | editor       | Resolve an X post URL into a static embed       |
+| `GET`    | `/api/v2/sites/{siteId}/operations/:id`   | publisher    | Build job or archive-restore operation state    |
+| `POST`   | `/api/v2/sites/{siteId}/content-restore`  | publisher    | Restore a local archive with `Idempotency-Key`  |
 
 Article locale operations use the same editor key:
 

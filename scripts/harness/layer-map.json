@@ -141,7 +141,7 @@
     "cli": {
       "level": "L5",
       "globs": ["packages/ops-cli/**"],
-      "allow": ["cli", "client", "builtin", "tooling"]
+      "allow": ["cli", "client", "index:contract", "builtin", "tooling"]
     },
     "scripts": {
       "level": "L5",

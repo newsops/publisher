@@ -52,8 +52,9 @@ async function archiveManifest(directory) {
   try {
     const root = path.resolve(directory)
     const raw = await readFile(path.join(root, 'archive.json'), 'utf8')
+    // The content contract is pure TypeScript; tsx (registered above) loads it.
     const { validateEditorialArchive, archiveSummary } =
-      await import('../../content/src/archive.ts')
+      await import('@publisher/content')
     const archive = validateEditorialArchive(JSON.parse(raw))
     for (const media of archive.media) {
       const target = path.resolve(root, media.assetPath)
@@ -384,6 +385,226 @@ async function main() {
       return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
     }
   }
+  if (
+    (args[0] === 'settings' && (args[1] === 'get' || args[1] === 'set')) ||
+    (args[0] === 'site' && (args[1] === 'update' || args[1] === 'archive')) ||
+    (args[0] === 'post' && args[1] === 'delete') ||
+    args[0] === 'plugin' ||
+    args[0] === 'article' ||
+    args[0] === 'media'
+  ) {
+    // Surface parity (ARCH-006): every automation capability has a command.
+    const siteId = option('--site')
+    if (!siteId) return emit(false, 'INPUT_REQUIRED', { field: '--site' }, 10)
+    const api = client()
+    if (!api)
+      return emit(
+        false,
+        'CONFIGURATION_REQUIRED',
+        { missing: missingClientConfiguration() },
+        20,
+      )
+    const revisionOption = () => {
+      const revision = Number(option('--revision'))
+      return Number.isSafeInteger(revision) && revision >= 1
+        ? revision
+        : undefined
+    }
+    /** True (after emitting) when a mutation must not proceed. */
+    const mutation = () => {
+      if (nonInteractive) return false
+      emit(false, 'NON_INTERACTIVE_REQUIRED', { mutationAttempted: false }, 10)
+      return true
+    }
+    const inputFile = async () => {
+      const file = option('--input')
+      if (!file)
+        return {
+          error: emit(false, 'INPUT_REQUIRED', { field: '--input' }, 10),
+        }
+      return { value: JSON.parse(await readFile(file, 'utf8')) }
+    }
+    try {
+      if (args[0] === 'settings' && args[1] === 'get') {
+        const response = await api.getSettings(siteId)
+        return emit(true, 'SETTINGS', response.data ?? {})
+      }
+      if (args[0] === 'settings' && args[1] === 'set') {
+        const revision = revisionOption()
+        if (!revision)
+          return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+        const input = await inputFile()
+        if ('error' in input) return
+        if (mutation()) return
+        const response = await api.updateSettings(siteId, input.value, revision)
+        return emit(true, 'SETTINGS_UPDATED', response.data ?? {})
+      }
+      if (args[0] === 'site' && args[1] === 'update') {
+        const input = await inputFile()
+        if ('error' in input) return
+        if (mutation()) return
+        const response = await api.updateSite(siteId, input.value)
+        return emit(true, 'SITE_UPDATED', response.data ?? {})
+      }
+      if (args[0] === 'site' && args[1] === 'archive') {
+        if (mutation()) return
+        const response = await api.archiveSite(siteId)
+        return emit(true, 'SITE_ARCHIVED', response.data ?? {})
+      }
+      if (args[0] === 'post' && args[1] === 'delete') {
+        const postId = option('--post')
+        const revision = revisionOption()
+        if (!postId)
+          return emit(false, 'INPUT_REQUIRED', { field: '--post' }, 10)
+        if (!revision)
+          return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+        if (mutation()) return
+        const response = await api.deletePost(siteId, postId, revision)
+        return emit(true, 'POST_DELETED', response.data ?? {})
+      }
+      if (args[0] === 'plugin') {
+        const pluginId = option('--plugin')
+        if (args[1] === 'list') {
+          const response = await api.listPlugins(siteId)
+          return emit(true, 'PLUGINS', response.data ?? {})
+        }
+        if (!pluginId)
+          return emit(false, 'INPUT_REQUIRED', { field: '--plugin' }, 10)
+        if (args[1] === 'get') {
+          const response = await api.getPlugin(siteId, pluginId)
+          return emit(true, 'PLUGIN', response.data ?? {})
+        }
+        if (args[1] === 'install') {
+          const input = option('--input') ? await inputFile() : { value: {} }
+          if ('error' in input) return
+          if (mutation()) return
+          const response = await api.createPlugin(siteId, {
+            pluginId,
+            configuration: input.value,
+          })
+          return emit(true, 'PLUGIN_INSTALLED', response.data ?? {})
+        }
+        const revision = revisionOption()
+        if (!revision)
+          return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+        if (args[1] === 'configure') {
+          const input = await inputFile()
+          if ('error' in input) return
+          if (mutation()) return
+          const response = await api.configurePlugin(
+            siteId,
+            pluginId,
+            input.value,
+            revision,
+          )
+          return emit(true, 'PLUGIN_CONFIGURED', response.data ?? {})
+        }
+        if (['validate', 'enable', 'disable'].includes(args[1])) {
+          const configuration = option('--input')
+            ? (await inputFile()).value
+            : undefined
+          if (mutation()) return
+          const response = await api.runPluginAction(
+            siteId,
+            pluginId,
+            args[1],
+            revision,
+            configuration,
+          )
+          return emit(
+            true,
+            `PLUGIN_${args[1].toUpperCase()}D`,
+            response.data ?? {},
+          )
+        }
+        return emit(
+          false,
+          'USAGE',
+          {
+            command:
+              'plugin list|get|install|configure|validate|enable|disable',
+          },
+          10,
+        )
+      }
+      if (args[0] === 'article') {
+        const articleId = option('--article')
+        if (!articleId)
+          return emit(false, 'INPUT_REQUIRED', { field: '--article' }, 10)
+        if (args[1] === 'get') {
+          const response = await api.getArticle(siteId, articleId)
+          return emit(true, 'ARTICLE', response.data ?? {})
+        }
+        const revision = revisionOption()
+        if (!revision)
+          return emit(false, 'INPUT_REQUIRED', { field: '--revision' }, 10)
+        if (args[1] === 'set') {
+          const input = await inputFile()
+          if ('error' in input) return
+          if (mutation()) return
+          const response = await api.putArticleVariant(
+            siteId,
+            articleId,
+            input.value,
+            revision,
+          )
+          return emit(true, 'ARTICLE_VARIANT_SET', response.data ?? {})
+        }
+        if (args[1] === 'remove') {
+          const locale = option('--locale')
+          if (!locale)
+            return emit(false, 'INPUT_REQUIRED', { field: '--locale' }, 10)
+          if (mutation()) return
+          const response = await api.deleteArticleVariant(
+            siteId,
+            articleId,
+            locale,
+            revision,
+          )
+          return emit(true, 'ARTICLE_VARIANT_REMOVED', response.data ?? {})
+        }
+        return emit(false, 'USAGE', { command: 'article get|set|remove' }, 10)
+      }
+      if (args[0] === 'media') {
+        if (args[1] === 'upload') {
+          const file = option('--file')
+          const mimeType = option('--mime-type')
+          if (!file)
+            return emit(false, 'INPUT_REQUIRED', { field: '--file' }, 10)
+          if (!mimeType)
+            return emit(false, 'INPUT_REQUIRED', { field: '--mime-type' }, 10)
+          if (mutation()) return
+          const body = await readFile(file)
+          const uploaded = await api.uploadMedia(siteId, {
+            fileName: path.basename(file),
+            mimeType,
+            sha256: createHash('sha256').update(body).digest('hex'),
+            body,
+          })
+          if (!args.includes('--pending')) {
+            const approved = await api.approveMedia(
+              siteId,
+              uploaded.data.media.id,
+            )
+            return emit(true, 'MEDIA_APPROVED', approved.data ?? {})
+          }
+          return emit(true, 'MEDIA_UPLOADED', uploaded.data ?? {})
+        }
+        if (args[1] === 'approve') {
+          const mediaId = option('--media')
+          if (!mediaId)
+            return emit(false, 'INPUT_REQUIRED', { field: '--media' }, 10)
+          if (mutation()) return
+          const response = await api.approveMedia(siteId, mediaId)
+          return emit(true, 'MEDIA_APPROVED', response.data ?? {})
+        }
+        return emit(false, 'USAGE', { command: 'media upload|approve' }, 10)
+      }
+    } catch (error) {
+      return emit(false, 'REMOTE_ERROR', apiErrorData(error), 30)
+    }
+  }
+
   if (args[0] === 'site' && args[1] === 'guidance') {
     const action = args[2]
     const siteId = option('--site')
@@ -844,6 +1065,10 @@ async function main() {
         'site bootstrap --site <id> --non-interactive',
         'site guidance get --site <id> --json',
         'site guidance set --site <id> --file <path> --revision <n> --non-interactive --json',
+        'site update --site <id> --input <site.json> --non-interactive --json',
+        'site archive --site <id> --non-interactive --json',
+        'settings get --site <id> --json',
+        'settings set --site <id> --input <settings.json> --revision <n> --non-interactive --json',
         'taxonomy categories|tags list --site <id> --json',
         'taxonomy categories|tags create --site <id> --name <name> [--slug <slug>] --non-interactive --json',
         'author get --site <id> --slug <author-slug> --json',
@@ -851,6 +1076,17 @@ async function main() {
         'post create --site <id> --input <post.json> [--author <author-slug>] --non-interactive --json',
         'post update --site <id> --post <post-id> --input <patch.json> --revision <n> [--author <author-slug>] --non-interactive --json',
         'post submit --site <id> --post <post-id> --revision <n> --non-interactive --json',
+        'post delete --site <id> --post <post-id> --revision <n> --non-interactive --json',
+        'article get --site <id> --article <post-id> --json',
+        'article set --site <id> --article <post-id> --input <variant.json> --revision <n> --non-interactive --json',
+        'article remove --site <id> --article <post-id> --locale <tag> --revision <n> --non-interactive --json',
+        'plugin list --site <id> --json',
+        'plugin get --site <id> --plugin <plugin-id> --json',
+        'plugin install --site <id> --plugin <plugin-id> [--input <configuration.json>] --non-interactive --json',
+        'plugin configure --site <id> --plugin <plugin-id> --input <configuration.json> --revision <n> --non-interactive --json',
+        'plugin validate|enable|disable --site <id> --plugin <plugin-id> --revision <n> [--input <configuration.json>] --non-interactive --json',
+        'media upload --site <id> --file <path> --mime-type <type> [--pending] --non-interactive --json',
+        'media approve --site <id> --media <media-id> --non-interactive --json',
         'desk list --site <id> --json',
         'desk report --site <id> --post <post-id> --json',
         'desk approve --site <id> --post <post-id> --revision <n> --check <item-id>... [--note <text>] --non-interactive --json',

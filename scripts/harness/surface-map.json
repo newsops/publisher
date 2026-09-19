@@ -22,7 +22,13 @@
         "updatePost",
         "deletePost"
       ],
-      "cli": ["post plan", "post create", "post update", "post submit"],
+      "cli": [
+        "post plan",
+        "post create",
+        "post update",
+        "post submit",
+        "post delete"
+      ],
       "ui": ["PostEditor.tsx"]
     },
     {
@@ -44,8 +50,8 @@
       "service": "apps/admin/app/lib/services/article-repository.ts",
       "browser": ["articles/[id]"],
       "automation": ["sites/[siteId]/articles/[id]"],
-      "client": [],
-      "cli": [],
+      "client": ["getArticle", "putArticleVariant", "deleteArticleVariant"],
+      "cli": ["article get", "article set", "article remove"],
       "ui": ["ArticleVariantEditor.tsx"]
     },
     {
@@ -102,7 +108,7 @@
       "browser": ["settings"],
       "automation": ["sites/[siteId]/settings"],
       "client": ["getSettings", "updateSettings"],
-      "cli": [],
+      "cli": ["settings get", "settings set"],
       "ui": ["PublicationSettingsPanel.tsx"]
     },
     {
@@ -120,7 +126,7 @@
       "browser": ["media", "media/[id]/approve", "media/[id]/preview"],
       "automation": ["sites/[siteId]/media"],
       "client": ["uploadMedia", "approveMedia"],
-      "cli": [],
+      "cli": ["media upload", "media approve"],
       "ui": ["MediaLibraryPanel.tsx"]
     },
     {
@@ -157,8 +163,20 @@
         "sites/[siteId]/plugins",
         "sites/[siteId]/plugins/[pluginId]"
       ],
-      "client": [],
-      "cli": [],
+      "client": [
+        "listPlugins",
+        "createPlugin",
+        "getPlugin",
+        "configurePlugin",
+        "runPluginAction"
+      ],
+      "cli": [
+        "plugin list",
+        "plugin get",
+        "plugin install",
+        "plugin configure",
+        "plugin validate|enable|disable"
+      ],
       "ui": ["PluginManagementPanel.tsx"]
     },
     {
@@ -182,7 +200,13 @@
         "updateSite",
         "archiveSite"
       ],
-      "cli": ["site list", "site create", "site bootstrap"],
+      "cli": [
+        "site list",
+        "site create",
+        "site bootstrap",
+        "site update",
+        "site archive"
+      ],
       "ui": ["SiteSelector.tsx"]
     },
     {
