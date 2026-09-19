@@ -6,10 +6,13 @@ import { fileURLToPath } from 'node:url'
 import type { ContentSnapshot } from '../../packages/content/src/index'
 import {
   FileSystemStaticDeployment,
+  guardBuildJobTransitions,
   type ReleaseManifest,
 } from '../../packages/publication/src/index'
 import {
   objectStoreFromEnvironment,
+  PostgresBuildJobRepository,
+  postgresPool,
   type ObjectStore,
 } from '../../packages/persistence/src/index'
 import {
@@ -66,9 +69,11 @@ async function runNext(objectStore: ObjectStore): Promise<void> {
     argument('--deployment-root') ?? process.env.STATIC_DEPLOYMENT_ROOT
   if (!deploymentRoot)
     throw new Error('--deployment-root or STATIC_DEPLOYMENT_ROOT is required')
-  const { PostgresBuildJobRepository } =
-    await import('../../apps/admin/app/lib/build-job-repository')
-  const jobs = new PostgresBuildJobRepository()
+  const jobs = guardBuildJobTransitions(
+    new PostgresBuildJobRepository(
+      postgresPool(process.env.DATABASE_URL ?? ''),
+    ),
+  )
   const retryJobId = argument('--retry')
   if (retryJobId) await jobs.retry(retryJobId)
   const completed = await runNextPublicationJob({

@@ -42,6 +42,28 @@ export interface BuildJobRepository {
   ): Promise<BuildJob>
 }
 
+/**
+ * Applies the job state machine in front of a storage adapter (ARCH-002):
+ * adapters only compare-and-swap on the expected status, this wrapper
+ * refuses transitions the table does not allow.
+ */
+export function guardBuildJobTransitions(
+  repository: BuildJobRepository,
+): BuildJobRepository {
+  return {
+    enqueue: (input) => repository.enqueue(input),
+    get: (jobId) => repository.get(jobId),
+    findByIdempotencyKey: (siteId, key) =>
+      repository.findByIdempotencyKey(siteId, key),
+    claimNext: (siteId) => repository.claimNext(siteId),
+    retry: (jobId) => repository.retry(jobId),
+    transition: async (jobId, expected, status, failureReason) => {
+      assertBuildJobTransition(expected, status)
+      return repository.transition(jobId, expected, status, failureReason)
+    },
+  }
+}
+
 const allowedTransitions: Readonly<
   Record<BuildJobStatus, readonly BuildJobStatus[]>
 > = {

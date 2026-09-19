@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { BuildJob } from '@publisher/publication'
-import { FileBuildJobRepository } from './build-job-repository'
+import { FileBuildJobRepository } from '@publisher/persistence'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import {

@@ -9,7 +9,7 @@ import {
   type PostgresQueryable,
 } from '@publisher/persistence'
 import { PostgresArticleRepository } from './postgres-article-repository'
-import { PostgresBuildJobRepository } from './build-job-repository'
+import { PostgresBuildJobRepository } from '@publisher/persistence'
 import { PostgresPluginRepository } from './postgres-plugin-repository'
 import { deliverSnapshot } from './publisher'
 import type { PublishResult } from './repository-contract'

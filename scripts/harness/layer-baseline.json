@@ -53,10 +53,6 @@
   },
   {
     "rule": "env-access",
-    "key": "apps/admin/app/lib/build-job-repository.ts -> process.env.DATABASE_URL"
-  },
-  {
-    "rule": "env-access",
     "key": "apps/admin/app/lib/comment-moderation.ts -> process.env.COMMENTS_MODERATION_TOKEN"
   },
   {
@@ -157,10 +153,6 @@
   },
   {
     "rule": "layer-imports",
-    "key": "apps/admin/app/lib/build-job-repository.ts -> @publisher/publication"
-  },
-  {
-    "rule": "layer-imports",
     "key": "apps/admin/app/lib/comment-moderation.ts -> ./api-error"
   },
   {
@@ -170,10 +162,6 @@
   {
     "rule": "layer-imports",
     "key": "apps/admin/app/lib/desk-review.ts -> @publisher/persistence"
-  },
-  {
-    "rule": "layer-imports",
-    "key": "apps/admin/app/lib/desk-review.ts -> sharp"
   },
   {
     "rule": "layer-imports",
@@ -229,7 +217,19 @@
   },
   {
     "rule": "layer-imports",
-    "key": "scripts/deploy/publication-worker.ts -> ../../apps/admin/app/lib/build-job-repository"
+    "key": "packages/persistence/scripts/clean-room.ts -> ../../../apps/admin/app/lib/postgres-content-repository"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "packages/persistence/scripts/clean-room.ts -> ../../../scripts/deploy/publication-worker-core"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "packages/persistence/scripts/reconcile.ts -> ../../../apps/admin/app/lib/postgres-content-repository"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "packages/persistence/scripts/reconcile.ts -> ../../../apps/admin/app/lib/postgres-publication"
   },
   {
     "rule": "layer-imports",

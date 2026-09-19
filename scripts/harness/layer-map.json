@@ -1,5 +1,5 @@
 {
-  "$comment": "ARCH-001 single source for the layer hierarchy. Order matters: the first layer whose globs match a file wins. `allow` lists layer ids, `types:<id>` (type-only imports), `index:<id>` (package index or @publisher alias only), module classes from `modules`, `builtin`, or exact specifiers. `.agents/project-structure.md` and `.agents/rules/layer-boundaries.md` describe this file; they never override it.",
+  "$comment": "ARCH-001 single source for the layer hierarchy. Order matters: the first layer whose globs match a file wins. `allow` lists layer ids, `types:<id>` (type-only imports), `index:<id>` (package index or @publisher alias only), module classes from `modules`, `builtin`, or exact specifiers. `.agents/project-structure.md` and `.agents/rules/layer-boundaries.md` describe this file; they never override it. Package-owned scripts (`packages/*/scripts`) belong to their package's layer and are composition roots. Files under `packages/` never import `apps/`.",
   "modules": {
     "sdk": ["pg", "@aws-sdk/**", "sharp"],
     "framework": ["next", "next/**", "react", "react-dom", "react-dom/**"],
@@ -33,6 +33,7 @@
       "level": "L1",
       "globs": [
         "packages/persistence/src/**",
+        "packages/persistence/scripts/**",
         "apps/admin/app/lib/adapters/**",
         "apps/admin/app/lib/postgres-*.ts",
         "apps/admin/app/lib/file-*.ts",
@@ -197,7 +198,8 @@
     "packages/persistence/src/object-storage.ts",
     "packages/persistence/src/postgres.ts",
     "packages/ops-cli/**",
-    "scripts/**"
+    "scripts/**",
+    "packages/*/scripts/**"
   ],
   "envAllowedNames": ["NEXT_PUBLIC_*", "NODE_ENV"],
   "routes": {

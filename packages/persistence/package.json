@@ -36,6 +36,7 @@
     "@types/node": "^22.0.0",
     "@types/pg": "^8.23.1",
     "tsx": "^4.20.5",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "@publisher/publication": "workspace:*"
   }
 }

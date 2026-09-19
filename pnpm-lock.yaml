@@ -217,6 +217,9 @@ importers:
         specifier: ^0.35.4
         version: 0.35.4(@types/node@22.20.1)
     devDependencies:
+      '@publisher/publication':
+        specifier: workspace:*
+        version: link:../publication
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
