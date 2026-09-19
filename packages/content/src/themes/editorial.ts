@@ -1,4 +1,18 @@
-:root { --paper: #ffffff; --wash: #f3f4f6; --ink: #0b0c0c; --body: #3a3f46; --prose: #1d2024; --meta: #6b7079; --rule: #d9dce1; --rule-soft: #eceef1; --accent: #b80000; --accent-ink: #ffffff; --masthead: #0b0c0c; --masthead-ink: #ffffff; --masthead-muted: #b4b8bf; --serif: 'Iowan Old Style', Charter, 'Palatino Linotype', 'Book Antiqua', Georgia, serif; --sans: 'Helvetica Neue', Helvetica, 'Segoe UI', 'Noto Sans', Arial, sans-serif; }
+import type { ThemeDefinition } from './definition'
+
+/**
+ * Editorial theme — Broadcast-newsroom design: ink-black masthead, signal-red accent, hairline story grid.
+ *
+ * Every theme owns its complete stylesheet: the token block first, then the
+ * presentation rules for the shared semantic slots (header, navigation,
+ * index, article, rail, comments, footer). Edit this file directly; the
+ * bundle is content-addressed at build time and never rebuilds article HTML.
+ */
+export const editorial: ThemeDefinition = {
+  id: 'editorial',
+  name: 'Editorial',
+  version: '1',
+  css: `:root { --paper: #ffffff; --wash: #f3f4f6; --ink: #0b0c0c; --body: #3a3f46; --prose: #1d2024; --meta: #6b7079; --rule: #d9dce1; --rule-soft: #eceef1; --accent: #b80000; --accent-ink: #ffffff; --masthead: #0b0c0c; --masthead-ink: #ffffff; --masthead-muted: #b4b8bf; --serif: 'Iowan Old Style', Charter, 'Palatino Linotype', 'Book Antiqua', Georgia, serif; --sans: 'Helvetica Neue', Helvetica, 'Segoe UI', 'Noto Sans', Arial, sans-serif; }
 :root { --gutter: clamp(16px, 4vw, 48px); --measure: 66ch; --container: 1280px; --masthead-rule: rgba(255, 255, 255, 0.14); }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -209,4 +223,5 @@ button[type='submit']:hover { background: var(--accent); border-color: var(--acc
 .publisher-x-post figcaption { margin-top: 14px; color: var(--meta); font: 700 12px/1.4 var(--sans); letter-spacing: .03em; }
 .publisher-x-post figcaption a { color: var(--accent); }
 @media (max-width: 560px) { .publisher-x-post { padding: 18px; } .publisher-x-post blockquote { font-size: 18px; } }
-
+`,
+}

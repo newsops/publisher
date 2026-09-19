@@ -4,41 +4,20 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { getTheme, isThemeId } from '../packages/content/src/themes'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const publicRoot = path.join(root, 'apps/site/public')
-const themes = JSON.parse(
-  await fs.readFile(
-    path.join(root, 'packages/content/src/data/themes.json'),
-    'utf8',
-  ),
-)
-const presentation = JSON.parse(
-  await fs.readFile(
-    path.join(root, 'packages/content/src/data/theme-presentation.json'),
-    'utf8',
-  ),
-)
 const publication = JSON.parse(
   await fs.readFile(
     path.join(root, 'packages/content/src/data/publication.json'),
     'utf8',
   ),
-)
-const selectedTheme =
-  themes.find((theme) => theme.id === publication.themeId) ?? themes[0]
-if (
-  !selectedTheme?.id ||
-  !selectedTheme?.version ||
-  !selectedTheme?.css ||
-  !Array.isArray(presentation.rules) ||
-  !presentation.rules.every((rule) => typeof rule === 'string')
-)
-  throw new Error('Theme registry has no valid fallback theme')
-const selected = {
-  ...selectedTheme,
-  css: `${selectedTheme.css}\n${presentation.rules.join('\n')}`,
-}
+) as { themeId?: string }
+if (!publication.themeId || !isThemeId(publication.themeId))
+  throw new Error(`Unknown theme: ${publication.themeId ?? ''}`)
+// The registry entry is the complete, self-hosted stylesheet for the theme.
+const selected = getTheme(publication.themeId)
 const checksum = createHash('sha256').update(selected.css).digest('hex')
 const themePath = `/theme-runtime/immutable/${selected.id}.${checksum}.css`
 const releaseId = (
