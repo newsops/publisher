@@ -1,4 +1,5 @@
 import { ServiceError as ApiRequestError } from './errors'
+import { adminConfig } from '../config'
 import { assertSiteId } from '@publisher/content'
 
 export type ModerationStatus = 'pending' | 'approved' | 'rejected'
@@ -34,8 +35,9 @@ export function moderationUpdatePath(
 const REQUEST_TIMEOUT_MS = 5_000
 
 function commentServiceConfig(): { origin: string; token: string } {
-  const origin = process.env.COMMENTS_ORIGIN?.replace(/\/$/, '')
-  const token = process.env.COMMENTS_MODERATION_TOKEN
+  const config = adminConfig()
+  const origin = config.commentsOrigin?.replace(/\/$/, '')
+  const token = config.commentsModerationToken
   if (!origin || !token)
     throw new ApiRequestError(
       'comments_unconfigured',

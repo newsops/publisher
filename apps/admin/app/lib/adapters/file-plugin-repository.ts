@@ -18,11 +18,7 @@ export class FilePluginRepository implements PluginRepository {
   readonly siteId: string
   private readonly filePath: string
 
-  constructor(
-    directory = process.env.ADMIN_DATA_DIR ??
-      path.join(process.cwd(), '.data/admin'),
-    siteId = 'default',
-  ) {
+  constructor(directory: string, siteId = 'default') {
     assertSiteId(siteId)
     this.siteId = siteId
     this.filePath =

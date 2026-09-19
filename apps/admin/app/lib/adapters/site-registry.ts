@@ -1,4 +1,4 @@
-import { postgresPool, type PostgresPool } from '@publisher/persistence'
+import type { PostgresPool } from '@publisher/persistence'
 import {
   assertSiteId,
   ContentValidationError,
@@ -61,11 +61,7 @@ function row(value: Record<string, unknown>): SiteConfig {
 }
 
 export class PostgresSiteRegistry {
-  constructor(
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
-  ) {}
+  constructor(private readonly pool: PostgresPool) {}
 
   async list(): Promise<readonly SiteConfig[]> {
     const result = await this.pool.query<Record<string, unknown>>(
@@ -143,11 +139,4 @@ export class PostgresSiteRegistry {
     )
     return { site, created: result.rowCount === 1 }
   }
-}
-
-let registry: PostgresSiteRegistry | undefined
-export function getSiteRegistry(): PostgresSiteRegistry {
-  if (!process.env.DATABASE_URL)
-    throw new Error('DATABASE_URL is required for the site registry')
-  return (registry ??= new PostgresSiteRegistry())
 }

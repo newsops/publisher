@@ -23,7 +23,7 @@ import {
   approveImage,
   readApprovedMediaPreview,
   uploadImage,
-} from '../../../apps/admin/app/lib/adapters/media-service.ts'
+} from '../../../apps/admin/app/lib/index.ts'
 import { PostgresContentRepository } from '../../../apps/admin/app/lib/adapters/postgres-content-repository.ts'
 import { PostgresArticleRepository } from '../../../apps/admin/app/lib/adapters/postgres-article-repository.ts'
 import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/adapters/postgres-publication.ts'

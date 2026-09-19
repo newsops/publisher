@@ -7,7 +7,7 @@ import {
   enforceRateLimit,
 } from './auth'
 import { ApiRequestError } from './api-error'
-import { getSiteRegistry } from '../index'
+import { adminConfig, adminPool, getSiteRegistry } from '../index'
 
 export { ApiRequestError as AutomationApiError } from './api-error'
 
@@ -21,10 +21,10 @@ interface AutomationKeyRecord {
 }
 
 function keyRecords(): readonly AutomationKeyRecord[] {
-  const rings = [
-    process.env.ADMIN_AUTOMATION_KEYS,
-    process.env.ADMIN_AUTOMATION_KEYS_EXTRA,
-  ].filter((value): value is string => Boolean(value))
+  const config = adminConfig()
+  const rings = [config.automationKeys, config.automationKeysExtra].filter(
+    (value): value is string => Boolean(value),
+  )
   if (rings.length === 0)
     throw new AdminAuthError('Automation authentication unavailable', 503)
   try {
@@ -222,7 +222,7 @@ export async function withSiteAutomation(
     // Local isolated repositories are intentionally usable without a database
     // for deterministic contract tests. Every deployed admin runtime has
     // DATABASE_URL and therefore verifies the PostgreSQL registry first.
-    if (process.env.DATABASE_URL) await getSiteRegistry().require(siteId)
+    if (adminPool()) await getSiteRegistry().require(siteId)
     enforceRateLimit(request, identity)
     return await handler(identity, id)
   } catch (error) {

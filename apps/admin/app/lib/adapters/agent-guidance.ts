@@ -1,5 +1,5 @@
 import { ContentValidationError } from '@publisher/content'
-import { postgresPool, type PostgresPool } from '@publisher/persistence'
+import type { PostgresPool } from '@publisher/persistence'
 import { assertSiteId } from './site-registry'
 
 export interface AgentGuidance {
@@ -28,11 +28,7 @@ function row(value: Record<string, unknown>): AgentGuidance {
 }
 
 export class PostgresAgentGuidanceRepository {
-  constructor(
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
-  ) {}
+  constructor(private readonly pool: PostgresPool) {}
 
   async get(siteId: string): Promise<AgentGuidance> {
     assertSiteId(siteId)
@@ -67,26 +63,20 @@ export class PostgresAgentGuidanceRepository {
   }
 }
 
-let guidance: PostgresAgentGuidanceRepository | undefined
-export function getAgentGuidanceRepository(): PostgresAgentGuidanceRepository {
-  if (!process.env.DATABASE_URL)
-    throw new Error('DATABASE_URL is required for agent guidance')
-  return (guidance ??= new PostgresAgentGuidanceRepository())
-}
-
 export function parseAgentGuidanceInput(value: unknown): string {
   if (!value || typeof value !== 'object')
     throw new ContentValidationError('Guidance input is required')
   return normalized((value as { instructions?: unknown }).instructions)
 }
 
-/** Guidance text for desk reports; absent without a database. */
+/** Guidance text for desk reports; absent without a repository. */
 export async function siteGuidanceText(
+  repository: PostgresAgentGuidanceRepository | undefined,
   siteId: string,
 ): Promise<string | undefined> {
-  if (!process.env.DATABASE_URL) return undefined
+  if (!repository) return undefined
   try {
-    const guidance = await getAgentGuidanceRepository().get(siteId)
+    const guidance = await repository.get(siteId)
     return guidance.instructions || undefined
   } catch {
     return undefined

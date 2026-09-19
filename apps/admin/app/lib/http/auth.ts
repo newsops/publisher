@@ -9,19 +9,8 @@ import { ContentValidationError } from '@publisher/content'
 import {
   AccountStoreConflict,
   AccountStoreUnavailable,
-  countAccounts,
-  findAccountById,
-  findCredentialByEmail,
-  findSessionAccount,
-  insertAccount,
-  insertAuditEvent,
-  insertFirstOwner,
-  insertSession,
-  listAccountRecords,
-  revokeAccountSessions,
-  revokeSessionByToken,
-  touchSession,
-  updateAccountRecord,
+  accountStore,
+  adminConfig,
   type AccountUpdate,
 } from '../index'
 import { ApiRequestError } from './api-error'
@@ -138,7 +127,12 @@ async function createSession(
   const token = randomBytes(32).toString('base64url')
   const expiresAt = new Date(Date.now() + sessionTtlSeconds * 1000)
   await stored(() =>
-    insertSession(randomUUID(), accountId, tokenHash(token), expiresAt),
+    accountStore().insertSession(
+      randomUUID(),
+      accountId,
+      tokenHash(token),
+      expiresAt,
+    ),
   )
   return { token, expiresAt }
 }
@@ -150,22 +144,18 @@ export async function requireIdentity(
   // Harness-only identities keep local fixture routes testable without a shared
   // database. The development branch additionally requires ADMIN_DATA_DIR;
   // every production runtime still reaches the database-backed session path.
+  const config = adminConfig()
   const allowsFixtureIdentity =
-    process.env.NODE_ENV === 'test' ||
-    (process.env.NODE_ENV === 'development' &&
-      Boolean(process.env.ADMIN_DATA_DIR))
+    config.nodeEnv === 'test' ||
+    (config.nodeEnv === 'development' && Boolean(config.adminDataDir))
   if (allowsFixtureIdentity) {
-    const expected = process.env.ADMIN_DEV_TOKEN
+    const expected = config.devToken
     const supplied = request.headers.get('x-admin-dev-token')
     const email = request.headers.get('x-admin-dev-email')?.trim().toLowerCase()
-    const configuredEmails = (name: string) =>
-      process.env[name]
-        ?.split(',')
-        .map((value) => value.trim().toLowerCase()) ?? []
     // ADMIN_OWNERS lets the file-backed local admin drive the browser routes,
     // which require an owner for site access; ADMIN_PUBLISHERS grants publish.
-    const owners = configuredEmails('ADMIN_OWNERS')
-    const configured = configuredEmails('ADMIN_PUBLISHERS')
+    const owners = config.devOwners
+    const configured = config.devPublishers
     if (
       expected &&
       supplied &&
@@ -187,12 +177,14 @@ export async function requireIdentity(
   }
   const token = cookie(request, sessionCookie)
   if (!token) throw new AdminAuthError('Authentication required')
-  const account = await stored(() => findSessionAccount(tokenHash(token)))
+  const account = await stored(() =>
+    accountStore().findSessionAccount(tokenHash(token)),
+  )
   if (!account) throw new AdminAuthError('Authentication required')
   const capabilities = roles(account.role)
   if (!capabilities.includes(requiredRole))
     throw new AdminAuthError('Role required', 403)
-  touchSession(tokenHash(token))
+  accountStore().touchSession(tokenHash(token))
   return { email: account.email, subject: account.id, roles: capabilities }
 }
 
@@ -203,10 +195,12 @@ export async function login(
 ): Promise<Response> {
   throttle(rateKey(request), 10)
   throttle(`login:${email.trim().toLowerCase()}`, 10)
-  const account = await stored(() => findCredentialByEmail(email.trim()))
+  const account = await stored(() =>
+    accountStore().findCredentialByEmail(email.trim()),
+  )
   if (!account || !(await verifyPassword(password, account.passwordHash)))
     throw new AdminAuthError('Invalid email or password')
-  await stored(() => revokeAccountSessions(account.id))
+  await stored(() => accountStore().revokeAccountSessions(account.id))
   const session = await createSession(account.id)
   return Response.json(
     { account: { email: account.email, role: account.role } },
@@ -224,7 +218,7 @@ export async function bootstrapOwner(
   password: string,
 ): Promise<Response> {
   throttle(rateKey(request), 5)
-  const configured = process.env.ADMIN_BOOTSTRAP_SECRET
+  const configured = adminConfig().bootstrapSecret
   const provided = bootstrapSecret(request)
   if (
     !configured ||
@@ -239,7 +233,9 @@ export async function bootstrapOwner(
   const passwordHash = await hashPassword(password)
   const id = randomUUID()
   try {
-    await stored(() => insertFirstOwner(id, normalized, passwordHash))
+    await stored(() =>
+      accountStore().insertFirstOwner(id, normalized, passwordHash),
+    )
   } catch (error) {
     if (error instanceof AccountStoreConflict)
       throw new AdminAuthError('Bootstrap unavailable', 403)
@@ -259,7 +255,8 @@ export async function bootstrapOwner(
 }
 export async function logout(request: Request): Promise<Response> {
   const token = cookie(request, sessionCookie)
-  if (token) await stored(() => revokeSessionByToken(tokenHash(token)))
+  if (token)
+    await stored(() => accountStore().revokeSessionByToken(tokenHash(token)))
   return Response.json(
     { ok: true },
     {
@@ -272,8 +269,8 @@ export async function logout(request: Request): Promise<Response> {
 }
 
 export async function bootstrapAvailable(): Promise<boolean> {
-  if (!process.env.ADMIN_BOOTSTRAP_SECRET) return false
-  return (await stored(countAccounts)) === 0
+  if (!adminConfig().bootstrapSecret) return false
+  return (await stored(() => accountStore().countAccounts())) === 0
 }
 
 function validRole(value: unknown): value is AdminRole {
@@ -289,14 +286,16 @@ function normalizedEmail(value: unknown): string {
 export async function listAccounts(identity: AdminIdentity) {
   if (!identity.roles.includes('owner'))
     throw new AdminAuthError('Role required', 403)
-  return (await stored(listAccountRecords)).map((account) => ({
-    id: account.id,
-    email: account.email,
-    role: account.role,
-    active: account.active,
-    created_at: account.createdAt,
-    password_changed_at: account.passwordChangedAt,
-  }))
+  return (await stored(() => accountStore().listAccountRecords())).map(
+    (account) => ({
+      id: account.id,
+      email: account.email,
+      role: account.role,
+      active: account.active,
+      created_at: account.createdAt,
+      password_changed_at: account.passwordChangedAt,
+    }),
+  )
 }
 
 export async function createAccount(
@@ -314,7 +313,9 @@ export async function createAccount(
   const id = randomUUID()
   const passwordHash = await hashPassword(input.password)
   try {
-    await stored(() => insertAccount(id, email, passwordHash, role))
+    await stored(() =>
+      accountStore().insertAccount(id, email, passwordHash, role),
+    )
   } catch (error) {
     if (error instanceof AccountStoreConflict)
       throw new AdminAuthError('Account already exists', 409)
@@ -333,7 +334,7 @@ export async function updateAccount(
     throw new AdminAuthError('Role required', 403)
   if (!/^[0-9a-f-]{36}$/i.test(accountId))
     throw new AdminAuthError('Invalid account input', 400)
-  const account = await stored(() => findAccountById(accountId))
+  const account = await stored(() => accountStore().findAccountById(accountId))
   if (!account) throw new AdminAuthError('Account not found', 404)
   const update: { -readonly [K in keyof AccountUpdate]: AccountUpdate[K] } = {}
   if ('role' in input) {
@@ -357,7 +358,9 @@ export async function updateAccount(
   }
   if (Object.keys(update).length === 0)
     throw new AdminAuthError('No account changes supplied', 400)
-  await stored(() => updateAccountRecord(accountId, update, true))
+  await stored(() =>
+    accountStore().updateAccountRecord(accountId, update, true),
+  )
   audit('account.updated', identity, {
     accountId,
     fields: Object.keys(input).filter((key) => key !== 'password'),
@@ -366,7 +369,7 @@ export async function updateAccount(
 
 export function assertSameOrigin(request: Request): void {
   const origin = request.headers.get('origin')
-  const expected = process.env.ADMIN_PUBLIC_ORIGIN
+  const expected = adminConfig().publicOrigin
   if (!origin || !expected || origin !== expected)
     throw new AdminAuthError('Cross-origin mutation rejected', 403)
 }
@@ -381,14 +384,16 @@ export function audit(
   identity: AdminIdentity,
   details: Record<string, unknown> = {},
 ): void {
-  if (process.env.NODE_ENV === 'test') {
+  if (adminConfig().nodeEnv === 'test') {
     console.info(event, JSON.stringify(details))
     return
   }
   try {
-    void insertAuditEvent(identity.email, event, details).catch((error) =>
-      console.error('Admin audit write failed', error),
-    )
+    void accountStore()
+      .insertAuditEvent(identity.email, event, details)
+      .catch((error: unknown) =>
+        console.error('Admin audit write failed', error),
+      )
   } catch (error) {
     // File-backed harness routes intentionally exercise their domain contract
     // without a PostgreSQL audit target.

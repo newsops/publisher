@@ -42,11 +42,7 @@ export class FileContentRepository implements ContentRepository {
   private readonly filePath: string
   private readonly articleRepository: FileArticleRepositoryAdapter
 
-  constructor(
-    directory = process.env.ADMIN_DATA_DIR ??
-      path.join(process.cwd(), '.data/admin'),
-    siteId = 'default',
-  ) {
+  constructor(directory: string, siteId = 'default') {
     this.siteId = siteId
     this.directory = directory
     this.filePath =
