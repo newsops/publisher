@@ -247,9 +247,12 @@ describe('content safety contract', () => {
       importPreReleaseHtmlToMarkdown(
         '<figure><img src="/media/briefing.webp"></figure>',
       ),
-    ).toThrow('pre-release figure requires image src and alternative text')
-    expect(() =>
-      importPreReleaseHtmlToMarkdown('<iframe src="https://bad.test">'),
-    ).toThrow('pre-release HTML contains unsupported executable markup')
+    ).toThrow('imported image requires alternative text, a title, or a caption')
+    // Executable markup never survives; an embed becomes a visible link.
+    expect(
+      importPreReleaseHtmlToMarkdown(
+        '<iframe src="https://bad.test/embed"></iframe><script>alert(1)</script>',
+      ),
+    ).toBe('[Embedded content](https://bad.test/embed)')
   })
 })

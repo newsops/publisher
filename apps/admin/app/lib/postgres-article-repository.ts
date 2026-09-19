@@ -4,6 +4,7 @@ import {
   assertValidArticleVariant,
   type ArticleVariant,
   type ManagedArticle,
+  withCanonicalVariants,
 } from '@publisher/content'
 import {
   postgresPool,
@@ -14,10 +15,14 @@ import {
 import type { ArticleRepository } from './article-repository'
 
 function clone(article: ManagedArticle): ManagedArticle {
-  return {
-    ...article,
-    variants: article.variants.map((variant) => ({ ...variant })),
-  }
+  return withCanonicalVariants(
+    {
+      ...article,
+      variants: article.variants.map((variant) => ({ ...variant })),
+    },
+    article.id,
+    { onImportError: 'lenient' },
+  )
 }
 
 function initialArticles(): ManagedArticle[] {

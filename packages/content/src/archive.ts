@@ -4,10 +4,8 @@ import {
   type PostDraftInput,
 } from './editor'
 import type { PublicationSettings } from './types'
-import {
-  importPreReleaseHtmlToMarkdown,
-  renderEditorialMarkdown,
-} from './editorial-markdown'
+import { renderEditorialMarkdown } from './editorial-markdown'
+import { importHtmlBodyToMarkdown } from './html-body-import'
 
 export interface ArchiveMediaEntry {
   readonly assetPath: string
@@ -263,7 +261,7 @@ export function validateEditorialArchive(value: unknown): EditorialArchive {
     const bodyMarkdown =
       typeof post.bodyMarkdown === 'string'
         ? safeText(post.bodyMarkdown, `posts[${index}].bodyMarkdown`)
-        : importPreReleaseHtmlToMarkdown(
+        : importHtmlBodyToMarkdown(
             safeText(post.bodyHtml, `posts[${index}].bodyHtml`),
           )
     const bodyHtml = renderEditorialMarkdown(bodyMarkdown)

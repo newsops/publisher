@@ -37,8 +37,11 @@ describe('structured editorial static projection contract', () => {
       'utf8',
     )
 
-    expect(worker).toContain('renderEditorialMarkdown(post.bodyMarkdown)')
+    // Every stored body shape resolves through the canonical Markdown path;
+    // snapshot HTML is never copied into the publication.
+    expect(worker).toContain('resolveEditorialBody(post')
     expect(worker).not.toContain('sanitizeBodyHtml(post.bodyHtml)')
+    expect(worker).not.toContain('bodyHtml: post.bodyHtml')
   })
 
   it('derives static site feeds from Markdown instead of an old HTML source field', async () => {

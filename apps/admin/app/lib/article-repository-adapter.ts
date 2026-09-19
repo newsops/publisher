@@ -8,6 +8,7 @@ import {
   assertValidArticleLocales,
   type ArticleVariant,
   type ManagedArticle,
+  withCanonicalVariants,
 } from '@publisher/content'
 import type { ArticleRepository } from './article-repository'
 
@@ -46,7 +47,13 @@ export class FileArticleRepositoryAdapter implements ArticleRepository {
       const value = JSON.parse(
         await readFile(this.filePath, 'utf8'),
       ) as ArticleState
-      return { articles: value.articles.map(cloneArticle) }
+      return {
+        articles: value.articles.map((article) =>
+          withCanonicalVariants(cloneArticle(article), article.id, {
+            onImportError: 'lenient',
+          }),
+        ),
+      }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
       return { articles: initialArticles() }

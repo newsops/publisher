@@ -152,6 +152,12 @@ importers:
 
   packages/content:
     dependencies:
+      domhandler:
+        specifier: 5.0.3
+        version: 5.0.3
+      htmlparser2:
+        specifier: 10.1.0
+        version: 10.1.0
       mdast-util-directive:
         specifier: ^3.1.0
         version: 3.1.0

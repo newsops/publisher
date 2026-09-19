@@ -1,4 +1,7 @@
-import { projectPublicPluginSnapshot } from '@publisher/content'
+import {
+  projectPublicPluginSnapshot,
+  withCanonicalBody,
+} from '@publisher/content'
 import {
   PostgresMediaRepository,
   runPostgresTransaction,
@@ -64,10 +67,11 @@ export async function loadPostgresSiteState(
     state: {
       ...row.state,
       categories: row.state.categories ?? row.state.tags,
-      posts: row.state.posts.map((post) => ({
-        ...post,
-        tags: post.tags ?? [],
-      })),
+      posts: row.state.posts.map((post) =>
+        withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
+          onImportError: 'lenient',
+        }),
+      ),
       authors: row.state.authors.map((author) => ({
         ...author,
         editorialPersona: author.editorialPersona ?? '',
