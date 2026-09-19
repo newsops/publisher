@@ -21,6 +21,7 @@ import AccountManagementPanel from './AccountManagementPanel'
 import MediaLibraryPanel from './MediaLibraryPanel'
 import PublicationManagementPanel from './PublicationManagementPanel'
 import AgentGuidancePanel from './AgentGuidancePanel'
+import DeskReviewPanel from './DeskReviewPanel'
 
 export interface DashboardState {
   posts: AdminPost[]
@@ -231,6 +232,7 @@ export default function AdminDashboardView({
         setGuidance={actions.setGuidance}
         save={actions.saveAgentGuidance}
       />
+      <DeskReviewPanel />
       <PublicationManagementPanel />
       <PluginManagementPanel
         plugins={state.plugins}

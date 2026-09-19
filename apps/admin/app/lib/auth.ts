@@ -137,10 +137,14 @@ export async function requireIdentity(
     const expected = process.env.ADMIN_DEV_TOKEN
     const supplied = request.headers.get('x-admin-dev-token')
     const email = request.headers.get('x-admin-dev-email')?.trim().toLowerCase()
-    const configured =
-      process.env.ADMIN_PUBLISHERS?.split(',').map((value) =>
-        value.trim().toLowerCase(),
-      ) ?? []
+    const configuredEmails = (name: string) =>
+      process.env[name]
+        ?.split(',')
+        .map((value) => value.trim().toLowerCase()) ?? []
+    // ADMIN_OWNERS lets the file-backed local admin drive the browser routes,
+    // which require an owner for site access; ADMIN_PUBLISHERS grants publish.
+    const owners = configuredEmails('ADMIN_OWNERS')
+    const configured = configuredEmails('ADMIN_PUBLISHERS')
     if (
       expected &&
       supplied &&
@@ -149,7 +153,11 @@ export async function requireIdentity(
       email
     ) {
       const capabilities = roles(
-        configured.includes(email) ? 'publisher' : 'editor',
+        owners.includes(email)
+          ? 'owner'
+          : configured.includes(email)
+            ? 'publisher'
+            : 'editor',
       )
       if (!capabilities.includes(requiredRole))
         throw new AdminAuthError('Role required', 403)

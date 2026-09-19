@@ -43,6 +43,45 @@ publisher site guidance set --site example --file ./editorial-guidance.txt \
 
 Guidance is excluded from snapshots, static HTML, feeds, and search indexes.
 
+## Desk review before publication
+
+A story reaches readers only with a desk approval bound to its current
+content. The server refuses `status=published` or `scheduled` and excludes the
+post from a snapshot until a `publisher` key or account approves it; a later
+edit to the title, excerpt, body, image, author, taxonomy, or SEO fields
+invalidates the approval automatically. Automated checks cannot be overridden:
+a failing story is improved until every check passes.
+
+Loop for an agent acting as author and desk:
+
+```bash
+publisher post submit --site example --post <post-id> --revision 3 \
+  --non-interactive --json                       # draft -> review, returns the report
+publisher desk report --site example --post <post-id> --json
+publisher desk approve --site example --post <post-id> --revision 4 \
+  --check facts-verified --check headline-accurate --check image-representative \
+  --check seo-fields --check taxonomy-author --check site-guidance \
+  --note "Checked against site guidance" --non-interactive --json
+publisher post update --site example --post <post-id> --revision 5 \
+  --input ./published.json --non-interactive --json  # {"status":"published"}
+publisher publish --idempotency-key release-01 --json
+```
+
+`desk report` returns `checks` (each `pass`, `warn`, or `fail`), the
+`checklist` items with their descriptions, the site guidance text, and the
+current review state. `desk approve` fails with `DESK_REJECTED` and reason
+`desk_checks_failed` or `desk_checklist_incomplete` when a check fails or an
+item is not attested; fix the story, re-read the report, and approve again.
+`desk request-changes --note` records feedback for the author. `desk list`
+shows the stories waiting for the desk.
+
+Automated checks: representative image present, resolvable in the media
+library, at least 1200×630 with a 1.4–2.0 aspect ratio, not near-blank, and
+not repeated as the first body figure; title 20–110 characters; excerpt
+40–200; SEO title ≤ 70; SEO description 50–160; body ≥ 150 words with at
+least one HTTPS source link or embed and a valid Markdown body; active author;
+valid categories.
+
 ## Reporter personas and taxonomy
 
 Each site separately manages required primary `categories` and optional article

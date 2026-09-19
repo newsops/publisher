@@ -9,6 +9,7 @@ import {
   renderEditorialMarkdown,
   resolveEditorialBody,
   withCanonicalBody,
+  deskFixtureApproval,
 } from '../../../packages/content/src/index.ts'
 import { publicationInputs } from '../../../scripts/deploy/publication-worker-core.ts'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
@@ -286,9 +287,19 @@ describe('HTML body import contract', () => {
       expect(upgraded.bodyMarkdown).toBe('Imported **text**.')
       expect(upgraded.bodyHtml).toBe('<p>Imported <strong>text</strong>.</p>')
       expect(unresolved.bodyMarkdown).toBe('')
-      await expect(repository.publish()).rejects.toThrow(
-        `post ${broken.slug} cannot be published`,
+      // Imported content has no desk approval for its converted body, so the
+      // gate (EDIT-001) returns both posts to review instead of publishing.
+      expect(upgraded.status).toBe('review')
+      expect(unresolved.status).toBe('review')
+      expect((await repository.publish()).snapshot.posts).toHaveLength(0)
+      // Even a desk approval cannot carry an unresolved body to readers.
+      const approved = await repository.reviewPost(
+        unresolved.id,
+        deskFixtureApproval(unresolved),
       )
+      await expect(
+        repository.save(approved.id, { ...approved, status: 'published' }),
+      ).rejects.toThrow('bodyMarkdown is required')
     } finally {
       await rm(directory, { recursive: true, force: true })
     }

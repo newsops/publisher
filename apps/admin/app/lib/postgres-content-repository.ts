@@ -11,6 +11,7 @@ import {
   type PostDraftInput,
   type PublicationSettingsInput,
   type TaxonomyTermInput,
+  type DeskReview,
 } from '@publisher/content'
 import {
   postgresPool,
@@ -29,6 +30,7 @@ import {
   validatedTag,
   referencesTerm,
   upsertTaxonomyTerm,
+  withDeskReview,
 } from './repository-validation'
 import { assertSiteId } from './site-registry'
 import {
@@ -314,6 +316,21 @@ export class PostgresContentRepository implements ContentRepository {
       const posts = state.posts.filter((post) => post.id !== id)
       if (posts.length === state.posts.length) throw new Error('Post not found')
       return { state: { ...state, posts }, result: undefined }
+    })
+  }
+
+  async reviewPost(id: string, review: DeskReview): Promise<ManagedPost> {
+    return this.mutate((state) => {
+      const current = state.posts.find((post) => post.id === id)
+      if (!current) throw new Error('Post not found')
+      const post = withDeskReview(current, review)
+      return {
+        state: {
+          ...state,
+          posts: state.posts.map((item) => (item.id === id ? post : item)),
+        },
+        result: post,
+      }
     })
   }
 

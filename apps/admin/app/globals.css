@@ -401,3 +401,89 @@ textarea.body {
     flex-direction: column;
   }
 }
+
+/* Desk review (EDIT-001) */
+.desk-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  gap: 24px;
+  margin-top: 16px;
+}
+.desk-queue,
+.desk-checks,
+.desk-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.desk-queue li {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.desk-queue .link {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.desk-queue .link.current {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.desk-queue small,
+.muted {
+  color: var(--muted);
+}
+.desk-report {
+  display: grid;
+  gap: 12px;
+}
+.desk-checks li {
+  padding: 8px 10px;
+  border-left: 4px solid var(--line);
+  background: var(--page);
+  border-radius: 6px;
+  font-size: 14px;
+}
+.desk-checks li[data-level='fail'] {
+  border-left-color: #c62828;
+}
+.desk-checks li[data-level='warn'] {
+  border-left-color: #e0a100;
+}
+.desk-checks li[data-level='pass'] {
+  border-left-color: #2e7d32;
+}
+.desk-checklist label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.desk-guidance {
+  white-space: pre-wrap;
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  font: inherit;
+  font-size: 14px;
+}
+.desk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media (max-width: 760px) {
+  .desk-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

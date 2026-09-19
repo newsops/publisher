@@ -114,8 +114,11 @@ describe('configurable news platform contract', () => {
         ...settings,
         canonicalOrigin: 'https://news.example.test',
       })
+      // A content edit needs a fresh desk approval before it is published
+      // again (EDIT-001), so the edit moves the post into review.
       const migrated = await repository.save(posts[0].id, {
         ...posts[0],
+        status: 'review',
         title: `${posts[0].title} updated`,
       })
       expect(migrated.sourceUrl).toBe(
@@ -236,6 +239,7 @@ describe('configurable news platform contract', () => {
     const [assignedPost] = await repository.list()
     const assigned = await repository.save(assignedPost.id, {
       ...assignedPost,
+      status: 'review',
       author: author.name,
       authorSlug: author.slug,
     })

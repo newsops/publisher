@@ -7,6 +7,7 @@ import type {
   PostDraftInput,
   PublicationSettingsInput,
   TaxonomyTermInput,
+  DeskReview,
 } from '@publisher/content'
 import type { ArticleRepository } from './article-repository'
 import { FileArticleRepositoryAdapter } from './article-repository-adapter'
@@ -43,6 +44,10 @@ class RuntimeContentRepository implements ContentRepository {
   ): Promise<ManagedPost> {
     return (await this.active()).save(id, input)
   }
+  async reviewPost(id: string, review: DeskReview): Promise<ManagedPost> {
+    return (await this.active()).reviewPost(id, review)
+  }
+
   async remove(id: string): Promise<void> {
     return (await this.active()).remove(id)
   }

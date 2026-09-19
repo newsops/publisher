@@ -14,6 +14,7 @@ import {
   type PublicationSettingsInput,
   type TaxonomyTermInput,
   withCanonicalBody,
+  type DeskReview,
 } from '@publisher/content'
 import { FileArticleRepositoryAdapter } from './article-repository-adapter'
 import type { ContentRepository, PublishResult } from './repository-contract'
@@ -28,6 +29,8 @@ import {
   assertUniqueFeaturedRanks,
   referencesTerm,
   upsertTaxonomyTerm,
+  withDeskGateUpgrade,
+  withDeskReview,
 } from './repository-validation'
 
 export class FileContentRepository implements ContentRepository {
@@ -63,9 +66,11 @@ export class FileContentRepository implements ContentRepository {
         ...state,
         categories: state.categories ?? state.tags,
         posts: state.posts.map((post) =>
-          withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
-            onImportError: 'lenient',
-          }),
+          withDeskGateUpgrade(
+            withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
+              onImportError: 'lenient',
+            }),
+          ),
         ),
         authors: state.authors.map((author) => ({
           ...author,
@@ -311,6 +316,18 @@ export class FileContentRepository implements ContentRepository {
     const posts = state.posts.filter((post) => post.id !== id)
     if (posts.length === state.posts.length) throw new Error('Post not found')
     await this.writeState({ ...state, posts })
+  }
+
+  async reviewPost(id: string, review: DeskReview): Promise<ManagedPost> {
+    const state = await this.readState()
+    const current = state.posts.find((post) => post.id === id)
+    if (!current) throw new Error('Post not found')
+    const post = withDeskReview(current, review)
+    await this.writeState({
+      ...state,
+      posts: state.posts.map((item) => (item.id === id ? post : item)),
+    })
+    return post
   }
 
   async publish(idempotencyKey: string = randomUUID()): Promise<PublishResult> {

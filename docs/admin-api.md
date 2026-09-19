@@ -116,6 +116,8 @@ equivalent operations.
 | `PATCH`  | `/api/v2/sites/{siteId}/authors/:slug`    | editor       | Edit an author without changing its slug        |
 | `DELETE` | `/api/v2/sites/{siteId}/authors/:slug`    | editor       | Archive an author with `If-Match`               |
 | `POST`   | `/api/v2/sites/{siteId}/publish`          | publisher    | Create a snapshot and enqueue an idempotent job |
+| `GET`    | `/api/v2/sites/{siteId}/posts/:id/desk`   | editor       | Desk report: checks, checklist, guidance, state |
+| `POST`   | `/api/v2/sites/{siteId}/posts/:id/desk`   | publisher    | `approve` or `request-changes` with `If-Match`  |
 
 Article locale operations use the same editor key:
 
@@ -174,12 +176,21 @@ no-store` and include `X-Request-Id`. Errors use this shape:
    `If-Match: <revision>`.
 5. If the revision is stale, reload the post and reconcile instead of
    overwriting another update.
-6. `POST /api/v2/sites/{siteId}/publish` with a publisher key and unique `Idempotency-Key`.
-7. Verify the `202` response's `snapshotId`, checksum, `jobId`, and
+6. Before a post can be `published` or `scheduled`, `GET
+/api/v2/sites/{siteId}/posts/:id/desk` for the report and `POST` the same
+   path with `If-Match` and `{ "action": "approve", "checklist": [{ "id",
+"checked": true }...], "note" }`. Every automated check must pass and every
+   checklist item must be attested; otherwise the response is `409` with
+   `desk_checks_failed` or `desk_checklist_incomplete` and the report. `{
+"action": "request-changes", "note" }` records feedback. Editing the
+   content afterwards returns the post to `pending`, and a `published` save
+   without a valid approval fails with `validation_failed`.
+7. `POST /api/v2/sites/{siteId}/publish` with a publisher key and unique `Idempotency-Key`.
+8. Verify the `202` response's `snapshotId`, checksum, `jobId`, and
    `jobStatus: queued`. The schema-version 4 snapshot contains publication
    settings, active authors/tags, published/due content, public-safe plugin
    projection, and approved logical media references.
-8. Run the repository-owned publication worker. A job becomes `published` only
+9. Run the repository-owned publication worker. A job becomes `published` only
    after candidate checksum verification and compare-and-swap activation.
 
 Example:

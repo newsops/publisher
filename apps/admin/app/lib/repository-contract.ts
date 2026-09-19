@@ -8,6 +8,7 @@ import type {
   PostDraftInput,
   PublicationSettingsInput,
   TaxonomyTermInput,
+  DeskReview,
 } from '@publisher/content'
 import type { PublishDelivery } from './publisher'
 import type { BuildJob, BuildJobStatus } from '@publisher/publication'
@@ -29,6 +30,8 @@ export interface ContentRepository {
   get(id: string): Promise<ManagedPost | undefined>
   save(id: string | undefined, input: PostDraftInput): Promise<ManagedPost>
   remove(id: string): Promise<void>
+  /** Records a desk decision (EDIT-001) without changing content. */
+  reviewPost(id: string, review: DeskReview): Promise<ManagedPost>
   listTags(): Promise<readonly ManagedTaxonomyTerm[]>
   getTag(slug: string): Promise<ManagedTaxonomyTerm | undefined>
   saveTag(

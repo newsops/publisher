@@ -44,7 +44,13 @@ describe('ADMIN-003 multi-site isolation contract', () => {
       const siteB = getRepositoryForSite('site-b')
       const [aPost] = await siteA.list()
       const [bPost] = await siteB.list()
-      await siteA.save(aPost.id, { ...aPost, title: 'Only site A' })
+      // A content edit on a published post needs a fresh desk approval, so
+      // the isolation check edits it back into review.
+      await siteA.save(aPost.id, {
+        ...aPost,
+        status: 'review',
+        title: 'Only site A',
+      })
       expect((await siteA.get(aPost.id)).title).toBe('Only site A')
       expect((await siteB.get(bPost.id)).title).not.toBe('Only site A')
       expect(() =>
