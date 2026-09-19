@@ -5,7 +5,7 @@ import path from 'node:path'
 import { PostgresContentRepository } from '../../apps/admin/app/lib/index'
 import { PostgresBuildJobRepository } from '../../packages/persistence/src/index'
 import { runNextPublicationJob } from '../deploy/publication-worker-core'
-import { reconcileCheckedInFixture } from './reconcile'
+import { reconcileCheckedInFixture } from './reconcile.mts'
 import {
   createLogicalBackup,
   restoreLogicalBackup,

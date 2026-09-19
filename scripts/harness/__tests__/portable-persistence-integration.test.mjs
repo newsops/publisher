@@ -28,7 +28,7 @@ import { PostgresContentRepository } from '../../../apps/admin/app/lib/adapters/
 import { PostgresArticleRepository } from '../../../apps/admin/app/lib/adapters/postgres-article-repository.ts'
 import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/adapters/postgres-publication.ts'
 import { InMemoryBuildJobRepository } from '../../../packages/publication/src/index.ts'
-import { reconcileCheckedInFixture } from '../../admin/reconcile.ts'
+import { reconcileCheckedInFixture } from '../../admin/reconcile.mts'
 import {
   PostgresCommentStore,
   PostgresRateLimiter,
