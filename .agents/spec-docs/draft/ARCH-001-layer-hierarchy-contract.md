@@ -50,6 +50,17 @@ Observed consequences in the current tree (all reproducible with `grep`):
    layer owns CSS.
 7. Specs name affected packages, but not layers, so a reviewer cannot tell
    from `### Affected Scope` whether a change crosses a boundary.
+8. The three access surfaces — admin page (browser session), automation API
+   (`/api/v2/sites/{siteId}/**`, bearer key), and CLI (`publisher` over
+   `@publisher/admin-client`) — are not declared as a contract, so their
+   coverage drifts: `docs/admin-api.openapi.yaml` documents 13 `v2` paths while
+   22 `v2` route directories exist (desk, media, categories, agent-guidance,
+   embeds, operations, content-restore, bootstrap, sites are undocumented);
+   `@publisher/admin-client` exposes `getSettings`/`updateSettings`,
+   `deletePost`, `updateSite`, `archiveSite` with no CLI command; plugins and
+   article locales exist on the browser and `v2` surfaces but not in the
+   client or CLI. Which capabilities are intentionally surface-exclusive
+   (accounts, login, comment moderation) is recorded nowhere.
 
 Without a named hierarchy and a gate that fails on violation, each new feature
 re-decides where code goes, and the answers drift.
@@ -67,7 +78,10 @@ re-decides where code goes, and the answers drift.
   `scripts/harness/scan-env-access.mjs` (new),
   `scripts/harness/scan-route-shape.mjs` (new),
   `scripts/harness/layer-baseline.json` (new ratchet baseline),
-  `scripts/harness/run-all-scans.mjs`, `scripts/harness/__tests__/layer-contract.test.mjs` (new).
+  `scripts/harness/surface-map.json` (new capability registry),
+  `scripts/harness/scan-surface-parity.mjs` (new),
+  `scripts/harness/run-all-scans.mjs`, `scripts/harness/__tests__/layer-contract.test.mjs` (new),
+  `docs/admin-api.openapi.yaml`, `docs/admin-api.md`, `docs/agent-operations.md`.
 - Follow-up refactors (separate specs, listed under "Phased backlog"):
   `apps/admin/app/lib/**`, `packages/persistence/src/media.ts`,
   `packages/persistence` (build-job repository), `packages/publication`,
@@ -121,6 +135,40 @@ The hierarchy, from the bottom (no dependencies) to the top:
 | L3    | Services    | Admin domain services: repository contracts, validation, desk review, media service, publisher/release orchestration, guidance | `apps/admin/app/lib/services/**` (contracts + rules), `apps/admin/app/lib/index`-style composition root                                              | L0, L2, L1 contracts/types, own adapters through the repository factory. No `pg`/`sharp`/`@aws-sdk` symbols. |
 | L4    | Surfaces    | HTTP transport and UI: browser session routes, automation routes, admin React UI, public site pages, comments worker           | `apps/admin/app/api/**`, `apps/admin/app/lib/http/**` (auth, request parsing, responses), `apps/admin/app/*.tsx`, `apps/site/**`, `apps/comments/**` | Routes: L3 + `http/`; UI: L0 types + `fetch`; `apps/site`: L0 only. Never L1 symbols, never another surface. |
 | L5    | Operators   | Reusable clients and tooling: admin API client, CLI, build/deploy/harness scripts                                              | `packages/admin-client/**`, `packages/ops-cli/**`, `scripts/**`                                                                                      | `admin-client`: nothing. `ops-cli`: admin-client + `node:*`. `scripts`: package **index** entry points only. |
+
+#### Access surfaces
+
+Inside L4/L5 three surfaces reach the same L3 services. They differ in who
+calls, how the caller is identified, and how the site is scoped; they never
+differ in business rules.
+
+| Surface        | Caller                          | Identity                                                                 | Transport and owner code                                                                            | Site scope                                                  |
+| -------------- | ------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Admin page     | Human operator in a browser     | Local account session cookie (`owner`/`publisher`/`editor`), same-origin | `apps/admin/app/*.tsx` → `apps/admin/app/api/**` browser routes (L4)                                | `x-admin-site-id` header resolved by `repositoryForRequest` |
+| Automation API | Agent, integration, CI          | Bearer automation key with `role` and `sites[]`                          | `apps/admin/app/api/v2/sites/{siteId}/**` (L4); contract published in `docs/admin-api.openapi.yaml` | `{siteId}` path segment checked by `withSiteAutomation`     |
+| CLI            | Operator or agent shell process | `PUBLISHER_API_TOKEN` forwarded by `@publisher/admin-client`             | `packages/ops-cli` → `packages/admin-client` → Automation API only (L5)                             | `--site` flag mapped to the `v2` path                       |
+
+Surface rules:
+
+- **One capability, one service.** A capability is implemented once in L3;
+  the browser route and the `v2` route are thin adapters over it. A route
+  that contains a rule the other surface lacks is a violation.
+- **CLI has no capabilities of its own.** Every CLI command wraps an
+  `admin-client` method, and every `admin-client` method mirrors one `v2`
+  operation in the OpenAPI document. The CLI never opens PostgreSQL, object
+  storage, or a provider API; `doctor` and `content inspect` are local
+  process utilities and are declared as such.
+- **Exclusivity is declared, never accidental.** `surface-map.json` lists
+  each capability with its service, browser route, `v2` route, client method,
+  CLI command, and UI panel. A capability missing from a surface must carry
+  `exclusive: browser | automation | cli` with a reason (for example
+  `accounts`, `auth/session` and `comments/moderation` are browser-only human
+  trust actions; `content-restore`, `bootstrap`, `operations` are
+  automation-only; `doctor`, `content inspect` are CLI-only).
+- **Parity gate.** `scan-surface-parity.mjs` fails when a declared path does
+  not exist, when a route directory, client method, or CLI command in the
+  tree is not registered, or when a `v2` route is absent from the OpenAPI
+  document. Today's gaps go into the same shrinking baseline.
 
 Cross-cutting rules that the map encodes:
 
@@ -191,6 +239,11 @@ Cross-cutting rules that the map encodes:
    prove each scan fails red on a forbidden edge, a stale baseline entry, an
    out-of-root `process.env`, and a browser route without site authorization,
    and passes on the compliant fixture.
+9. `scripts/harness/surface-map.json` (capability registry for the three
+   access surfaces) and `scripts/harness/scan-surface-parity.mjs`, with
+   today's coverage gaps recorded in `layer-baseline.json` under the
+   `surface-parity` rule; `docs/admin-api.md` and `docs/agent-operations.md`
+   gain a "Surfaces" section generated from the same map.
 
 ### Phased backlog (follow-up specs, created when each phase starts)
 
@@ -202,10 +255,13 @@ Cross-cutting rules that the map encodes:
 | 4     | ARCH-004 | Presentation ownership: renderer parity test (fixture snapshot rendered by `packages/publication` vs `apps/site` output, compared on semantic-v3 markers), theme stylesheet sources moved from `packages/content/src/themes` to the presentation owner with the registry left in content.                                                                                             | `content → CSS sources` (documented, not an import edge)              | confirmation-required (design ownership)   |
 | 5     | ARCH-005 | Configuration at composition roots: replace scattered `process.env` reads in `apps/admin/app/lib` with a typed `config.ts`; `objectStoreFromEnvironment` stays as an L1 factory but is called only from roots. Ratchet `scan-env-access` to zero.                                                                                                                                     | all `env-access` entries                                              | delegated                                  |
 
-Order is fixed: 1 before 2–5 because the gates must exist before refactors so
+| 6 | ARCH-006 | Surface parity backfill: bring `docs/admin-api.openapi.yaml` to every `v2` route, add the missing `admin-client` methods and CLI commands (settings get/set, site update/archive, post delete, plugins, article locales, standalone media upload/approve), and declare the browser-only and automation-only exclusives with reasons. | all `surface-parity` entries | delegated |
+
+Order is fixed: 1 before 2–6 because the gates must exist before refactors so
 each refactor is measured by baseline entries removed. 2 and 5 are independent
 of 3; 4 depends on nothing but is the largest design decision and is scheduled
-last so that the presentation move happens once, after the admin split.
+after the admin split so that the presentation move happens once; 6 follows 3
+because the route split fixes which service each surface adapts.
 
 ### Out of scope
 
@@ -244,28 +300,36 @@ last so that the presentation move happens once, after the admin split.
       `repositoryForRequest`, and on a route importing `@publisher/persistence`
       or `sharp`; exit 0 on `apps/admin/app/api/desk/route.ts` as merged in
       PR #10.
-- [ ] TC-05: `pnpm harness:scan` → `[harness] 9 scans passed`; `pnpm test`
+- [ ] TC-05: `pnpm harness:scan` → `[harness] 10 scans passed`; `pnpm test`
       includes `layer-contract.test.mjs` with every fixture case above passing.
 - [ ] TC-06: `.agents/project-structure.md` and
       `.agents/rules/layer-boundaries.md` contain the L0–L5 table with the
       same directory globs as `layer-map.json`; `scan-spec-contract.mjs` fails
       a new spec whose `### Affected Scope` path lacks an `L0`–`L5` tag and
       passes this spec.
-- [ ] TC-07: `layer-baseline.json` lists at least the seven observed
+- [ ] TC-07: `layer-baseline.json` lists at least the eight observed
       violations from `## Problem` (by file and rule), and each follow-up
       backlog row names the entries it removes.
+- [ ] TC-08: `node scripts/harness/scan-surface-parity.mjs` → exit 0 on the
+      current tree via baseline entries that name every undocumented `v2`
+      route and every client method without a CLI command; adding a fixture
+      `apps/admin/app/api/v2/sites/[siteId]/widgets/route.ts` that is not in
+      `surface-map.json` → exit 1 with `unregistered capability: widgets`;
+      a map entry without a `v2` route and without `exclusive` → exit 1 with
+      `missing surface: automation`.
 
 ## Test Plan
 
-| TC-ID | Test Type | Tool / Approach                                            | Notes                                                                                                                                                              |
-| ----- | --------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TC-01 | unit      | `layer-contract.test.mjs` + direct scan run                | Temporary fixture tree under `os.tmpdir()` with a copied `layer-map.json`; assert exit code and message text; then run on the real tree with the baseline.         |
-| TC-02 | unit      | `layer-contract.test.mjs`                                  | Two fixture baselines: one missing an entry, one with a stale entry; both must exit 1 with the named reason.                                                       |
-| TC-03 | unit      | `layer-contract.test.mjs` + direct scan run                | Fixture file with `process.env.FOO` outside roots; the real tree passes only through baseline entries, which are counted and reported.                             |
-| TC-04 | unit      | `layer-contract.test.mjs`                                  | Fixture routes for browser-without-site-auth, route-importing-adapter, and the merged desk route copied verbatim as the compliant case.                            |
-| TC-05 | gate      | `pnpm harness:scan`, `pnpm test`                           | Run after wiring `run-all-scans.mjs`; scan count rises from 6 to 9. Precondition: `pnpm build` output exists for the static-output scan, as today.                 |
-| TC-06 | contract  | `scan-spec-contract.mjs` + file diff                       | Table equality checked by a test that parses the markdown table and the JSON globs; spec tag check exercised on a fixture spec with and without layer tags.        |
-| TC-07 | manual    | Review of `layer-baseline.json` against `## Problem` items | Reviewer maps each Problem item 1–6 to at least one baseline entry (item 7 is covered by TC-06, item 6 by a documented non-import entry `presentation.duplicate`). |
+| TC-ID | Test Type | Tool / Approach                                            | Notes                                                                                                                                                                                                |
+| ----- | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TC-01 | unit      | `layer-contract.test.mjs` + direct scan run                | Temporary fixture tree under `os.tmpdir()` with a copied `layer-map.json`; assert exit code and message text; then run on the real tree with the baseline.                                           |
+| TC-02 | unit      | `layer-contract.test.mjs`                                  | Two fixture baselines: one missing an entry, one with a stale entry; both must exit 1 with the named reason.                                                                                         |
+| TC-03 | unit      | `layer-contract.test.mjs` + direct scan run                | Fixture file with `process.env.FOO` outside roots; the real tree passes only through baseline entries, which are counted and reported.                                                               |
+| TC-04 | unit      | `layer-contract.test.mjs`                                  | Fixture routes for browser-without-site-auth, route-importing-adapter, and the merged desk route copied verbatim as the compliant case.                                                              |
+| TC-05 | gate      | `pnpm harness:scan`, `pnpm test`                           | Run after wiring `run-all-scans.mjs`; scan count rises from 6 to 10. Precondition: `pnpm build` output exists for the static-output scan, as today.                                                  |
+| TC-06 | contract  | `scan-spec-contract.mjs` + file diff                       | Table equality checked by a test that parses the markdown table and the JSON globs; spec tag check exercised on a fixture spec with and without layer tags.                                          |
+| TC-07 | manual    | Review of `layer-baseline.json` against `## Problem` items | Reviewer maps each Problem item 1–6 and 8 to at least one baseline entry (item 7 is covered by TC-06, item 6 by a documented non-import entry `presentation.duplicate`).                             |
+| TC-08 | unit      | `layer-contract.test.mjs` + direct scan run                | Fixture route directory and fixture map entries; the real-tree run reports the current gap count (OpenAPI 13 of 22 `v2` paths; client methods without CLI) so the number is visible in the baseline. |
 
 ## Tasks
 
