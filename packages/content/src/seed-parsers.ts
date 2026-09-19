@@ -1,9 +1,6 @@
 import { renderPluginContributions, type PublicPluginSnapshot } from './plugins'
 import { assertValidArticleVariant } from './article-adapter'
-import {
-  importPreReleaseHtmlToMarkdown,
-  renderEditorialMarkdown,
-} from './editorial-markdown'
+import { resolveEditorialBody } from './html-body-import'
 import type { Article, ArticleVariant, NewsPost } from './types'
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -36,7 +33,11 @@ function parseArticleVariant(value: unknown): ArticleVariant {
     slug: optionalString(value.slug),
     title: optionalString(value.title),
     excerpt: optionalString(value.excerpt),
-    bodyMarkdown: optionalString(value.bodyMarkdown),
+    bodyMarkdown:
+      typeof value.bodyMarkdown === 'string' ||
+      typeof value.bodyHtml !== 'string'
+        ? optionalString(value.bodyMarkdown)
+        : resolveEditorialBody(value).bodyMarkdown,
     seoTitle: optionalString(value.seoTitle),
     seoDescription: optionalString(value.seoDescription),
     status:
@@ -113,19 +114,7 @@ export function parsePost(value: unknown): NewsPost {
     slug: requiredString(value.slug, 'slug'),
     title: requiredString(value.title, 'title'),
     excerpt: requiredString(value.excerpt, 'excerpt'),
-    bodyMarkdown:
-      typeof value.bodyMarkdown === 'string'
-        ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
-        : importPreReleaseHtmlToMarkdown(
-            requiredString(value.bodyHtml, 'bodyHtml'),
-          ),
-    bodyHtml: renderEditorialMarkdown(
-      typeof value.bodyMarkdown === 'string'
-        ? requiredString(value.bodyMarkdown, 'bodyMarkdown')
-        : importPreReleaseHtmlToMarkdown(
-            requiredString(value.bodyHtml, 'bodyHtml'),
-          ),
-    ),
+    ...resolveEditorialBody(value),
     author: requiredString(value.author, 'author'),
     authorSlug:
       typeof value.authorSlug === 'string'

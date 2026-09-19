@@ -13,6 +13,7 @@ import {
   type PostDraftInput,
   type PublicationSettingsInput,
   type TaxonomyTermInput,
+  withCanonicalBody,
 } from '@publisher/content'
 import { FileArticleRepositoryAdapter } from './article-repository-adapter'
 import type { ContentRepository, PublishResult } from './repository-contract'
@@ -59,7 +60,11 @@ export class FileContentRepository implements ContentRepository {
       return {
         ...state,
         categories: state.categories ?? state.tags,
-        posts: state.posts.map((post) => ({ ...post, tags: post.tags ?? [] })),
+        posts: state.posts.map((post) =>
+          withCanonicalBody({ ...post, tags: post.tags ?? [] }, post.slug, {
+            onImportError: 'lenient',
+          }),
+        ),
         authors: state.authors.map((author) => ({
           ...author,
           editorialPersona: author.editorialPersona ?? '',

@@ -18,6 +18,7 @@ import {
   type TaxonomyTermInput,
   validatePostInput,
   validateFeaturedRanks,
+  withCanonicalBody,
 } from '@publisher/content'
 
 export function validatedSettings(
@@ -275,7 +276,17 @@ export function makeSnapshot(
           (post.status === 'scheduled' &&
             Date.parse(post.publishedAt) <= Date.parse(generatedAt)),
       )
-      .map(asPublishedPost),
+      .map((post) => {
+        try {
+          return withCanonicalBody(asPublishedPost(post), post.slug)
+        } catch (error) {
+          throw new ContentValidationError(
+            `post ${post.slug} cannot be published: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
+        }
+      }),
     articles: articles
       .map((article) => ({
         ...article,

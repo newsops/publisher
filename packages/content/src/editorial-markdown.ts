@@ -151,7 +151,18 @@ function serializeMarkdownAst(tree: Root): string {
   return String(
     unified()
       .data('toMarkdownExtensions', [directiveToMarkdown()])
-      .use(remarkStringify)
+      .use(remarkStringify, {
+        // The directive parser also accepts digit-led names (`5:00` would
+        // re-parse as a `:00` text directive), so escape those colons too.
+        unsafe: [
+          {
+            before: '[^:]',
+            character: ':',
+            after: '[A-Za-z0-9]',
+            inConstruct: ['phrasing'],
+          },
+        ],
+      })
       .stringify(tree),
   ).trim()
 }
@@ -263,14 +274,28 @@ function escapeHtml(value: string): string {
   })
 }
 
+/**
+ * Directive attribute values follow HTML attribute rules: character
+ * references are decoded and there is no backslash escape, so quotes and
+ * ampersands are encoded as references.
+ */
+export function directiveAttribute(value: string): string {
+  return value
+    .replace(/&(?=[a-z0-9#]+;)/gi, '&amp;')
+    .replaceAll('"', '&quot;')
+    .replace(/[\r\n]+/g, ' ')
+}
+
 export function figureDirective(figure: FigureAttribution): string {
   const attributes = [
-    `src="${figure.src.replaceAll('"', '\\"')}"`,
-    `alt="${figure.alt.replaceAll('"', '\\"')}"`,
+    `src="${directiveAttribute(figure.src)}"`,
+    `alt="${directiveAttribute(figure.alt)}"`,
     ...(figure.credit?.name
-      ? [`creditName="${figure.credit.name.replaceAll('"', '\\"')}"`]
+      ? [`creditName="${directiveAttribute(figure.credit.name)}"`]
       : []),
-    ...(figure.credit?.url ? [`creditUrl="${figure.credit.url}"`] : []),
+    ...(figure.credit?.url
+      ? [`creditUrl="${directiveAttribute(figure.credit.url)}"`]
+      : []),
   ]
   return `:::figure{${attributes.join(' ')}}\n${figure.caption ?? ''}\n:::`
 }
@@ -313,7 +338,9 @@ export function renderEditorialMarkdown(markdown: string): string {
     })
     .use(remarkRehype, { allowDangerousHtml: true })
     .use(rehypeStringify, { allowDangerousHtml: true })
-  return sanitizeHtml(String(processor.processSync(document.markdown)), {
+  // Render the validated source itself; the canonical serialization is a
+  // separate, round-trip-checked representation.
+  return sanitizeHtml(String(processor.processSync(markdown)), {
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
       'img',
@@ -328,53 +355,4 @@ export function renderEditorialMarkdown(markdown: string): string {
     allowedSchemes: ['https'],
     allowProtocolRelative: false,
   }).trim()
-}
-
-export function importPreReleaseHtmlToMarkdown(html: string): string {
-  if (typeof html !== 'string' || !html.trim())
-    throw new EditorialMigrationError('pre-release HTML body is empty')
-  if (/<(?:script|style|iframe|object)\b/i.test(html))
-    throw new EditorialMigrationError(
-      'pre-release HTML contains unsupported executable markup',
-    )
-  const attribute = (value: string, name: string): string | undefined => {
-    const match = new RegExp(
-      `\\b${name}\\s*=\\s*(["'])([\\s\\S]*?)\\1`,
-      'i',
-    ).exec(value)
-    return match?.[2]?.trim()
-  }
-  const supported = html
-    .replace(
-      /<figure\b[^>]*>\s*<img\b([^>]*)\/?>(?:\s*<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>)?\s*<\/figure>/gi,
-      (_match, imageAttributes: string, caption: string | undefined) => {
-        const src = attribute(imageAttributes, 'src')
-        const alt = attribute(imageAttributes, 'alt')
-        if (!src || !alt)
-          throw new EditorialMigrationError(
-            'pre-release figure requires image src and alternative text',
-          )
-        return `${figureDirective({
-          src,
-          alt,
-          caption: caption?.replace(/<[^>]+>/g, '').trim() || undefined,
-        })}\n\n`
-      },
-    )
-    .replace(
-      /<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi,
-      (_m, level, body) =>
-        `${'#'.repeat(Math.min(Number(level), 6))} ${body.replace(/<[^>]+>/g, '').trim()}\n\n`,
-    )
-    .replace(
-      /<p[^>]*>([\s\S]*?)<\/p>/gi,
-      (_m, body) => `${body.replace(/<[^>]+>/g, '').trim()}\n\n`,
-    )
-    .trim()
-  if (!supported || /<\/?[a-z][^>]*>/i.test(supported))
-    throw new EditorialMigrationError(
-      'pre-release HTML contains unsupported markup',
-    )
-  parseEditorialMarkdown(supported)
-  return supported
 }

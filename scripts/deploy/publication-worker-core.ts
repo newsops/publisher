@@ -7,7 +7,7 @@ import {
   publicCategoryPath,
   publicPostPath,
   getTheme,
-  renderEditorialMarkdown,
+  resolveEditorialBody,
   type ContentSnapshot,
 } from '../../packages/content/src/index'
 import {
@@ -96,8 +96,10 @@ function articleInputs(snapshot: ContentSnapshot) {
       title: post.title,
       seoTitle: post.seoTitle,
       description: post.seoDescription,
-      // Public HTML is always derived from the canonical Markdown source.
-      bodyHtml: renderEditorialMarkdown(post.bodyMarkdown),
+      // Public HTML is always derived from the canonical Markdown source;
+      // records that predate the Markdown contract are imported first.
+      bodyHtml: resolveEditorialBody(post, `posts.${post.slug}.bodyMarkdown`)
+        .bodyHtml,
       authorName: authors.get(post.authorSlug)?.name ?? post.author,
       authorPath: publicAuthorPath(post.authorSlug),
       category:

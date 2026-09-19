@@ -43,12 +43,25 @@ export {
 export {
   EditorialMarkdownError,
   figureDirective,
-  importPreReleaseHtmlToMarkdown,
   EditorialMigrationError,
   parseEditorialMarkdown,
   renderEditorialMarkdown,
   serializeEditorialMarkdown,
 } from './editorial-markdown'
+export {
+  hasCanonicalBody,
+  importHtmlBodyToMarkdown,
+  importPreReleaseHtmlToMarkdown,
+  resolveEditorialBody,
+  withCanonicalBody,
+  withCanonicalVariants,
+} from './html-body-import'
+export type {
+  CanonicalBodyOptions,
+  EditorialBody,
+  EditorialBodySource,
+  HtmlBodyImportOptions,
+} from './html-body-import'
 export type {
   EditorialDocument,
   EditorialNode,
