@@ -2,8 +2,8 @@ import {
   apiErrorResponse,
   apiResponse,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { getSiteRegistry } from '../../../../../lib/site-registry'
+} from '../../../../../lib/http/automation-auth'
+import { getSiteRegistry } from '../../../../../lib'
 
 export async function POST(
   request: Request,

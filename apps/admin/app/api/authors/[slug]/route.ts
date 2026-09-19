@@ -4,9 +4,9 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../lib/auth'
-import { parseAuthorPatch } from '../../../lib/platform-api-input'
-import { repositoryForRequest } from '../../../lib/request-repository'
+} from '../../../lib/http/auth'
+import { parseAuthorPatch } from '../../../lib/http/platform-api-input'
+import { repositoryForRequest } from '../../../lib/http/request-repository'
 
 function expectedRevision(request: Request): number | Response {
   const value = request.headers.get('if-match')?.replace(/^"|"$/g, '')

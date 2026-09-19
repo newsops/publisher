@@ -3,9 +3,9 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { assertSiteId } from '../../../apps/admin/app/lib/site-registry.ts'
+import { assertSiteId } from '../../../apps/admin/app/lib/adapters/site-registry.ts'
 import { getRepositoryForSite } from '../../../apps/admin/app/lib/repository.ts'
-import { requireSiteAutomationIdentity } from '../../../apps/admin/app/lib/automation-auth.ts'
+import { requireSiteAutomationIdentity } from '../../../apps/admin/app/lib/http/automation-auth.ts'
 import { readFile } from 'node:fs/promises'
 
 const previous = new Map()

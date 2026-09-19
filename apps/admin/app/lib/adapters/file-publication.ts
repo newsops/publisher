@@ -1,11 +1,11 @@
 import { projectPublicPluginSnapshot } from '@publisher/content'
-import type { ArticleRepository } from './article-repository'
+import type { ArticleRepository } from '../services/article-repository'
 import { FileBuildJobRepository } from '@publisher/persistence'
-import { FilePluginRepository } from './plugin-repository'
+import { FilePluginRepository } from './file-plugin-repository'
 import { deliverSnapshot } from './publisher'
-import type { PublishResult } from './repository-contract'
-import type { LocalState } from './repository-seed'
-import { makeSnapshot } from './repository-validation'
+import type { PublishResult } from '../services/repository-contract'
+import type { LocalState } from '@publisher/content'
+import { makeSnapshot } from '@publisher/content'
 
 interface FilePublicationInput {
   readonly state: LocalState

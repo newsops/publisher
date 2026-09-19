@@ -4,13 +4,13 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../../lib/auth'
+} from '../../../../lib/http/auth'
 import {
   forwardCommentResponse,
   moderationUpdatePath,
   requestCommentService,
-} from '../../../../lib/comment-moderation'
-import { requestedSiteId } from '../../../../lib/request-repository'
+} from '../../../../lib/services/comment-moderation'
+import { authorizedSiteId } from '../../../../lib/http/request-repository'
 
 export async function PATCH(
   request: Request,
@@ -35,7 +35,7 @@ export async function PATCH(
         { status: 400, headers: { 'Cache-Control': 'no-store' } },
       )
     const response = await requestCommentService(
-      moderationUpdatePath(requestedSiteId(request), id),
+      moderationUpdatePath(authorizedSiteId(request, identity, 'editor'), id),
       {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

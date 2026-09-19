@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type {
   ModerationComment,
   ModerationStatus,
-} from './lib/comment-moderation'
+} from './lib/services/comment-moderation'
 
 type PanelState = 'loading' | 'ready' | 'unavailable'
 

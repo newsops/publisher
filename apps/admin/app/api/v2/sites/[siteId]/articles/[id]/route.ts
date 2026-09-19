@@ -4,9 +4,12 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
-import { getArticleRepositoryForSite } from '../../../../../../lib/repository'
+} from '../../../../../../lib/http/automation-auth'
+import {
+  parseJsonBody,
+  revisionFrom,
+} from '../../../../../../lib/http/api-request'
+import { getArticleRepositoryForSite } from '../../../../../../lib'
 
 function variantInput(value: unknown): ArticleVariant {
   const object =

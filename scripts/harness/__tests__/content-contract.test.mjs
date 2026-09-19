@@ -142,7 +142,10 @@ describe('content safety contract', () => {
       fs.readFileSync(path.join(root, 'apps/site/public/_headers'), 'utf8'),
     ).toContain('immutable')
     expect(
-      fs.readFileSync(path.join(root, 'apps/admin/app/lib/auth.ts'), 'utf8'),
+      fs.readFileSync(
+        path.join(root, 'apps/admin/app/lib/adapters/account-store.ts'),
+        'utf8',
+      ),
     ).toContain('account_sessions')
   })
 

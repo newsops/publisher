@@ -12,7 +12,7 @@ import {
   type PostgresPool,
   type PostgresQueryable,
 } from '@publisher/persistence'
-import type { ArticleRepository } from './article-repository'
+import type { ArticleRepository } from '../services/article-repository'
 
 function clone(article: ManagedArticle): ManagedArticle {
   return withCanonicalVariants(

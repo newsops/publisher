@@ -2,19 +2,22 @@ import { createHash, randomUUID } from 'node:crypto'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { PostgresContentRepository } from '../../../apps/admin/app/lib/postgres-content-repository'
-import { PostgresBuildJobRepository } from '../src/build-jobs'
-import { runNextPublicationJob } from '../../../scripts/deploy/publication-worker-core'
+import { PostgresContentRepository } from '../../apps/admin/app/lib/index'
+import { PostgresBuildJobRepository } from '../../packages/persistence/src/index'
+import { runNextPublicationJob } from '../deploy/publication-worker-core'
 import { reconcileCheckedInFixture } from './reconcile'
-import { createLogicalBackup, restoreLogicalBackup } from '../src/recovery'
-import { applyMigrations } from '../src/migrations'
+import {
+  createLogicalBackup,
+  restoreLogicalBackup,
+} from '../../packages/persistence/src/index'
+import { applyMigrations } from '../../packages/persistence/src/index'
 import {
   createImageVariants,
   PostgresMediaRepository,
   validateImageUpload,
-} from '../src/media'
-import { S3CompatibleObjectStore } from '../src/object-storage'
-import { createPostgresPool } from '../src/postgres'
+} from '../../packages/persistence/src/index'
+import { S3CompatibleObjectStore } from '../../packages/persistence/src/index'
+import { createPostgresPool } from '../../packages/persistence/src/index'
 
 function required(name: string): string {
   const value = process.env[name]?.trim()

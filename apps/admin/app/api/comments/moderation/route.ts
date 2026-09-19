@@ -2,13 +2,13 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../lib/auth'
+} from '../../../lib/http/auth'
 import {
   forwardCommentResponse,
   moderationListPath,
   requestCommentService,
-} from '../../../lib/comment-moderation'
-import { requestedSiteId } from '../../../lib/request-repository'
+} from '../../../lib/services/comment-moderation'
+import { authorizedSiteId } from '../../../lib/http/request-repository'
 
 export async function GET(request: Request): Promise<Response> {
   try {
@@ -22,7 +22,7 @@ export async function GET(request: Request): Promise<Response> {
       )
     const response = await requestCommentService(
       moderationListPath(
-        requestedSiteId(request),
+        authorizedSiteId(request, identity, 'editor'),
         status as 'pending' | 'approved' | 'rejected',
       ),
     )

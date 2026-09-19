@@ -3,10 +3,10 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { parseTagInput } from '../../../../../lib/api-input'
-import { parseJsonBody } from '../../../../../lib/api-request'
-import { getRepositoryForSite } from '../../../../../lib/repository'
+} from '../../../../../lib/http/automation-auth'
+import { parseTagInput } from '../../../../../lib/http/api-input'
+import { parseJsonBody } from '../../../../../lib/http/api-request'
+import { getRepositoryForSite } from '../../../../../lib'
 
 export async function GET(
   request: Request,

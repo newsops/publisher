@@ -3,9 +3,9 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { parseJsonBody } from '../../../../../../lib/api-request'
-import { resolveXPostOEmbed } from '../../../../../../lib/x-oembed'
+} from '../../../../../../lib/http/automation-auth'
+import { parseJsonBody } from '../../../../../../lib/http/api-request'
+import { resolveXPostOEmbed } from '../../../../../../lib/services/x-oembed'
 
 export async function POST(
   request: Request,

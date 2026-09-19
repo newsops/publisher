@@ -30,3 +30,10 @@ export function createSnapshotRelease(
     createdAt,
   }
 }
+
+/** What the admin recorded after handing a snapshot to the publication path. */
+export interface PublishDelivery {
+  readonly snapshotKey?: string
+  readonly mode: 'object-storage' | 'local'
+  readonly release: ContentReleaseManifest
+}

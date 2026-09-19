@@ -3,13 +3,9 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import {
-  approveImage,
-  listMedia,
-  uploadImage,
-} from '../../../../../lib/media-service'
-import { browserMediaView } from '../../../../../lib/media-view'
+} from '../../../../../lib/http/automation-auth'
+import { approveImage, listMedia, uploadImage } from '../../../../../lib'
+import { browserMediaView } from '../../../../../lib/http/media-view'
 
 const maximumBytes = 10 * 1024 * 1024
 

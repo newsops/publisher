@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts'
-import { deliverSnapshot } from '../../../apps/admin/app/lib/publisher.ts'
+import { deliverSnapshot } from '../../../apps/admin/app/lib/adapters/publisher.ts'
 
 async function withEnvironment(values, callback) {
   const previous = new Map()

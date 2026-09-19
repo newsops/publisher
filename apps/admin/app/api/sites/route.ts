@@ -2,8 +2,8 @@ import {
   assertSameOrigin,
   authErrorResponse,
   requireIdentity,
-} from '../../lib/auth'
-import { getSiteRegistry } from '../../lib/site-registry'
+} from '../../lib/http/auth'
+import { getSiteRegistry } from '../../lib'
 
 export async function GET(request: Request): Promise<Response> {
   try {

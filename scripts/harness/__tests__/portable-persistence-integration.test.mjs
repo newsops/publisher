@@ -23,18 +23,18 @@ import {
   approveImage,
   readApprovedMediaPreview,
   uploadImage,
-} from '../../../apps/admin/app/lib/media-service.ts'
-import { PostgresContentRepository } from '../../../apps/admin/app/lib/postgres-content-repository.ts'
-import { PostgresArticleRepository } from '../../../apps/admin/app/lib/postgres-article-repository.ts'
-import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/postgres-publication.ts'
+} from '../../../apps/admin/app/lib/adapters/media-service.ts'
+import { PostgresContentRepository } from '../../../apps/admin/app/lib/adapters/postgres-content-repository.ts'
+import { PostgresArticleRepository } from '../../../apps/admin/app/lib/adapters/postgres-article-repository.ts'
+import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/adapters/postgres-publication.ts'
 import { InMemoryBuildJobRepository } from '../../../packages/publication/src/index.ts'
-import { reconcileCheckedInFixture } from '../../../packages/persistence/scripts/reconcile.ts'
+import { reconcileCheckedInFixture } from '../../admin/reconcile.ts'
 import {
   PostgresCommentStore,
   PostgresRateLimiter,
 } from '../../../apps/comments/src/postgres-db.ts'
 import { runNextPublicationJob } from '../../../scripts/deploy/publication-worker.ts'
-import { restoreArchive } from '../../../apps/admin/app/lib/archive-restore.ts'
+import { restoreArchive } from '../../../apps/admin/app/lib/adapters/archive-restore.ts'
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

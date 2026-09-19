@@ -3,19 +3,19 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../../../lib/automation-auth'
+} from '../../../../../../../lib/http/automation-auth'
 import {
   parseJsonBody,
   revisionFrom,
-} from '../../../../../../../lib/api-request'
+} from '../../../../../../../lib/http/api-request'
 import {
   DeskDecisionError,
   decideDesk,
   deskReportFor,
   deskReviewerFor,
   parseDeskDecision,
-} from '../../../../../../../lib/desk-review'
-import { getRepositoryForSite } from '../../../../../../../lib/repository'
+} from '../../../../../../../lib'
+import { getRepositoryForSite } from '../../../../../../../lib'
 
 /**
  * Desk review (EDIT-001). GET exposes the check guide for a post; POST

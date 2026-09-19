@@ -5,10 +5,10 @@ import {
   enforceRateLimit,
   AdminAuthError,
   requireIdentity,
-} from '../../../lib/auth'
-import { parsePluginConfiguration } from '../../../lib/plugin-api-input'
-import { publicPluginInstallation } from '../../../lib/plugin-repository'
-import { pluginRepositoryForRequest } from '../../../lib/request-repository'
+} from '../../../lib/http/auth'
+import { parsePluginConfiguration } from '../../../lib/http/plugin-api-input'
+import { publicPluginInstallation } from '../../../lib'
+import { pluginRepositoryForRequest } from '../../../lib/http/request-repository'
 
 function revision(request: Request): number {
   const value = request.headers.get('if-match')?.replace(/^"|"$/g, '')

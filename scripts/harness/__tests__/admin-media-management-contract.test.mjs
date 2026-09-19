@@ -12,7 +12,7 @@ async function source(path) {
 describe('admin media management contract', () => {
   it('returns a site-scoped browser view with no object-store internals', async () => {
     const route = await source('apps/admin/app/api/media/route.ts')
-    const view = await source('apps/admin/app/lib/media-view.ts')
+    const view = await source('apps/admin/app/lib/http/media-view.ts')
 
     expect(route).toContain("requireIdentity(request, 'publisher')")
     expect(route).toContain('repositoryForRequest(request, identity)')

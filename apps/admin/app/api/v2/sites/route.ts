@@ -2,8 +2,8 @@ import {
   apiErrorResponse,
   apiResponse,
   withAutomation,
-} from '../../../lib/automation-auth'
-import { getSiteRegistry } from '../../../lib/site-registry'
+} from '../../../lib/http/automation-auth'
+import { getSiteRegistry } from '../../../lib'
 
 export async function GET(request: Request): Promise<Response> {
   return withAutomation(request, 'editor', async (_identity, id) =>

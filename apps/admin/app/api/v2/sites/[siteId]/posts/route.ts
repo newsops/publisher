@@ -4,14 +4,14 @@ import {
   auditAutomation,
   AutomationApiError,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { parsePostInput } from '../../../../../lib/api-input'
+} from '../../../../../lib/http/automation-auth'
+import { parsePostInput } from '../../../../../lib/http/api-input'
 import {
   parseJsonBody,
   validatePagination,
-} from '../../../../../lib/api-request'
-import { getRepositoryForSite } from '../../../../../lib/repository'
-import { authorContext } from '../../../../../lib/author-context'
+} from '../../../../../lib/http/api-request'
+import { getRepositoryForSite } from '../../../../../lib'
+import { authorContext } from '../../../../../lib/http/author-context'
 
 export async function GET(
   request: Request,

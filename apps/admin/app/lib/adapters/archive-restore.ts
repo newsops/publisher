@@ -17,14 +17,14 @@ import {
 } from '@publisher/persistence'
 import { assertSiteId } from './site-registry'
 import { loadPostgresSiteState } from './postgres-publication'
-import { initialPayload, type LocalState } from './repository-seed'
+import { initialPayload, type LocalState } from '@publisher/content'
 import {
   assertUniqueFeaturedRanks,
   validatedAuthor,
   validatedPost,
   validatedSettings,
   validatedTag,
-} from './repository-validation'
+} from '@publisher/content'
 
 export interface ArchiveRestoreMediaBinding {
   readonly mediaId: string
@@ -342,4 +342,29 @@ export async function restoreArchive(
     )
     return result
   })
+}
+
+export interface ArchiveRestoreOperation {
+  readonly result: Record<string, unknown>
+  readonly createdAt: string
+}
+
+/** A completed restore operation by id, for the operations surface. */
+export async function findArchiveRestoreOperation(
+  siteId: string,
+  operationId: string,
+): Promise<ArchiveRestoreOperation | undefined> {
+  if (!process.env.DATABASE_URL) return undefined
+  const result = await postgresPool(process.env.DATABASE_URL).query<{
+    result: Record<string, unknown>
+    created_at: Date
+  }>(
+    `SELECT result, created_at FROM publisher_admin.archive_restore_operations
+     WHERE site_id = $1 AND operation_id = $2::uuid`,
+    [siteId, operationId],
+  )
+  const row = result.rows[0]
+  return row
+    ? { result: row.result, createdAt: row.created_at.toISOString() }
+    : undefined
 }

@@ -4,16 +4,13 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../lib/auth'
-import { parsePluginCreateInput } from '../../lib/plugin-api-input'
-import {
-  knownPluginIds,
-  publicPluginInstallation,
-} from '../../lib/plugin-repository'
+} from '../../lib/http/auth'
+import { parsePluginCreateInput } from '../../lib/http/plugin-api-input'
+import { knownPluginIds, publicPluginInstallation } from '../../lib'
 import {
   pluginRepositoryForRequest,
   requestedSiteId,
-} from '../../lib/request-repository'
+} from '../../lib/http/request-repository'
 
 export async function GET(request: Request): Promise<Response> {
   try {

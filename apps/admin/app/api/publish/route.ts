@@ -4,9 +4,9 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../lib/auth'
-import { repositoryForRequest } from '../../lib/request-repository'
-import { publicationIdempotencyKey } from '../../lib/publisher'
+} from '../../lib/http/auth'
+import { repositoryForRequest } from '../../lib/http/request-repository'
+import { publicationIdempotencyKey } from '../../lib'
 
 export async function POST(request: Request): Promise<Response> {
   try {

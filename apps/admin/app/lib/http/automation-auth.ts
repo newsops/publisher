@@ -7,7 +7,7 @@ import {
   enforceRateLimit,
 } from './auth'
 import { ApiRequestError } from './api-error'
-import { getSiteRegistry } from './site-registry'
+import { getSiteRegistry } from '../index'
 
 export { ApiRequestError as AutomationApiError } from './api-error'
 

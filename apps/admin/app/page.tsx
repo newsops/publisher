@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import AdminDashboard from './AdminDashboard'
 import LoginForm from './LoginForm'
-import { bootstrapAvailable, requireIdentity } from './lib/auth'
+import { bootstrapAvailable, requireIdentity } from './lib/http/auth'
 
 export const dynamic = 'force-dynamic'
 

@@ -6,8 +6,8 @@ import {
   enforceRateLimit,
   AdminAuthError,
   requireIdentity,
-} from '../../../lib/auth'
-import { repositoryForRequest } from '../../../lib/request-repository'
+} from '../../../lib/http/auth'
+import { repositoryForRequest } from '../../../lib/http/request-repository'
 
 function parseInput(value: unknown): PostDraftInput {
   const object =

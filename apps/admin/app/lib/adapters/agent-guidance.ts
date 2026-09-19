@@ -79,3 +79,16 @@ export function parseAgentGuidanceInput(value: unknown): string {
     throw new ContentValidationError('Guidance input is required')
   return normalized((value as { instructions?: unknown }).instructions)
 }
+
+/** Guidance text for desk reports; absent without a database. */
+export async function siteGuidanceText(
+  siteId: string,
+): Promise<string | undefined> {
+  if (!process.env.DATABASE_URL) return undefined
+  try {
+    const guidance = await getAgentGuidanceRepository().get(siteId)
+    return guidance.instructions || undefined
+  } catch {
+    return undefined
+  }
+}

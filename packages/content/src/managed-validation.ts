@@ -22,7 +22,7 @@ import {
   deskApprovalValid,
   deskContentFingerprint,
   type DeskReview,
-} from '@publisher/content'
+} from './index'
 
 export function validatedSettings(
   input: PublicationSettingsInput,

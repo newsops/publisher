@@ -1,16 +1,13 @@
 import { createHash } from 'node:crypto'
 import {
   ContentValidationError,
+  createSnapshotRelease,
   type ContentSnapshot,
+  type PublishDelivery,
 } from '@publisher/content'
 import { objectStoreFromEnvironment } from '@publisher/persistence'
-import { createSnapshotRelease, type ContentReleaseManifest } from './release'
 
-export interface PublishDelivery {
-  readonly snapshotKey?: string
-  readonly mode: 'object-storage' | 'local'
-  readonly release: ContentReleaseManifest
-}
+export type { PublishDelivery } from '@publisher/content'
 
 export function publicationIdempotencyKey(request: Request): string {
   const value = request.headers.get('idempotency-key')?.trim() ?? ''

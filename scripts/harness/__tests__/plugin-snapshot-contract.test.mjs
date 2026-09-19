@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { FileContentRepository } from '../../../apps/admin/app/lib/file-content-repository.ts'
-import {
-  FilePluginRepository,
-  clonePluginInstallations,
-} from '../../../apps/admin/app/lib/plugin-repository.ts'
+import { FileContentRepository } from '../../../apps/admin/app/lib/adapters/file-content-repository.ts'
+import { FilePluginRepository } from '../../../apps/admin/app/lib/adapters/file-plugin-repository.ts'
+import { clonePluginInstallations } from '../../../packages/content/src/index.ts'
 
 describe('plugin snapshot secrecy and clone contract', () => {
   it('publishes only enabled public configuration and removes secret references on clone', async () => {

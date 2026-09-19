@@ -1,10 +1,12 @@
-import { postgresPool } from '@publisher/persistence'
 import {
   apiErrorResponse,
   apiResponse,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { getRepositoryForSite } from '../../../../../../lib/repository'
+} from '../../../../../../lib/http/automation-auth'
+import {
+  findArchiveRestoreOperation,
+  getRepositoryForSite,
+} from '../../../../../../lib'
 
 export async function GET(
   request: Request,
@@ -17,17 +19,8 @@ export async function GET(
     siteId,
     async (_identity, id) => {
       try {
-        const restore = await postgresPool(
-          process.env.DATABASE_URL ?? '',
-        ).query<{
-          result: Record<string, unknown>
-          created_at: Date
-        }>(
-          `SELECT result, created_at FROM publisher_admin.archive_restore_operations
-         WHERE site_id = $1 AND operation_id = $2::uuid`,
-          [siteId, operationId],
-        )
-        if (restore.rows[0])
+        const restore = await findArchiveRestoreOperation(siteId, operationId)
+        if (restore)
           return apiResponse(
             {
               operation: {
@@ -36,8 +29,8 @@ export async function GET(
                 status: 'completed',
                 terminal: true,
                 retryable: false,
-                updatedAt: restore.rows[0].created_at.toISOString(),
-                result: restore.rows[0].result,
+                updatedAt: restore.createdAt,
+                result: restore.result,
               },
             },
             200,

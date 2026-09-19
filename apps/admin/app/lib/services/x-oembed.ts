@@ -1,4 +1,4 @@
-import { ApiRequestError } from './api-error'
+import { ServiceError as ApiRequestError } from './errors'
 
 const xStatusUrl =
   /^https:\/\/x\.com\/([A-Za-z0-9_]{1,15})\/status\/([0-9]+)(?:[/?#].*)?$/

@@ -8,7 +8,7 @@ import {
   isValidLocale,
   validateArticleLocales,
 } from '../../../packages/content/src/article-adapter.ts'
-import { FileArticleRepositoryAdapter } from '../../../apps/admin/app/lib/article-repository-adapter.ts'
+import { FileArticleRepositoryAdapter } from '../../../apps/admin/app/lib/adapters/article-repository-adapter.ts'
 import {
   GET,
   PUT,
