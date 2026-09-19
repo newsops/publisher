@@ -163,4 +163,35 @@ describe('admin taxonomy contract', () => {
       editorialPersona: 'Use a factual reporting voice.',
     })
   })
+
+  it('matches imported category spellings case-insensitively and honours an explicit slug', async () => {
+    const repository = new FileContentRepository(dataDirectory)
+    const seeded = await repository.listCategories()
+    expect(seeded.map((term) => term.slug)).toContain('hardware')
+    const explicit = await repository.saveCategory(undefined, {
+      name: 'Platforms',
+      slug: 'Platforms',
+    })
+    expect(explicit.slug).toBe('Platforms')
+    const [post] = await repository.list()
+    const saved = await repository.save(post.id, {
+      ...post,
+      categories: ['Hardware'],
+    })
+    // The stored spelling, and therefore the public category path, is kept.
+    expect(saved.categories).toEqual(['Hardware'])
+    await expect(
+      repository.save(post.id, { ...saved, categories: ['Unknown'] }),
+    ).rejects.toThrow('unsupported category: Unknown')
+    // Removing a term deactivates it; creating it again reactivates it.
+    const removed = await repository.removeCategory('Platforms')
+    expect(removed.active).toBe(false)
+    const revived = await repository.saveCategory(undefined, {
+      name: 'Platforms',
+    })
+    expect(revived).toMatchObject({ slug: 'Platforms', active: true })
+    await expect(
+      repository.saveCategory(undefined, { name: 'platforms' }),
+    ).rejects.toThrow('Category already exists')
+  })
 })

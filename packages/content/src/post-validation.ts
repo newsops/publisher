@@ -214,8 +214,13 @@ function validatedCategories(
   const categories = Array.isArray(input.categories)
     ? [...new Set(input.categories.map(String))]
     : []
+  // Taxonomy slugs are normalized to lower case, while records imported from
+  // earlier publications may reference the same term with its original case
+  // (a public path such as /search/label/Hardware/). Match case-insensitively
+  // and keep the stored spelling so existing public URLs remain stable.
+  const allowedLower = new Set(allowed.map((slug) => slug.toLowerCase()))
   for (const category of categories)
-    if (!allowed.includes(category))
+    if (!allowedLower.has(category.toLowerCase()))
       errors.push(`unsupported category: ${category}`)
   if (
     input.imageUrl !== undefined &&

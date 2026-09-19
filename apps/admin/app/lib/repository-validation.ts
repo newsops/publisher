@@ -151,7 +151,8 @@ export function validatedTag(
   const name = input.name.trim()
   if (!name) throw new ContentValidationError('tag name is required')
   if (name.length > 80) throw new ContentValidationError('tag name is too long')
-  const resolvedSlug = current?.slug ?? slug ?? slugify(name, 'tag')
+  const resolvedSlug =
+    current?.slug ?? slug ?? input.slug?.trim() ?? slugify(name, 'tag')
   if (!/^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/.test(resolvedSlug))
     throw new ContentValidationError(
       'tag slug must contain letters, numbers, and hyphens only',
@@ -230,8 +231,9 @@ export function validatedPost(
   })
   if (!result.ok || !result.value)
     throw new ContentValidationError(result.errors.join('; '))
+  const allowedTagSlugs = new Set(allowedTags.map((slug) => slug.toLowerCase()))
   for (const tag of result.value.tags)
-    if (!allowedTags.includes(tag))
+    if (!allowedTagSlugs.has(tag.toLowerCase()))
       throw new ContentValidationError(`unsupported tag: ${tag}`)
   return {
     ...result.value,
@@ -239,6 +241,51 @@ export function validatedPost(
     revision: current ? current.revision + 1 : result.value.revision,
     createdAt: current?.createdAt ?? result.value.createdAt,
   }
+}
+
+/**
+ * Creates or updates a taxonomy term. Creating a term whose slug matches a
+ * deactivated term reactivates that term instead of failing, so a removal is
+ * reversible through the same API; duplicates are detected case-insensitively
+ * because slugs are matched that way everywhere else.
+ */
+export function upsertTaxonomyTerm(
+  terms: readonly ManagedTaxonomyTerm[],
+  slug: string | undefined,
+  input: TaxonomyTermInput,
+  label: 'Tag' | 'Category',
+): {
+  readonly terms: ManagedTaxonomyTerm[]
+  readonly term: ManagedTaxonomyTerm
+} {
+  const sameSlug = (value: string) => (item: ManagedTaxonomyTerm) =>
+    item.slug.toLowerCase() === value.toLowerCase()
+  let current = slug ? terms.find(sameSlug(slug)) : undefined
+  if (slug && !current) throw new Error(`${label} not found`)
+  if (!current) {
+    const requested =
+      input.slug?.trim() || slugify(input.name.trim() || '', 'tag')
+    const existing = terms.find(sameSlug(requested))
+    if (existing?.active)
+      throw new ContentValidationError(`${label} already exists`)
+    current = existing
+  }
+  const term = validatedTag(slug ?? current?.slug, input, current)
+  return {
+    terms: current
+      ? terms.map((item) => (item.slug === current.slug ? term : item))
+      : [...terms, term],
+    term,
+  }
+}
+
+/** Case-insensitive taxonomy reference check; see validatedCategories. */
+export function referencesTerm(
+  references: readonly string[] | undefined,
+  slug: string,
+): boolean {
+  const target = slug.toLowerCase()
+  return (references ?? []).some((value) => value.toLowerCase() === target)
 }
 
 export function assertUniqueFeaturedRanks(posts: readonly ManagedPost[]): void {

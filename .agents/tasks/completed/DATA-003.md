@@ -33,6 +33,10 @@ keeping public HTML derived from canonical Markdown.
 - `pnpm typecheck`, `pnpm test`, `pnpm harness:scan` passed; both production
   snapshots (15 posts) resolved with zero failures.
 
+- Follow-up: imported posts could not be edited because their category
+  spelling differed from the normalized taxonomy slugs; validation now
+  matches case-insensitively and term removal is reversible.
+
 ## Decisions
 
 - Admin reads are lenient so a site stays editable; publication is strict and
