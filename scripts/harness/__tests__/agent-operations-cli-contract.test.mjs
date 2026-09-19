@@ -597,6 +597,226 @@ describe('agent operations CLI contract', () => {
     )
   })
 
+  it('covers every automation capability with a command that maps to one v2 operation (ARCH-006)', async () => {
+    const calls = []
+    const directory = await mkdtemp(path.join(os.tmpdir(), 'publisher-cli-'))
+    const input = path.join(directory, 'input.json')
+    await writeFile(input, JSON.stringify({ name: 'Example' }), 'utf8')
+    const image = path.join(directory, 'hero.png')
+    await writeFile(image, Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+    await withServer(
+      (request, response) => {
+        let raw = ''
+        request.on('data', (chunk) => (raw += chunk))
+        request.on('end', () => {
+          calls.push({
+            method: request.method,
+            url: request.url,
+            ifMatch: request.headers['if-match'],
+            contentType: request.headers['content-type']?.split(';')[0],
+          })
+          response.setHeader('content-type', 'application/json')
+          response.statusCode = request.method === 'POST' ? 201 : 200
+          response.end(
+            JSON.stringify({
+              siteId: 'default',
+              media: { id: 'm1', variants: [] },
+              ok: true,
+            }),
+          )
+        })
+      },
+      async (origin) => {
+        const environment = {
+          PUBLISHER_ADMIN_ORIGIN: origin,
+          PUBLISHER_API_TOKEN: 'token',
+        }
+        const expectations = [
+          [
+            ['settings', 'get', '--site', 'default'],
+            'SETTINGS',
+            'GET /api/v2/sites/default/settings',
+          ],
+          [
+            [
+              'settings',
+              'set',
+              '--site',
+              'default',
+              '--input',
+              input,
+              '--revision',
+              '3',
+            ],
+            'SETTINGS_UPDATED',
+            'PATCH /api/v2/sites/default/settings',
+          ],
+          [
+            ['site', 'update', '--site', 'default', '--input', input],
+            'SITE_UPDATED',
+            'PATCH /api/v2/sites/default',
+          ],
+          [
+            ['site', 'archive', '--site', 'default'],
+            'SITE_ARCHIVED',
+            'DELETE /api/v2/sites/default',
+          ],
+          [
+            [
+              'post',
+              'delete',
+              '--site',
+              'default',
+              '--post',
+              'p1',
+              '--revision',
+              '2',
+            ],
+            'POST_DELETED',
+            'DELETE /api/v2/sites/default/posts/p1',
+          ],
+          [
+            ['plugin', 'list', '--site', 'default'],
+            'PLUGINS',
+            'GET /api/v2/sites/default/plugins',
+          ],
+          [
+            [
+              'plugin',
+              'get',
+              '--site',
+              'default',
+              '--plugin',
+              'google.analytics',
+            ],
+            'PLUGIN',
+            'GET /api/v2/sites/default/plugins/google.analytics',
+          ],
+          [
+            [
+              'plugin',
+              'install',
+              '--site',
+              'default',
+              '--plugin',
+              'google.analytics',
+            ],
+            'PLUGIN_INSTALLED',
+            'POST /api/v2/sites/default/plugins',
+          ],
+          [
+            [
+              'plugin',
+              'configure',
+              '--site',
+              'default',
+              '--plugin',
+              'google.analytics',
+              '--input',
+              input,
+              '--revision',
+              '1',
+            ],
+            'PLUGIN_CONFIGURED',
+            'PATCH /api/v2/sites/default/plugins/google.analytics',
+          ],
+          [
+            [
+              'plugin',
+              'enable',
+              '--site',
+              'default',
+              '--plugin',
+              'google.analytics',
+              '--revision',
+              '2',
+            ],
+            'PLUGIN_ENABLED',
+            'POST /api/v2/sites/default/plugins/google.analytics',
+          ],
+          [
+            ['article', 'get', '--site', 'default', '--article', 'p1'],
+            'ARTICLE',
+            'GET /api/v2/sites/default/articles/p1',
+          ],
+          [
+            [
+              'article',
+              'set',
+              '--site',
+              'default',
+              '--article',
+              'p1',
+              '--input',
+              input,
+              '--revision',
+              '4',
+            ],
+            'ARTICLE_VARIANT_SET',
+            'PUT /api/v2/sites/default/articles/p1',
+          ],
+          [
+            [
+              'article',
+              'remove',
+              '--site',
+              'default',
+              '--article',
+              'p1',
+              '--locale',
+              'ko-KR',
+              '--revision',
+              '5',
+            ],
+            'ARTICLE_VARIANT_REMOVED',
+            'DELETE /api/v2/sites/default/articles/p1?locale=ko-KR',
+          ],
+          [
+            [
+              'media',
+              'upload',
+              '--site',
+              'default',
+              '--file',
+              image,
+              '--mime-type',
+              'image/png',
+              '--pending',
+            ],
+            'MEDIA_UPLOADED',
+            'POST /api/v2/sites/default/media',
+          ],
+          [
+            ['media', 'approve', '--site', 'default', '--media', 'm1'],
+            'MEDIA_APPROVED',
+            'PUT /api/v2/sites/default/media',
+          ],
+        ]
+        for (const [args, code, call] of expectations) {
+          calls.length = 0
+          const result = await runAsync(
+            [...args, '--non-interactive', '--json'],
+            environment,
+          )
+          expect(result.body.code, args.join(' ')).toBe(code)
+          expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual([call])
+        }
+        const mutations = calls.filter((call) => call.ifMatch)
+        expect(mutations.every((call) => /^"\d+"$/.test(call.ifMatch))).toBe(
+          true,
+        )
+        // A mutation without --non-interactive never reaches the server.
+        calls.length = 0
+        const refused = await runAsync(
+          ['site', 'archive', '--site', 'default', '--json'],
+          environment,
+        )
+        expect(refused.body.code).toBe('NON_INTERACTIVE_REQUIRED')
+        expect(calls).toEqual([])
+      },
+    )
+  })
+
   it('discovers a device flow without leaking tokens or persisting credentials', async () => {
     const requests = []
     await withServer(

@@ -133,6 +133,44 @@ export interface PublisherAdminClient {
     siteId: string,
     idempotencyKey: string,
   ): Promise<PublisherApiReply<unknown>>
+  listPlugins(siteId: string): Promise<PublisherApiReply<unknown>>
+  createPlugin(
+    siteId: string,
+    input: { pluginId: string; configuration?: Record<string, unknown> },
+  ): Promise<PublisherApiReply<unknown>>
+  getPlugin(
+    siteId: string,
+    pluginId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  configurePlugin(
+    siteId: string,
+    pluginId: string,
+    configuration: Record<string, unknown>,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  runPluginAction(
+    siteId: string,
+    pluginId: string,
+    action: 'validate' | 'enable' | 'disable',
+    revision: number,
+    configuration?: Record<string, unknown>,
+  ): Promise<PublisherApiReply<unknown>>
+  getArticle(
+    siteId: string,
+    articleId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  putArticleVariant(
+    siteId: string,
+    articleId: string,
+    variant: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  deleteArticleVariant(
+    siteId: string,
+    articleId: string,
+    locale: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
   uploadMedia(
     siteId: string,
     input: {

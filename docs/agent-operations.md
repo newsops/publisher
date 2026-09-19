@@ -40,6 +40,21 @@ client method, or route is missing without a declared reason. Commands with
 no server counterpart (`doctor`, `auth login`, `content inspect`) are
 declared CLI-only there.
 
+```bash
+publisher settings get --site example --json
+publisher settings set --site example --input ./settings.json --revision 2 --non-interactive --json
+publisher site update --site example --input ./site.json --non-interactive --json
+publisher post delete --site example --post <post-id> --revision 3 --non-interactive --json
+publisher plugin list --site example --json
+publisher plugin install --site example --plugin google.analytics --input ./plugin.json --non-interactive --json
+publisher plugin enable --site example --plugin google.analytics --revision 1 --non-interactive --json
+publisher article set --site example --article <post-id> --input ./variant.json --revision 4 --non-interactive --json
+publisher media upload --site example --file ./hero.png --mime-type image/png --non-interactive --json
+```
+
+`media upload` approves the image and returns its public variants unless
+`--pending` is given; `media approve --media <id>` approves a pending item.
+
 ## Per-publication guidance
 
 An operator can retain private editorial instructions for each publication.

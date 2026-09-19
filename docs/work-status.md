@@ -1,6 +1,6 @@
 # Work status
 
-Last reconciled: 2026-09-13
+Last reconciled: 2026-09-19
 
 A feature is completed only after every criterion is checked and its spec has a
 passing `GATE-COMPLETE` entry. Earlier completed specs remain decision records;
@@ -8,12 +8,13 @@ current active specs override their provider details.
 
 ## Completed foundation
 
-| ID        | Status   | Scope                                                                                               |
-| --------- | -------- | --------------------------------------------------------------------------------------------------- |
-| INFRA-005 | Complete | PostgreSQL, S3-compatible object storage, media, recovery, `$0` preflight, clean-room onboarding    |
-| WEB-008   | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation |
-| WEB-001   | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision     |
-| INFRA-003 | Complete | Provider-neutral managed static-host activation evidence                                            |
+| ID            | Status   | Scope                                                                                               |
+| ------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| ARCH-001..006 | Complete | Six-layer hierarchy and three access surfaces enforced by harness scans; baseline empty             |
+| INFRA-005     | Complete | PostgreSQL, S3-compatible object storage, media, recovery, `$0` preflight, clean-room onboarding    |
+| WEB-008       | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation |
+| WEB-001       | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision     |
+| INFRA-003     | Complete | Provider-neutral managed static-host activation evidence                                            |
 
 ## Completed implementation
 
