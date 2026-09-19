@@ -1,4 +1,18 @@
-:root { --paper: #ffffff; --wash: #f3f4f6; --ink: #0b0c0c; --body: #3a3f46; --prose: #1d2024; --meta: #6b7079; --rule: #d9dce1; --rule-soft: #eceef1; --accent: #b80000; --accent-ink: #ffffff; --masthead: #0b0c0c; --masthead-ink: #ffffff; --masthead-muted: #b4b8bf; --serif: 'Iowan Old Style', Charter, 'Palatino Linotype', 'Book Antiqua', Georgia, serif; --sans: 'Helvetica Neue', Helvetica, 'Segoe UI', 'Noto Sans', Arial, sans-serif; }
+import type { ThemeDefinition } from './definition'
+
+/**
+ * Signal theme — Same newsroom layout on warm paper with a forest-green accent and a deep green masthead.
+ *
+ * Every theme owns its complete stylesheet: the token block first, then the
+ * presentation rules for the shared semantic slots (header, navigation,
+ * index, article, rail, comments, footer). Edit this file directly; the
+ * bundle is content-addressed at build time and never rebuilds article HTML.
+ */
+export const signal: ThemeDefinition = {
+  id: 'signal',
+  name: 'Signal',
+  version: '1',
+  css: `:root { --paper: #fbfaf5; --wash: #f0eee4; --ink: #17231d; --body: #405047; --prose: #25352c; --meta: #6b7b70; --rule: #d4ddd4; --rule-soft: #e4ebe3; --accent: #087f5b; --accent-ink: #ffffff; --masthead: #0f2a22; --masthead-ink: #fbfaf5; --masthead-muted: #a8bcb2; --serif: 'Iowan Old Style', Charter, 'Palatino Linotype', 'Book Antiqua', Georgia, serif; --sans: 'Helvetica Neue', Helvetica, 'Segoe UI', 'Noto Sans', Arial, sans-serif; }
 :root { --gutter: clamp(16px, 4vw, 48px); --measure: 66ch; --container: 1280px; --masthead-rule: rgba(255, 255, 255, 0.14); }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -203,3 +217,11 @@ button[type='submit']:hover { background: var(--accent); border-color: var(--acc
 @media (max-width: 760px) { body { font-size: 16px; } .container, .post-body { width: calc(100% - 32px); } .topbar-inner { min-height: 32px; } .topbar-date { font-size: 11px; } .main-header-inner { min-height: 68px; gap: 16px; } .brand { font-size: 24px; gap: 10px; } .brand::before { width: 9px; } .masthead-search { display: none; } .section-nav-inner { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .section-nav-inner::-webkit-scrollbar { display: none; } .main-nav { gap: 20px; } .main-nav a { height: 44px; font-size: 12px; } .nav-search { margin-left: 0; } .post-list[data-variant='grid'] { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 0; margin-inline: -12px; } .post-list[data-variant='grid'] .post-card:nth-child(n) { padding-inline: 12px; border-left: 1px solid var(--rule); } .post-list[data-variant='grid'] .post-card:nth-child(2n + 1) { border-left: 0; } .post-title { font-size: 16px; } .post-list[data-variant='list'] .post-card { grid-template-columns: minmax(0, 1fr) 120px; gap: 16px; padding: 18px 0; } .post-list[data-variant='list'] .post-title { font-size: 18px; } .post-list[data-variant='list'] .excerpt { display: none; } .pagination { flex-wrap: wrap; } .prose { font-size: 18px; } .footer-main { gap: 24px; padding: 32px 0 24px; } }
 @media (max-width: 520px) { .topbar-nav { gap: 16px; } .post-list[data-variant='grid'] { grid-template-columns: minmax(0, 1fr); gap: 0; margin-inline: 0; } .post-list[data-variant='grid'] .post-card:nth-child(n) { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; padding: 16px 0; border-left: 0; padding-inline: 0; border-bottom: 1px solid var(--rule); } .post-list[data-variant='grid'] .post-card:first-child { padding-top: 0; } .post-list[data-variant='grid'] .post-card:last-child { border-bottom: 0; } .post-list[data-variant='grid'] .post-image { aspect-ratio: 1; } .post-list[data-variant='grid'] .post-image-placeholder { aspect-ratio: 1; } .post-list[data-variant='list'] .post-card { grid-template-columns: minmax(0, 1fr); } .post-list[data-variant='list'] .post-image { order: 0; } .lead-title { font-size: 28px; } .post-body h1 { font-size: 30px; } .standfirst { font-size: 17px; } .footer-bar-inner { align-items: flex-start; flex-direction: column; justify-content: center; gap: 8px; padding-block: 16px; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+.publisher-x-post { margin: 32px 0; padding: 22px 24px; border: 1px solid var(--rule); border-radius: 4px; background: var(--wash); }
+.publisher-x-post blockquote { margin: 0; padding: 0; border: 0; color: var(--ink); font: 600 20px/1.5 var(--serif); }
+.publisher-x-post blockquote p { margin: 0; }
+.publisher-x-post figcaption { margin-top: 14px; color: var(--meta); font: 700 12px/1.4 var(--sans); letter-spacing: .03em; }
+.publisher-x-post figcaption a { color: var(--accent); }
+@media (max-width: 560px) { .publisher-x-post { padding: 18px; } .publisher-x-post blockquote { font-size: 18px; } }
+`,
+}

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node ../../scripts/generate-theme-runtime.mjs && next build && node ../../scripts/postbuild-static.mjs && tsx ../../scripts/generate-public-metadata.mjs && node ../../scripts/generate-plugin-headers.mjs",
+    "build": "tsx ../../scripts/generate-theme-runtime.mts && next build && node ../../scripts/postbuild-static.mjs && tsx ../../scripts/generate-public-metadata.mjs && node ../../scripts/generate-plugin-headers.mjs",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "node -e \"process.exit(0)\""
