@@ -199,8 +199,8 @@ export async function createImageVariants(
 
 export class PostgresMediaRepository {
   constructor(
-    connectionString = process.env.DATABASE_URL ?? '',
-    private readonly pool: PostgresPool = postgresPool(connectionString),
+    connectionString: string | undefined,
+    private readonly pool: PostgresPool = postgresPool(connectionString ?? ''),
   ) {}
 
   async createPending(

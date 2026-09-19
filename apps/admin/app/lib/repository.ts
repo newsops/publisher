@@ -19,20 +19,38 @@ import type {
   PublishResult,
 } from './services/repository-contract'
 import type { BuildJob } from '@publisher/publication'
-import { assertSiteId } from './adapters/site-registry'
+import { assertSiteId } from '@publisher/content'
+import { postgresPool } from '@publisher/persistence'
+import { adminConfig, adminDataDirectory } from './config'
+
+/** The shared pool for the configured database, or undefined without one. */
+export function adminPool() {
+  const url = adminConfig().databaseUrl
+  return url ? postgresPool(url) : undefined
+}
+
+function requireProductionDatabase(): never {
+  throw new Error('DATABASE_URL is required for production persistence')
+}
 
 class RuntimeContentRepository implements ContentRepository {
   readonly siteId = 'default'
-  private readonly file = new FileContentRepository()
+  private file: FileContentRepository | undefined
   private postgres: PostgresContentRepository | undefined
 
   private async active(): Promise<ContentRepository> {
-    if (shouldUseIsolatedFileRepository()) return this.file
-    if (process.env.DATABASE_URL)
-      return (this.postgres ??= new PostgresContentRepository(this.siteId))
-    if (process.env.NODE_ENV === 'production')
-      throw new Error('DATABASE_URL is required for production persistence')
-    return this.file
+    const config = adminConfig()
+    const file = () =>
+      (this.file ??= new FileContentRepository(adminDataDirectory()))
+    if (config.isolatedFileRepository) return file()
+    const pool = adminPool()
+    if (pool)
+      return (this.postgres ??= new PostgresContentRepository(
+        this.siteId,
+        pool,
+      ))
+    if (config.nodeEnv === 'production') requireProductionDatabase()
+    return file()
   }
 
   async list(): Promise<readonly ManagedPost[]> {
@@ -116,11 +134,9 @@ class RuntimeContentRepository implements ContentRepository {
 }
 
 export function shouldUseIsolatedFileRepository(
-  environment: NodeJS.ProcessEnv = process.env,
+  environment?: NodeJS.ProcessEnv,
 ): boolean {
-  return (
-    environment.NODE_ENV !== 'production' && Boolean(environment.ADMIN_DATA_DIR)
-  )
+  return adminConfig(environment).isolatedFileRepository
 }
 
 let repository: ContentRepository | undefined
@@ -132,28 +148,31 @@ export function getRepository(): ContentRepository {
 
 export function getRepositoryForSite(siteId: string): ContentRepository {
   assertSiteId(siteId)
-  if (process.env.DATABASE_URL) return new PostgresContentRepository(siteId)
+  const pool = adminPool()
+  if (pool) return new PostgresContentRepository(siteId, pool)
   if (siteId === 'default') return getRepository()
-  if (process.env.NODE_ENV === 'production')
-    throw new Error('DATABASE_URL is required for production persistence')
-  return new FileContentRepository(undefined, siteId)
+  if (adminConfig().nodeEnv === 'production') requireProductionDatabase()
+  return new FileContentRepository(adminDataDirectory(siteId), siteId)
+}
+
+/** File-backed stores serve local development; production requires PostgreSQL. */
+export function useFileStores(): boolean {
+  const config = adminConfig()
+  return (
+    config.isolatedFileRepository ||
+    (config.nodeEnv !== 'production' && !config.databaseUrl)
+  )
 }
 
 export function getArticleRepositoryForSite(
   siteId = 'default',
 ): ArticleRepository {
   assertSiteId(siteId)
-  if (
-    shouldUseIsolatedFileRepository() ||
-    (process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL)
-  )
-    return new FileArticleRepositoryAdapter(
-      siteId === 'default'
-        ? process.env.ADMIN_DATA_DIR
-        : `${process.env.ADMIN_DATA_DIR ?? '.data/admin'}/sites/${siteId}`,
-    )
-  if (process.env.DATABASE_URL) return new PostgresArticleRepository(siteId)
-  throw new Error('DATABASE_URL is required for production persistence')
+  if (useFileStores())
+    return new FileArticleRepositoryAdapter(adminDataDirectory(siteId))
+  const pool = adminPool()
+  if (pool) return new PostgresArticleRepository(siteId, pool)
+  return requireProductionDatabase()
 }
 
 export { FileContentRepository } from './adapters/file-content-repository'

@@ -36,10 +36,8 @@ function initialArticles(): ManagedArticle[] {
 
 export class PostgresArticleRepository implements ArticleRepository {
   constructor(
-    readonly siteId = 'default',
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
+    readonly siteId: string,
+    private readonly pool: PostgresPool,
   ) {}
 
   async seedCheckedInFixture(): Promise<void> {

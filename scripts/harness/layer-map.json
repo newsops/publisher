@@ -168,7 +168,8 @@
     "packages/persistence/src/postgres.ts",
     "packages/ops-cli/**",
     "scripts/**",
-    "packages/*/scripts/**"
+    "packages/*/scripts/**",
+    "apps/admin/app/lib/repository.ts"
   ],
   "envAllowedNames": ["NEXT_PUBLIC_*", "NODE_ENV"],
   "routes": {

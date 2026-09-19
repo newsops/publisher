@@ -46,10 +46,8 @@ export class PostgresContentRepository implements ContentRepository {
   readonly siteId: string
 
   constructor(
-    siteId = 'default',
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
+    siteId: string,
+    private readonly pool: PostgresPool,
   ) {
     assertSiteId(siteId)
     this.siteId = siteId

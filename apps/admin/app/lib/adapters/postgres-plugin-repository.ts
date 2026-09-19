@@ -55,9 +55,7 @@ function configured(
 export class PostgresPluginRepository implements PluginRepository {
   constructor(
     readonly siteId: string,
-    private readonly pool: PostgresPool = postgresPool(
-      process.env.DATABASE_URL ?? '',
-    ),
+    private readonly pool: PostgresPool,
   ) {
     assertSiteId(siteId)
   }

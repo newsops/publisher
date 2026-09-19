@@ -226,7 +226,7 @@ async function approvedMediaPaths(
 export async function restoreArchive(
   siteId: string,
   input: ArchiveRestoreInput,
-  pool: PostgresPool = postgresPool(process.env.DATABASE_URL ?? ''),
+  pool: PostgresPool,
 ): Promise<ArchiveRestoreResult> {
   assertSiteId(siteId)
   if (
@@ -353,9 +353,9 @@ export interface ArchiveRestoreOperation {
 export async function findArchiveRestoreOperation(
   siteId: string,
   operationId: string,
+  pool: PostgresPool,
 ): Promise<ArchiveRestoreOperation | undefined> {
-  if (!process.env.DATABASE_URL) return undefined
-  const result = await postgresPool(process.env.DATABASE_URL).query<{
+  const result = await pool.query<{
     result: Record<string, unknown>
     created_at: Date
   }>(

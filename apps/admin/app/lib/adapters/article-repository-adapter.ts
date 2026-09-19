@@ -35,10 +35,7 @@ function initialArticles(): ManagedArticle[] {
 export class FileArticleRepositoryAdapter implements ArticleRepository {
   private readonly filePath: string
 
-  constructor(
-    directory = process.env.ADMIN_DATA_DIR ??
-      path.join(process.cwd(), '.data/admin'),
-  ) {
+  constructor(directory: string) {
     this.filePath = path.join(directory, 'articles.json')
   }
 

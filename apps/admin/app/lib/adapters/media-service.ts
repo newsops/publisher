@@ -2,38 +2,35 @@ import { parseEditorialMarkdown } from '@publisher/content'
 import {
   analyseImagePixels,
   createImageVariants,
-  objectStoreFromEnvironment,
-  PostgresMediaRepository,
   validateImageUpload,
   type MediaMetadata,
+  type ObjectStore,
+  type PostgresMediaRepository,
 } from '@publisher/persistence'
 import type { DeskImageFactsResolver } from '../services/desk-review'
 
-function dependencies() {
-  const store = objectStoreFromEnvironment()
-  if (!store) throw new Error('Object storage is not configured')
-  if (!process.env.DATABASE_URL)
-    throw new Error('DATABASE_URL is required for media metadata')
-  return {
-    store,
-    repository: new PostgresMediaRepository(process.env.DATABASE_URL),
-  }
+/** Storage the media adapter works on; the composition root supplies it. */
+export interface MediaDependencies {
+  readonly store: ObjectStore
+  readonly repository: PostgresMediaRepository
 }
 
-export async function uploadImage({
-  siteId,
-  fileName,
-  mimeType,
-  sha256,
-  body,
-}: {
-  readonly siteId: string
-  readonly fileName: string
-  readonly mimeType: string
-  readonly sha256?: string
-  readonly body: Uint8Array
-}): Promise<MediaMetadata> {
-  const { store, repository } = dependencies()
+export async function uploadImage(
+  { store, repository }: MediaDependencies,
+  {
+    siteId,
+    fileName,
+    mimeType,
+    sha256,
+    body,
+  }: {
+    readonly siteId: string
+    readonly fileName: string
+    readonly mimeType: string
+    readonly sha256?: string
+    readonly body: Uint8Array
+  },
+): Promise<MediaMetadata> {
   const validated = await validateImageUpload({
     siteId,
     fileName,
@@ -52,10 +49,10 @@ export async function uploadImage({
 }
 
 export async function approveImage(
+  { store, repository }: MediaDependencies,
   id: string,
   siteId: string,
 ): Promise<MediaMetadata> {
-  const { store, repository } = dependencies()
   const media = await repository.get(id, siteId)
   if (!media) throw new Error('Media not found')
   const original = await store.get(media.objectKey)
@@ -81,21 +78,20 @@ export async function approveImage(
 }
 
 export async function listMedia(
+  { repository }: MediaDependencies,
   siteId: string,
 ): Promise<readonly MediaMetadata[]> {
-  if (!process.env.DATABASE_URL)
-    throw new Error('DATABASE_URL is required for media metadata')
-  return new PostgresMediaRepository(process.env.DATABASE_URL).list(siteId)
+  return repository.list(siteId)
 }
 
 export async function readApprovedMediaPreview(
+  { store, repository }: MediaDependencies,
   id: string,
   siteId: string,
   variantSha256: string,
 ): Promise<
   { readonly body: Uint8Array; readonly mimeType: string } | undefined
 > {
-  const { store, repository } = dependencies()
   const media = await repository.get(id, siteId)
   if (!media || media.state !== 'approved') return undefined
   const variant = media.variants.find(
@@ -130,46 +126,45 @@ function mediaByPublicPath(
 }
 
 /** Media-library backed facts; without a library the facts are unverified. */
-export const mediaLibraryImageFacts: DeskImageFactsResolver = async (
-  siteId,
-  post,
-) => {
-  if (!post.imageUrl) return undefined
-  const databaseUrl = process.env.DATABASE_URL
-  const store = objectStoreFromEnvironment()
-  if (!databaseUrl || !store)
-    return { found: true, verified: false, analysed: false }
-  const media = await new PostgresMediaRepository(databaseUrl).list(siteId)
-  const hero = mediaByPublicPath(media, post.imageUrl)
-  if (!hero) return { found: false, analysed: false }
-  try {
-    const heroBody = await store.get(hero.objectKey)
-    const figureSource = firstFigureSource(post.bodyMarkdown)
-    const figure = figureSource
-      ? mediaByPublicPath(media, figureSource)
-      : undefined
-    const figureBody =
-      figure && figure.id !== hero.id
-        ? await store.get(figure.objectKey)
+export function mediaLibraryImageFacts(
+  dependencies: MediaDependencies | undefined,
+): DeskImageFactsResolver {
+  return async (siteId, post) => {
+    if (!post.imageUrl) return undefined
+    if (!dependencies) return { found: true, verified: false, analysed: false }
+    const { store, repository } = dependencies
+    const media = await repository.list(siteId)
+    const hero = mediaByPublicPath(media, post.imageUrl)
+    if (!hero) return { found: false, analysed: false }
+    try {
+      const heroBody = await store.get(hero.objectKey)
+      const figureSource = firstFigureSource(post.bodyMarkdown)
+      const figure = figureSource
+        ? mediaByPublicPath(media, figureSource)
         : undefined
-    const analysis = await analyseImagePixels(heroBody, figureBody)
-    return {
-      found: true,
-      width: hero.width,
-      height: hero.height,
-      channelDeviation: analysis.channelDeviation,
-      duplicatesFirstFigure:
-        figure && figure.id === hero.id
-          ? true
-          : (analysis.duplicatesCompared ?? false),
-      analysed: true,
-    }
-  } catch {
-    return {
-      found: true,
-      width: hero.width,
-      height: hero.height,
-      analysed: false,
+      const figureBody =
+        figure && figure.id !== hero.id
+          ? await store.get(figure.objectKey)
+          : undefined
+      const analysis = await analyseImagePixels(heroBody, figureBody)
+      return {
+        found: true,
+        width: hero.width,
+        height: hero.height,
+        channelDeviation: analysis.channelDeviation,
+        duplicatesFirstFigure:
+          figure && figure.id === hero.id
+            ? true
+            : (analysis.duplicatesCompared ?? false),
+        analysed: true,
+      }
+    } catch {
+      return {
+        found: true,
+        width: hero.width,
+        height: hero.height,
+        analysed: false,
+      }
     }
   }
 }
