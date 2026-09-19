@@ -1,0 +1,354 @@
+[
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/operations/[id]/route.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/agent-guidance.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/archive-restore.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/article-repository-adapter.ts -> process.env.ADMIN_DATA_DIR"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.[dynamic]"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.ADMIN_BOOTSTRAP_SECRET"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.ADMIN_DATA_DIR"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.ADMIN_DEV_TOKEN"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.ADMIN_PUBLIC_ORIGIN"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/auth.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/automation-auth.ts -> process.env.ADMIN_AUTOMATION_KEYS"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/automation-auth.ts -> process.env.ADMIN_AUTOMATION_KEYS_EXTRA"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/automation-auth.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/build-job-repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/comment-moderation.ts -> process.env.COMMENTS_MODERATION_TOKEN"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/comment-moderation.ts -> process.env.COMMENTS_ORIGIN"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/desk-review.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/file-content-repository.ts -> process.env.ADMIN_DATA_DIR"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/media-service.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/plugin-repository.ts -> process.env.ADMIN_DATA_DIR"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/plugin-repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/postgres-article-repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/postgres-content-repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/postgres-plugin-repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/repository.ts -> process.env.ADMIN_DATA_DIR"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/repository.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "apps/admin/app/lib/site-registry.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "env-access",
+    "key": "packages/persistence/src/media.ts -> process.env.DATABASE_URL"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/media/[id]/approve/route.ts -> ../../../../lib/media-service"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/media/[id]/preview/route.ts -> ../../../../lib/media-service"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/media/route.ts -> ../../lib/media-service"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/publish/route.ts -> ../../lib/publisher"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/media/route.ts -> ../../../../../lib/media-service"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/operations/[id]/route.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/publish/route.ts -> ../../../../../lib/publisher"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/agent-guidance.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/archive-restore.ts -> ./postgres-publication"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/archive-restore.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/auth.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/build-job-repository.ts -> @publisher/publication"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/comment-moderation.ts -> ./api-error"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/desk-review.ts -> ./api-error"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/desk-review.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/desk-review.ts -> sharp"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/file-content-repository.ts -> ./repository-seed"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/file-content-repository.ts -> ./repository-validation"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/file-publication.ts -> ./plugin-repository"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/file-publication.ts -> ./repository-validation"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-content-repository.ts -> ./repository-validation"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-content-repository.ts -> ./site-registry"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-plugin-repository.ts -> ./plugin-repository"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-plugin-repository.ts -> ./site-registry"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-publication.ts -> ./repository-seed"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/postgres-publication.ts -> ./repository-validation"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/site-registry.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "apps/admin/app/lib/x-oembed.ts -> ./api-error"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "packages/ops-cli/bin/publisher.mjs -> ../../content/src/archive.ts"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "scripts/deploy/publication-worker.ts -> ../../apps/admin/app/lib/build-job-repository"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "scripts/generate-public-metadata.mjs -> ../packages/content/src/editorial-markdown.ts"
+  },
+  {
+    "rule": "layer-imports",
+    "key": "scripts/generate-theme-runtime.mts -> ../packages/content/src/themes"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/agent-guidance/route.ts -> missing site resolution"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/comments/moderation/[id]/route.ts -> missing site resolution"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/comments/moderation/route.ts -> missing site resolution"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/embeds/x/route.ts -> missing site resolution"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/media/[id]/approve/route.ts -> ../../../../lib/media-service"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/media/[id]/preview/route.ts -> ../../../../lib/media-service"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/media/route.ts -> ../../lib/media-service"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/publish/route.ts -> ../../lib/publisher"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/media/route.ts -> ../../../../../lib/media-service"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/operations/[id]/route.ts -> @publisher/persistence"
+  },
+  {
+    "rule": "route-shape",
+    "key": "apps/admin/app/api/v2/sites/[siteId]/publish/route.ts -> ../../../../../lib/publisher"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: article-locales cli"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: article-locales client"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: media cli"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: plugins cli"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: plugins client"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "missing surface: settings cli"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/agent-guidance"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/bootstrap"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/categories"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/categories/[slug]"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/content-restore"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/embeds/x"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/media"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/operations/[id]"
+  },
+  {
+    "rule": "surface-parity",
+    "key": "undocumented v2 route: sites/[siteId]/posts/[id]/desk"
+  }
+]

@@ -87,6 +87,24 @@ creating a publication snapshot remain separate explicit actions. Agents must
 use the versioned CLI/API contract, rather than browser controls, for their
 equivalent operations.
 
+## Surfaces
+
+The admin exposes one set of capabilities through three surfaces that share
+the same services and rules (see `.agents/rules/layer-boundaries.md` and the
+capability registry `scripts/harness/surface-map.json`):
+
+| Surface        | Caller             | Identity                                  | Path                                   |
+| -------------- | ------------------ | ----------------------------------------- | -------------------------------------- |
+| Admin page     | Human in a browser | Local account session cookie, same-origin | `/api/**` (browser routes)             |
+| Automation API | Agent, integration | Bearer automation key with `sites[]`      | `/api/v2/sites/{siteId}/**` (this doc) |
+| CLI            | Operator shell     | `PUBLISHER_API_TOKEN` via admin-client    | `publisher …` → Automation API         |
+
+A capability is available on every surface unless the registry declares it
+exclusive with a reason (accounts, sessions, and comment moderation are
+browser-only; build-job polling and archive restore are automation-only;
+`doctor` and `auth login` are CLI-only). Every `v2` route must appear in
+`admin-api.openapi.yaml`; `pnpm harness:scan` fails otherwise.
+
 ## Endpoint and role summary
 
 | Method   | Path                                      | Minimum role | Purpose                                         |

@@ -12,6 +12,10 @@ const scans = [
   'scan-admin-contract.mjs',
   'scan-portable-runtime.mjs',
   'scan-spec-contract.mjs',
+  'scan-layer-imports.mjs',
+  'scan-env-access.mjs',
+  'scan-route-shape.mjs',
+  'scan-surface-parity.mjs',
 ]
 const failures = []
 

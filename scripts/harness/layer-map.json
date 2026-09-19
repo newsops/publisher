@@ -1,0 +1,228 @@
+{
+  "$comment": "ARCH-001 single source for the layer hierarchy. Order matters: the first layer whose globs match a file wins. `allow` lists layer ids, `types:<id>` (type-only imports), `index:<id>` (package index or @publisher alias only), module classes from `modules`, `builtin`, or exact specifiers. `.agents/project-structure.md` and `.agents/rules/layer-boundaries.md` describe this file; they never override it.",
+  "modules": {
+    "sdk": ["pg", "@aws-sdk/**", "sharp"],
+    "framework": ["next", "next/**", "react", "react-dom", "react-dom/**"],
+    "parser": [
+      "sanitize-html",
+      "unified",
+      "remark-*",
+      "rehype-*",
+      "mdast",
+      "mdast-*",
+      "micromark*",
+      "htmlparser2",
+      "domhandler"
+    ],
+    "tooling": ["tsx/**", "vitest", "s3rver", "@electric-sql/**", "wrangler"]
+  },
+  "aliases": {
+    "@publisher/content": "packages/content/src",
+    "@publisher/persistence": "packages/persistence/src",
+    "@publisher/publication": "packages/publication/src",
+    "@publisher/admin-client": "packages/admin-client/src"
+  },
+  "exempt": ["**/__tests__/**", "**/*.test.*", "scripts/harness/**"],
+  "layers": {
+    "contract": {
+      "level": "L0",
+      "globs": ["packages/content/src/**"],
+      "allow": ["contract", "node:crypto", "parser"]
+    },
+    "adapters": {
+      "level": "L1",
+      "globs": [
+        "packages/persistence/src/**",
+        "apps/admin/app/lib/adapters/**",
+        "apps/admin/app/lib/postgres-*.ts",
+        "apps/admin/app/lib/file-*.ts",
+        "apps/admin/app/lib/build-job-repository.ts",
+        "apps/admin/app/lib/article-repository-adapter.ts",
+        "apps/admin/app/lib/media-service.ts",
+        "apps/admin/app/lib/publisher.ts",
+        "apps/admin/app/lib/release.ts"
+      ],
+      "allow": [
+        "adapters",
+        "contract",
+        "types:publication",
+        "types:services",
+        "builtin",
+        "sdk"
+      ]
+    },
+    "publication": {
+      "level": "L2",
+      "globs": ["packages/publication/src/**"],
+      "allow": ["publication", "contract", "types:adapters", "builtin"]
+    },
+    "composition": {
+      "level": "L3",
+      "globs": [
+        "apps/admin/app/lib/index.ts",
+        "apps/admin/app/lib/config.ts",
+        "apps/admin/app/lib/repository.ts",
+        "apps/admin/app/lib/plugin-repository.ts"
+      ],
+      "allow": [
+        "composition",
+        "services",
+        "adapters",
+        "publication",
+        "contract",
+        "builtin"
+      ]
+    },
+    "services": {
+      "level": "L3",
+      "globs": ["apps/admin/app/lib/services/**", "apps/admin/app/lib/*.ts"],
+      "exclude": [
+        "apps/admin/app/lib/auth.ts",
+        "apps/admin/app/lib/automation-auth.ts",
+        "apps/admin/app/lib/api-error.ts",
+        "apps/admin/app/lib/api-input.ts",
+        "apps/admin/app/lib/api-request.ts",
+        "apps/admin/app/lib/platform-api-input.ts",
+        "apps/admin/app/lib/plugin-api-input.ts",
+        "apps/admin/app/lib/request-repository.ts",
+        "apps/admin/app/lib/author-context.ts",
+        "apps/admin/app/lib/media-view.ts"
+      ],
+      "allow": [
+        "services",
+        "composition",
+        "publication",
+        "contract",
+        "types:adapters",
+        "builtin"
+      ]
+    },
+    "http": {
+      "level": "L4",
+      "globs": [
+        "apps/admin/app/lib/http/**",
+        "apps/admin/app/lib/auth.ts",
+        "apps/admin/app/lib/automation-auth.ts",
+        "apps/admin/app/lib/api-error.ts",
+        "apps/admin/app/lib/api-input.ts",
+        "apps/admin/app/lib/api-request.ts",
+        "apps/admin/app/lib/platform-api-input.ts",
+        "apps/admin/app/lib/plugin-api-input.ts",
+        "apps/admin/app/lib/request-repository.ts",
+        "apps/admin/app/lib/author-context.ts",
+        "apps/admin/app/lib/media-view.ts"
+      ],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:adapters",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "routes-automation": {
+      "level": "L4",
+      "globs": ["apps/admin/app/api/v2/**"],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "routes-browser": {
+      "level": "L4",
+      "globs": ["apps/admin/app/api/**"],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "ui": {
+      "level": "L4",
+      "globs": ["apps/admin/app/**"],
+      "allow": ["ui", "http", "types:services", "types:contract", "framework"]
+    },
+    "site": {
+      "level": "L4",
+      "globs": ["apps/site/app/**", "apps/site/next.config.ts"],
+      "allow": ["site", "contract", "framework", "builtin"]
+    },
+    "comments": {
+      "level": "L4",
+      "globs": ["apps/comments/src/**"],
+      "allow": ["comments", "adapters", "builtin"]
+    },
+    "client": {
+      "level": "L5",
+      "globs": ["packages/admin-client/src/**"],
+      "allow": ["client"]
+    },
+    "cli": {
+      "level": "L5",
+      "globs": ["packages/ops-cli/**"],
+      "allow": ["cli", "client", "builtin", "tooling"]
+    },
+    "scripts": {
+      "level": "L5",
+      "globs": ["scripts/**"],
+      "allow": [
+        "scripts",
+        "index:contract",
+        "index:adapters",
+        "index:publication",
+        "client",
+        "builtin",
+        "tooling"
+      ]
+    }
+  },
+  "compositionRoots": [
+    "apps/admin/app/lib/config.ts",
+    "apps/admin/app/lib/index.ts",
+    "apps/admin/next.config.ts",
+    "apps/site/next.config.ts",
+    "apps/comments/src/**",
+    "packages/persistence/src/object-storage.ts",
+    "packages/persistence/src/postgres.ts",
+    "packages/ops-cli/**",
+    "scripts/**"
+  ],
+  "envAllowedNames": ["NEXT_PUBLIC_*", "NODE_ENV"],
+  "routes": {
+    "automation": {
+      "globs": ["apps/admin/app/api/v2/**/route.ts"],
+      "requiredAny": [
+        "withSiteAutomation(",
+        "requireSiteAutomationIdentity(",
+        "withAutomation("
+      ]
+    },
+    "browser": {
+      "globs": ["apps/admin/app/api/**/route.ts"],
+      "requiredAny": ["requireIdentity("],
+      "siteResolutionAny": [
+        "repositoryForRequest(",
+        "pluginRepositoryForRequest("
+      ],
+      "siteResolutionExempt": [
+        "apps/admin/app/api/accounts/**",
+        "apps/admin/app/api/auth/**",
+        "apps/admin/app/api/sites/route.ts"
+      ],
+      "requiredExempt": ["apps/admin/app/api/auth/**"]
+    },
+    "forbiddenImports": ["sdk", "adapters", "route.ts"]
+  }
+}
