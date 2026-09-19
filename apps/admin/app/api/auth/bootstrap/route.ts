@@ -2,7 +2,7 @@ import {
   assertSameOrigin,
   authErrorResponse,
   bootstrapOwner,
-} from '../../../lib/auth'
+} from '../../../lib/http/auth'
 
 export async function POST(request: Request): Promise<Response> {
   try {

@@ -4,13 +4,16 @@ import {
   auditAutomation,
   AutomationApiError,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { parseJsonBody, revisionFrom } from '../../../../../lib/api-request'
+} from '../../../../../lib/http/automation-auth'
+import {
+  parseJsonBody,
+  revisionFrom,
+} from '../../../../../lib/http/api-request'
 import {
   getAgentGuidanceRepository,
   parseAgentGuidanceInput,
   type AgentGuidance,
-} from '../../../../../lib/agent-guidance'
+} from '../../../../../lib'
 
 function envelope(siteId: string, guidance: AgentGuidance) {
   return {

@@ -1,4 +1,8 @@
-import { assertSameOrigin, authErrorResponse, logout } from '../../../lib/auth'
+import {
+  assertSameOrigin,
+  authErrorResponse,
+  logout,
+} from '../../../lib/http/auth'
 
 export async function POST(request: Request): Promise<Response> {
   try {

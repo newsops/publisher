@@ -3,7 +3,7 @@ import {
   authErrorResponse,
   requireIdentity,
   updateAccount,
-} from '../../../lib/auth'
+} from '../../../lib/http/auth'
 
 export async function PATCH(
   request: Request,

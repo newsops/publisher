@@ -15,7 +15,7 @@ import { FileContentRepository } from '../../../apps/admin/app/lib/repository.ts
 import {
   decideDesk,
   deskReportFor,
-} from '../../../apps/admin/app/lib/desk-review.ts'
+} from '../../../apps/admin/app/lib/services/desk-review.ts'
 import { analyseImagePixels } from '../../../packages/persistence/src/index.ts'
 import {
   GET as rawDeskGet,
@@ -234,8 +234,11 @@ describe('desk review contract (EDIT-001)', () => {
       repository.save(draft.id, { ...draft, status: 'published' }),
     ).rejects.toThrow('requires a desk approval')
 
-    const resolveImage = async () => goodImage
-    const report = await deskReportFor('default', draft, resolveImage)
+    const dependencies = {
+      resolveImage: async () => goodImage,
+      guidanceFor: async () => undefined,
+    }
+    const report = await deskReportFor('default', draft, dependencies)
     expect(fails(report.checks)).toEqual([])
     await expect(
       decideDesk(
@@ -243,7 +246,7 @@ describe('desk review contract (EDIT-001)', () => {
         draft.id,
         { action: 'approve', checklist: [] },
         { kind: 'automation', id: 'desk-agent' },
-        resolveImage,
+        dependencies,
       ),
     ).rejects.toMatchObject({ code: 'desk_checklist_incomplete' })
     const approved = await decideDesk(
@@ -258,7 +261,7 @@ describe('desk review contract (EDIT-001)', () => {
         note: 'Checked against site guidance.',
       },
       { kind: 'automation', id: 'desk-agent' },
-      resolveImage,
+      dependencies,
     )
     expect(approved.post.deskReview.status).toBe('approved')
     expect(approved.report.approvalValid).toBe(true)

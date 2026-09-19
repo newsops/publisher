@@ -169,3 +169,13 @@ export type {
   SitePage,
   TaxonomyTerm,
 } from './types'
+export * from './managed-validation'
+export * from './managed-seed'
+export * from './content-release'
+export { assertSiteId } from './site-id'
+export {
+  assertRevision as assertPluginRevision,
+  clonePluginInstallations,
+  configuredInstallation as configuredPluginInstallation,
+  stateInstallation as statePluginInstallation,
+} from './plugins/installation-transitions'

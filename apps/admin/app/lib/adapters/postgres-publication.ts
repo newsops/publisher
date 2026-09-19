@@ -12,9 +12,9 @@ import { PostgresArticleRepository } from './postgres-article-repository'
 import { PostgresBuildJobRepository } from '@publisher/persistence'
 import { PostgresPluginRepository } from './postgres-plugin-repository'
 import { deliverSnapshot } from './publisher'
-import type { PublishResult } from './repository-contract'
-import { initialPayload, type LocalState } from './repository-seed'
-import { makeSnapshot, withDeskGateUpgrade } from './repository-validation'
+import type { PublishResult } from '../services/repository-contract'
+import { initialPayload, type LocalState } from '@publisher/content'
+import { makeSnapshot, withDeskGateUpgrade } from '@publisher/content'
 
 export interface StoredPostgresState {
   readonly state: LocalState

@@ -4,10 +4,13 @@ import {
   auditAutomation,
   AutomationApiError,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { parseTagPatch } from '../../../../../../lib/api-input'
-import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
-import { getRepositoryForSite } from '../../../../../../lib/repository'
+} from '../../../../../../lib/http/automation-auth'
+import { parseTagPatch } from '../../../../../../lib/http/api-input'
+import {
+  parseJsonBody,
+  revisionFrom,
+} from '../../../../../../lib/http/api-request'
+import { getRepositoryForSite } from '../../../../../../lib'
 
 function assertRevision(current: { revision: number }, request: Request): void {
   if (revisionFrom(request, 'tag') !== current.revision)

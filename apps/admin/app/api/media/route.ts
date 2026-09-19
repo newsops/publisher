@@ -4,13 +4,13 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../lib/auth'
-import { listMedia, uploadImage } from '../../lib/media-service'
-import { browserMediaView } from '../../lib/media-view'
+} from '../../lib/http/auth'
+import { listMedia, uploadImage } from '../../lib'
+import { browserMediaView } from '../../lib/http/media-view'
 import {
   repositoryForRequest,
   requestedSiteId,
-} from '../../lib/request-repository'
+} from '../../lib/http/request-repository'
 
 const maximumBytes = 10 * 1024 * 1024
 

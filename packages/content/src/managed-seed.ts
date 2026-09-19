@@ -9,8 +9,8 @@ import {
   type ManagedPost,
   type ManagedPublicationSettings,
   type ManagedTaxonomyTerm,
-} from '@publisher/content'
-import type { PublishDelivery } from './publisher'
+} from './index'
+import type { PublishDelivery } from './content-release'
 const DEFAULT_SITE_ID = 'default'
 
 const FIRST_LEVEL_CATEGORIES: Readonly<

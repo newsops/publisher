@@ -2,12 +2,12 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../../lib/auth'
-import { readApprovedMediaPreview } from '../../../../lib/media-service'
+} from '../../../../lib/http/auth'
+import { readApprovedMediaPreview } from '../../../../lib'
 import {
   repositoryForRequest,
   requestedSiteId,
-} from '../../../../lib/request-repository'
+} from '../../../../lib/http/request-repository'
 
 export async function GET(
   request: Request,

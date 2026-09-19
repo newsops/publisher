@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   parseCanonicalXStatusUrl,
   resolveXPostOEmbed,
-} from '../../../apps/admin/app/lib/x-oembed.ts'
+} from '../../../apps/admin/app/lib/services/x-oembed.ts'
 import { sanitizeBodyHtml } from '../../../packages/content/src/editor.ts'
 import { getTheme } from '../../../packages/content/src/themes.ts'
 import { createPublisherAdminClient } from '../../../packages/admin-client/src/client.js'

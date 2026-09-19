@@ -10,7 +10,7 @@ import type {
   TaxonomyTermInput,
   DeskReview,
 } from '@publisher/content'
-import type { PublishDelivery } from './publisher'
+import type { PublishDelivery } from '../adapters/publisher'
 import type { BuildJob, BuildJobStatus } from '@publisher/publication'
 
 export interface SiteContext {

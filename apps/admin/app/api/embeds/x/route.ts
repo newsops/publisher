@@ -3,8 +3,8 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../lib/auth'
-import { resolveXPostOEmbed } from '../../../lib/x-oembed'
+} from '../../../lib/http/auth'
+import { resolveXPostOEmbed } from '../../../lib/services/x-oembed'
 
 export async function POST(request: Request): Promise<Response> {
   try {

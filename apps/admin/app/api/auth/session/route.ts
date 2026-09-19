@@ -1,4 +1,4 @@
-import { authErrorResponse, requireIdentity } from '../../../lib/auth'
+import { authErrorResponse, requireIdentity } from '../../../lib/http/auth'
 
 export async function GET(request: Request): Promise<Response> {
   try {

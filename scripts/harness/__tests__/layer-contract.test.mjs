@@ -69,20 +69,20 @@ describe('layer contract scans (ARCH-001)', () => {
       "import { pg } from '@publisher/persistence'\nexport const repo = pg\n",
     )
     write(
-      'apps/admin/app/lib/desk-review.ts',
+      'apps/admin/app/lib/services/desk-review.ts',
       "import { repo } from './repository'\nexport const desk = repo\n",
     )
     write(
-      'apps/admin/app/lib/auth.ts',
+      'apps/admin/app/lib/http/auth.ts',
       'export function requireIdentity() {}\n',
     )
     write(
-      'apps/admin/app/lib/request-repository.ts',
+      'apps/admin/app/lib/http/request-repository.ts',
       'export function repositoryForRequest() {}\n',
     )
     write(
       'apps/admin/app/api/desk/route.ts',
-      "import { requireIdentity } from '../../lib/auth'\nimport { repositoryForRequest } from '../../lib/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest() }\n",
+      "import { requireIdentity } from '../../lib/http/auth'\nimport { repositoryForRequest } from '../../lib/http/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest() }\n",
     )
     write(
       'apps/admin/app/api/v2/sites/[siteId]/posts/[id]/desk/route.ts',
@@ -118,7 +118,7 @@ describe('layer contract scans (ARCH-001)', () => {
         capabilities: [
           {
             id: 'desk-review',
-            service: 'apps/admin/app/lib/desk-review.ts',
+            service: 'apps/admin/app/lib/services/desk-review.ts',
             browser: ['desk'],
             automation: ['sites/[siteId]/posts/[id]/desk'],
             client: ['getDeskReport', 'decideDesk'],
@@ -183,7 +183,7 @@ describe('layer contract scans (ARCH-001)', () => {
     expect(run('scan-route-shape.mjs').code).toBe(0)
     write(
       'apps/admin/app/api/desk/route.ts',
-      "import { requireIdentity } from '../../lib/auth'\nexport async function GET() { requireIdentity() }\n",
+      "import { requireIdentity } from '../../lib/http/auth'\nexport async function GET() { requireIdentity() }\n",
     )
     const missing = run('scan-route-shape.mjs')
     expect(missing.code).toBe(1)
@@ -192,14 +192,14 @@ describe('layer contract scans (ARCH-001)', () => {
     )
     write(
       'apps/admin/app/api/desk/route.ts',
-      "import sharp from 'sharp'\nimport { requireIdentity } from '../../lib/auth'\nimport { repositoryForRequest } from '../../lib/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest(); sharp }\n",
+      "import sharp from 'sharp'\nimport { requireIdentity } from '../../lib/http/auth'\nimport { repositoryForRequest } from '../../lib/http/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest(); sharp }\n",
     )
     const adapter = run('scan-route-shape.mjs')
     expect(adapter.code).toBe(1)
     expect(adapter.out).toContain('apps/admin/app/api/desk/route.ts -> sharp')
     write(
       'apps/admin/app/api/desk/route.ts',
-      "import { requireIdentity } from '../../lib/auth'\nimport { repositoryForRequest } from '../../lib/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest() }\n",
+      "import { requireIdentity } from '../../lib/http/auth'\nimport { repositoryForRequest } from '../../lib/http/request-repository'\nexport async function GET() { requireIdentity(); repositoryForRequest() }\n",
     )
   })
 

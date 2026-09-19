@@ -19,8 +19,11 @@ import {
   type PostgresPool,
   type PostgresQueryable,
 } from '@publisher/persistence'
-import type { ContentRepository, PublishResult } from './repository-contract'
-import type { LocalState } from './repository-seed'
+import type {
+  ContentRepository,
+  PublishResult,
+} from '../services/repository-contract'
+import type { LocalState } from '@publisher/content'
 import {
   assertAuthorUnassigned,
   assertUniqueFeaturedRanks,
@@ -31,7 +34,7 @@ import {
   referencesTerm,
   upsertTaxonomyTerm,
   withDeskReview,
-} from './repository-validation'
+} from '@publisher/content'
 import { assertSiteId } from './site-registry'
 import {
   loadPostgresSiteState,

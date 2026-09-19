@@ -4,13 +4,13 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../lib/auth'
-import { parseJsonBody, revisionFrom } from '../../../lib/api-request'
-import { getArticleRepositoryForSite } from '../../../lib/repository'
+} from '../../../lib/http/auth'
+import { parseJsonBody, revisionFrom } from '../../../lib/http/api-request'
+import { getArticleRepositoryForSite } from '../../../lib'
 import {
   requestedSiteId,
   repositoryForRequest,
-} from '../../../lib/request-repository'
+} from '../../../lib/http/request-repository'
 
 function json(body: unknown, status = 200): Response {
   return Response.json(body, {

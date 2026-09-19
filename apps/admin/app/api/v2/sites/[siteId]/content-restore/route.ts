@@ -4,11 +4,11 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
+} from '../../../../../lib/http/automation-auth'
 import {
   restoreArchive,
   type ArchiveRestoreMediaBinding,
-} from '../../../../../lib/archive-restore'
+} from '../../../../../lib'
 
 function restoreInput(body: unknown, idempotencyKey: string | null) {
   if (!body || typeof body !== 'object' || Array.isArray(body))

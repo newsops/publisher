@@ -10,7 +10,7 @@ import {
   type ManagedArticle,
   withCanonicalVariants,
 } from '@publisher/content'
-import type { ArticleRepository } from './article-repository'
+import type { ArticleRepository } from '../services/article-repository'
 
 interface ArticleState {
   readonly articles: ManagedArticle[]

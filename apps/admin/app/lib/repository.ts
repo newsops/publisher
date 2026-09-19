@@ -9,14 +9,17 @@ import type {
   TaxonomyTermInput,
   DeskReview,
 } from '@publisher/content'
-import type { ArticleRepository } from './article-repository'
-import { FileArticleRepositoryAdapter } from './article-repository-adapter'
-import { FileContentRepository } from './file-content-repository'
-import { PostgresArticleRepository } from './postgres-article-repository'
-import { PostgresContentRepository } from './postgres-content-repository'
-import type { ContentRepository, PublishResult } from './repository-contract'
+import type { ArticleRepository } from './services/article-repository'
+import { FileArticleRepositoryAdapter } from './adapters/article-repository-adapter'
+import { FileContentRepository } from './adapters/file-content-repository'
+import { PostgresArticleRepository } from './adapters/postgres-article-repository'
+import { PostgresContentRepository } from './adapters/postgres-content-repository'
+import type {
+  ContentRepository,
+  PublishResult,
+} from './services/repository-contract'
 import type { BuildJob } from '@publisher/publication'
-import { assertSiteId } from './site-registry'
+import { assertSiteId } from './adapters/site-registry'
 
 class RuntimeContentRepository implements ContentRepository {
   readonly siteId = 'default'
@@ -153,6 +156,9 @@ export function getArticleRepositoryForSite(
   throw new Error('DATABASE_URL is required for production persistence')
 }
 
-export { FileContentRepository } from './file-content-repository'
-export { PostgresContentRepository } from './postgres-content-repository'
-export type { ContentRepository, PublishResult } from './repository-contract'
+export { FileContentRepository } from './adapters/file-content-repository'
+export { PostgresContentRepository } from './adapters/postgres-content-repository'
+export type {
+  ContentRepository,
+  PublishResult,
+} from './services/repository-contract'

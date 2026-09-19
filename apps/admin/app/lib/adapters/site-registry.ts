@@ -1,6 +1,9 @@
 import { postgresPool, type PostgresPool } from '@publisher/persistence'
-import { ContentValidationError } from '@publisher/content'
-import { emptyPayload } from './repository-seed'
+import {
+  assertSiteId,
+  ContentValidationError,
+  emptyPayload,
+} from '@publisher/content'
 
 export interface SiteConfig {
   readonly siteId: string
@@ -17,14 +20,7 @@ export interface SiteInput {
   readonly themeId?: string
 }
 
-const siteIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-
-export function assertSiteId(siteId: string): void {
-  if (!siteIdPattern.test(siteId))
-    throw new ContentValidationError(
-      'siteId must contain lowercase letters, numbers, and hyphens only',
-    )
-}
+export { assertSiteId } from '@publisher/content'
 
 function validate(input: SiteInput): Required<SiteInput> {
   assertSiteId(input.siteId)

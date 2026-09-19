@@ -4,8 +4,8 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../../lib/auth'
-import { repositoryForRequest } from '../../../lib/request-repository'
+} from '../../../lib/http/auth'
+import { repositoryForRequest } from '../../../lib/http/request-repository'
 
 function revision(request: Request): number {
   const value = request.headers.get('if-match')?.replace(/^"|"$/g, '')

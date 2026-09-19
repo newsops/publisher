@@ -12,7 +12,7 @@ import {
   type PostgresPool,
   type PostgresQueryable,
 } from '@publisher/persistence'
-import type { PluginRepository } from './plugin-repository'
+import type { PluginRepository } from '../services/plugin-repository'
 import { assertSiteId } from './site-registry'
 
 function assertRevision(

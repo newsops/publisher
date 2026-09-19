@@ -4,21 +4,15 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-  AdminAuthError,
-} from '../../lib/auth'
-import {
-  parseAgentGuidanceInput,
-  getAgentGuidanceRepository,
-} from '../../lib/agent-guidance'
-import { requestedSiteId } from '../../lib/request-repository'
+} from '../../lib/http/auth'
+import { parseAgentGuidanceInput, getAgentGuidanceRepository } from '../../lib'
+import { authorizedSiteId } from '../../lib/http/request-repository'
 
 export async function GET(request: Request): Promise<Response> {
   try {
     const identity = await requireIdentity(request)
     enforceRateLimit(request, identity)
-    const siteId = requestedSiteId(request)
-    if (!identity.roles.includes('owner'))
-      throw new AdminAuthError('Not authorized for this site', 403)
+    const siteId = authorizedSiteId(request, identity)
     return Response.json(
       { siteId, agentContext: await getAgentGuidanceRepository().get(siteId) },
       { headers: { 'Cache-Control': 'no-store' } },
@@ -33,9 +27,7 @@ export async function PATCH(request: Request): Promise<Response> {
     const identity = await requireIdentity(request)
     enforceRateLimit(request, identity)
     assertSameOrigin(request)
-    const siteId = requestedSiteId(request)
-    if (!identity.roles.includes('owner'))
-      throw new AdminAuthError('Not authorized for this site', 403)
+    const siteId = authorizedSiteId(request, identity)
     const revision = Number(
       request.headers.get('if-match')?.replace(/^"|"$/g, ''),
     )

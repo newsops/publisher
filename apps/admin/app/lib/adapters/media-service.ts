@@ -1,10 +1,13 @@
+import { parseEditorialMarkdown } from '@publisher/content'
 import {
+  analyseImagePixels,
   createImageVariants,
   objectStoreFromEnvironment,
   PostgresMediaRepository,
   validateImageUpload,
   type MediaMetadata,
 } from '@publisher/persistence'
+import type { DeskImageFactsResolver } from '../services/desk-review'
 
 function dependencies() {
   const store = objectStoreFromEnvironment()
@@ -102,5 +105,71 @@ export async function readApprovedMediaPreview(
   return {
     body: await store.get(variant.objectKey),
     mimeType: variant.mimeType,
+  }
+}
+
+function firstFigureSource(bodyMarkdown: string): string | undefined {
+  try {
+    const document = parseEditorialMarkdown(bodyMarkdown)
+    const first = document.nodes[0]
+    return first?.type === 'figure' ? document.figures[0]?.src : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function mediaByPublicPath(
+  media: readonly MediaMetadata[],
+  publicPath: string,
+): MediaMetadata | undefined {
+  return media.find(
+    (item) =>
+      item.state === 'approved' &&
+      item.variants.some((variant) => variant.publicPath === publicPath),
+  )
+}
+
+/** Media-library backed facts; without a library the facts are unverified. */
+export const mediaLibraryImageFacts: DeskImageFactsResolver = async (
+  siteId,
+  post,
+) => {
+  if (!post.imageUrl) return undefined
+  const databaseUrl = process.env.DATABASE_URL
+  const store = objectStoreFromEnvironment()
+  if (!databaseUrl || !store)
+    return { found: true, verified: false, analysed: false }
+  const media = await new PostgresMediaRepository(databaseUrl).list(siteId)
+  const hero = mediaByPublicPath(media, post.imageUrl)
+  if (!hero) return { found: false, analysed: false }
+  try {
+    const heroBody = await store.get(hero.objectKey)
+    const figureSource = firstFigureSource(post.bodyMarkdown)
+    const figure = figureSource
+      ? mediaByPublicPath(media, figureSource)
+      : undefined
+    const figureBody =
+      figure && figure.id !== hero.id
+        ? await store.get(figure.objectKey)
+        : undefined
+    const analysis = await analyseImagePixels(heroBody, figureBody)
+    return {
+      found: true,
+      width: hero.width,
+      height: hero.height,
+      channelDeviation: analysis.channelDeviation,
+      duplicatesFirstFigure:
+        figure && figure.id === hero.id
+          ? true
+          : (analysis.duplicatesCompared ?? false),
+      analysed: true,
+    }
+  } catch {
+    return {
+      found: true,
+      width: hero.width,
+      height: hero.height,
+      analysed: false,
+    }
   }
 }

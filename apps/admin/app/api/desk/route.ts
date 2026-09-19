@@ -5,18 +5,18 @@ import {
   enforceRateLimit,
   requireIdentity,
   AdminAuthError,
-} from '../../lib/auth'
+} from '../../lib/http/auth'
 import {
   DeskDecisionError,
   decideDesk,
   deskReportFor,
   deskReviewerFor,
   parseDeskDecision,
-} from '../../lib/desk-review'
+} from '../../lib'
 import {
   repositoryForRequest,
   requestedSiteId,
-} from '../../lib/request-repository'
+} from '../../lib/http/request-repository'
 
 /** Browser desk routes (EDIT-001) for the admin Desk panel. */
 export async function GET(request: Request): Promise<Response> {

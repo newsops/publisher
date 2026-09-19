@@ -4,10 +4,13 @@ import {
   auditAutomation,
   AutomationApiError,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
-import { parseAuthorPatch } from '../../../../../../lib/platform-api-input'
-import { getRepositoryForSite } from '../../../../../../lib/repository'
+} from '../../../../../../lib/http/automation-auth'
+import {
+  parseJsonBody,
+  revisionFrom,
+} from '../../../../../../lib/http/api-request'
+import { parseAuthorPatch } from '../../../../../../lib/http/platform-api-input'
+import { getRepositoryForSite } from '../../../../../../lib'
 
 function assertRevision(current: { revision: number }, request: Request): void {
   if (revisionFrom(request, 'author') !== current.revision)

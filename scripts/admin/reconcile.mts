@@ -2,27 +2,30 @@ import { createHash } from 'node:crypto'
 import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PostgresContentRepository } from '../../../apps/admin/app/lib/postgres-content-repository'
-import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/postgres-publication'
-import { applyMigrations } from '../src/migrations'
+import { PostgresContentRepository } from '../../apps/admin/app/lib/index'
+import { seedCheckedInPostgresFixture } from '../../apps/admin/app/lib/index'
+import { applyMigrations } from '../../packages/persistence/src/index'
 import {
   objectStoreFromEnvironment,
   type ObjectStore,
-} from '../src/object-storage'
-import { createPostgresPool, type PostgresPool } from '../src/postgres'
+} from '../../packages/persistence/src/index'
+import {
+  createPostgresPool,
+  type PostgresPool,
+} from '../../packages/persistence/src/index'
 import {
   PostgresMediaRepository,
   validateImageUpload,
   type MediaVariant,
-} from '../src/media'
-import type { FixtureReconciliation } from '../src/reconciliation'
+} from '../../packages/persistence/src/index'
+import type { FixtureReconciliation } from '../../packages/persistence/src/index'
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../..',
+  '../..',
 )
 
-export type { FixtureReconciliation } from '../src/reconciliation'
+export type { FixtureReconciliation } from '../../packages/persistence/src/index'
 
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name)

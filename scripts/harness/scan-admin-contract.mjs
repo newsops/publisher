@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const required = [
-  'apps/admin/app/lib/auth.ts',
+  'apps/admin/app/lib/http/auth.ts',
   'apps/admin/app/lib/repository.ts',
   'apps/admin/app/api/posts/route.ts',
   'apps/admin/app/api/posts/[id]/route.ts',
@@ -22,10 +22,13 @@ const robots = fs.readFileSync(
   path.join(root, 'apps/admin/app/robots.ts'),
   'utf8',
 )
-const auth = fs.readFileSync(
-  path.join(root, 'apps/admin/app/lib/auth.ts'),
-  'utf8',
-)
+// Identity policy lives in http/auth.ts; its session SQL in the account store.
+const auth =
+  fs.readFileSync(path.join(root, 'apps/admin/app/lib/http/auth.ts'), 'utf8') +
+  fs.readFileSync(
+    path.join(root, 'apps/admin/app/lib/adapters/account-store.ts'),
+    'utf8',
+  )
 const adminPackage = JSON.parse(
   fs.readFileSync(path.join(root, 'apps/admin/package.json'), 'utf8'),
 )

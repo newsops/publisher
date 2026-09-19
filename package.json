@@ -24,11 +24,11 @@
     "publication:worker": "tsx scripts/deploy/publication-worker.ts",
     "publication:next": "tsx scripts/deploy/publication-worker.ts --next",
     "publication:rollback": "tsx scripts/deploy/publication-worker.ts --rollback",
-    "fixture:reconcile": "pnpm --filter @publisher/persistence reconcile",
+    "fixture:reconcile": "tsx scripts/admin/reconcile.mts",
     "persistence:migrate": "pnpm --filter @publisher/persistence migrate",
     "persistence:backup": "pnpm --filter @publisher/persistence backup",
     "persistence:restore": "pnpm --filter @publisher/persistence restore",
-    "clean-room:smoke": "pnpm --filter @publisher/persistence clean-room",
+    "clean-room:smoke": "tsx scripts/admin/clean-room.mts",
     "admin:api-key": "node scripts/admin/create-api-key.mjs",
     "format": "prettier --write .",
     "prepare": "husky"

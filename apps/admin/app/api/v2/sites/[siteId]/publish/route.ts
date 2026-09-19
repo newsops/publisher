@@ -3,9 +3,9 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { getRepositoryForSite } from '../../../../../lib/repository'
-import { publicationIdempotencyKey } from '../../../../../lib/publisher'
+} from '../../../../../lib/http/automation-auth'
+import { getRepositoryForSite } from '../../../../../lib'
+import { publicationIdempotencyKey } from '../../../../../lib'
 
 export async function POST(
   request: Request,

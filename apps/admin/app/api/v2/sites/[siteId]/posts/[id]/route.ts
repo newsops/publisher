@@ -3,12 +3,18 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../../lib/automation-auth'
-import { mergePostInput, parsePostPatch } from '../../../../../../lib/api-input'
-import { parseJsonBody, revisionFrom } from '../../../../../../lib/api-request'
-import { getRepositoryForSite } from '../../../../../../lib/repository'
-import { AutomationApiError } from '../../../../../../lib/automation-auth'
-import { authorContext } from '../../../../../../lib/author-context'
+} from '../../../../../../lib/http/automation-auth'
+import {
+  mergePostInput,
+  parsePostPatch,
+} from '../../../../../../lib/http/api-input'
+import {
+  parseJsonBody,
+  revisionFrom,
+} from '../../../../../../lib/http/api-request'
+import { getRepositoryForSite } from '../../../../../../lib'
+import { AutomationApiError } from '../../../../../../lib/http/automation-auth'
+import { authorContext } from '../../../../../../lib/http/author-context'
 
 function assertRevision(current: { revision: number }, request: Request): void {
   const expected = revisionFrom(request)

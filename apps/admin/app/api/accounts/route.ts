@@ -4,7 +4,7 @@ import {
   createAccount,
   listAccounts,
   requireIdentity,
-} from '../../lib/auth'
+} from '../../lib/http/auth'
 
 export async function GET(request: Request): Promise<Response> {
   try {

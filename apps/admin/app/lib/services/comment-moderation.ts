@@ -1,5 +1,5 @@
-import { ApiRequestError } from './api-error'
-import { assertSiteId } from './site-registry'
+import { ServiceError as ApiRequestError } from './errors'
+import { assertSiteId } from '@publisher/content'
 
 export type ModerationStatus = 'pending' | 'approved' | 'rejected'
 

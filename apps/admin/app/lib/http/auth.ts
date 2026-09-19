@@ -5,8 +5,25 @@ import {
   scrypt as scryptCallback,
   timingSafeEqual,
 } from 'node:crypto'
-import { postgresPool, runPostgresTransaction } from '@publisher/persistence'
 import { ContentValidationError } from '@publisher/content'
+import {
+  AccountStoreConflict,
+  AccountStoreUnavailable,
+  countAccounts,
+  findAccountById,
+  findCredentialByEmail,
+  findSessionAccount,
+  insertAccount,
+  insertAuditEvent,
+  insertFirstOwner,
+  insertSession,
+  listAccountRecords,
+  revokeAccountSessions,
+  revokeSessionByToken,
+  touchSession,
+  updateAccountRecord,
+  type AccountUpdate,
+} from '../index'
 import { ApiRequestError } from './api-error'
 
 const sessionCookie = 'publisher_admin_session'
@@ -28,10 +45,15 @@ export class AdminAuthError extends Error {
   }
 }
 
-function db() {
-  const url = process.env.DATABASE_URL
-  if (!url) throw new AdminAuthError('Admin authentication unavailable', 503)
-  return postgresPool(url)
+/** Storage outages surface as a 503, never as a stack trace. */
+async function stored<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    if (error instanceof AccountStoreUnavailable)
+      throw new AdminAuthError('Admin authentication unavailable', 503)
+    throw error
+  }
 }
 function roles(role: AdminRole): readonly AdminRole[] {
   return role === 'owner'
@@ -115,9 +137,8 @@ async function createSession(
 ): Promise<{ token: string; expiresAt: Date }> {
   const token = randomBytes(32).toString('base64url')
   const expiresAt = new Date(Date.now() + sessionTtlSeconds * 1000)
-  await db().query(
-    'INSERT INTO publisher_admin.account_sessions (id, account_id, token_hash, expires_at) VALUES ($1,$2,$3,$4)',
-    [randomUUID(), accountId, tokenHash(token), expiresAt],
+  await stored(() =>
+    insertSession(randomUUID(), accountId, tokenHash(token), expiresAt),
   )
   return { token, expiresAt }
 }
@@ -166,23 +187,12 @@ export async function requireIdentity(
   }
   const token = cookie(request, sessionCookie)
   if (!token) throw new AdminAuthError('Authentication required')
-  const result = await db().query<{
-    id: string
-    email: string
-    role: AdminRole
-  }>(
-    'SELECT a.id,a.email,a.role FROM publisher_admin.account_sessions s JOIN publisher_admin.accounts a ON a.id=s.account_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at > CURRENT_TIMESTAMP AND a.active=TRUE',
-    [tokenHash(token)],
-  )
-  const account = result.rows[0]
+  const account = await stored(() => findSessionAccount(tokenHash(token)))
   if (!account) throw new AdminAuthError('Authentication required')
   const capabilities = roles(account.role)
   if (!capabilities.includes(requiredRole))
     throw new AdminAuthError('Role required', 403)
-  void db().query(
-    'UPDATE publisher_admin.account_sessions SET last_seen_at=CURRENT_TIMESTAMP WHERE token_hash=$1',
-    [tokenHash(token)],
-  )
+  touchSession(tokenHash(token))
   return { email: account.email, subject: account.id, roles: capabilities }
 }
 
@@ -193,22 +203,10 @@ export async function login(
 ): Promise<Response> {
   throttle(rateKey(request), 10)
   throttle(`login:${email.trim().toLowerCase()}`, 10)
-  const result = await db().query<{
-    id: string
-    email: string
-    password_hash: string
-    role: AdminRole
-  }>(
-    'SELECT id,email,password_hash,role FROM publisher_admin.accounts WHERE LOWER(email)=LOWER($1) AND active=TRUE',
-    [email.trim()],
-  )
-  const account = result.rows[0]
-  if (!account || !(await verifyPassword(password, account.password_hash)))
+  const account = await stored(() => findCredentialByEmail(email.trim()))
+  if (!account || !(await verifyPassword(password, account.passwordHash)))
     throw new AdminAuthError('Invalid email or password')
-  await db().query(
-    'UPDATE publisher_admin.account_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE account_id=$1 AND revoked_at IS NULL',
-    [account.id],
-  )
+  await stored(() => revokeAccountSessions(account.id))
   const session = await createSession(account.id)
   return Response.json(
     { account: { email: account.email, role: account.role } },
@@ -241,26 +239,9 @@ export async function bootstrapOwner(
   const passwordHash = await hashPassword(password)
   const id = randomUUID()
   try {
-    await runPostgresTransaction(db(), async (client) => {
-      const count = await client.query<{ count: string }>(
-        'SELECT COUNT(*)::text AS count FROM publisher_admin.accounts',
-      )
-      if (count.rows[0]?.count !== '0')
-        throw new AdminAuthError('Bootstrap unavailable', 403)
-      await client.query(
-        'INSERT INTO publisher_admin.accounts (id,email,password_hash,role) VALUES ($1,$2,$3,$4)',
-        [id, normalized, passwordHash, 'owner'],
-      )
-      await client.query(
-        'INSERT INTO publisher_admin.audit_events (site_id,actor,event,details) VALUES ($1,$2,$3,$4)',
-        ['default', normalized, 'account.owner.bootstrap', '{}'],
-      )
-    })
+    await stored(() => insertFirstOwner(id, normalized, passwordHash))
   } catch (error) {
-    if (
-      error instanceof AdminAuthError ||
-      (error as { code?: string }).code === '23505'
-    )
+    if (error instanceof AccountStoreConflict)
       throw new AdminAuthError('Bootstrap unavailable', 403)
     throw error
   }
@@ -278,11 +259,7 @@ export async function bootstrapOwner(
 }
 export async function logout(request: Request): Promise<Response> {
   const token = cookie(request, sessionCookie)
-  if (token)
-    await db().query(
-      'UPDATE publisher_admin.account_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE token_hash=$1 AND revoked_at IS NULL',
-      [tokenHash(token)],
-    )
+  if (token) await stored(() => revokeSessionByToken(tokenHash(token)))
   return Response.json(
     { ok: true },
     {
@@ -296,10 +273,7 @@ export async function logout(request: Request): Promise<Response> {
 
 export async function bootstrapAvailable(): Promise<boolean> {
   if (!process.env.ADMIN_BOOTSTRAP_SECRET) return false
-  const count = await db().query<{ count: string }>(
-    'SELECT COUNT(*)::text AS count FROM publisher_admin.accounts',
-  )
-  return count.rows[0]?.count === '0'
+  return (await stored(countAccounts)) === 0
 }
 
 function validRole(value: unknown): value is AdminRole {
@@ -315,17 +289,14 @@ function normalizedEmail(value: unknown): string {
 export async function listAccounts(identity: AdminIdentity) {
   if (!identity.roles.includes('owner'))
     throw new AdminAuthError('Role required', 403)
-  const result = await db().query<{
-    id: string
-    email: string
-    role: AdminRole
-    active: boolean
-    created_at: Date
-    password_changed_at: Date
-  }>(
-    'SELECT id,email,role,active,created_at,password_changed_at FROM publisher_admin.accounts ORDER BY created_at ASC',
-  )
-  return result.rows
+  return (await stored(listAccountRecords)).map((account) => ({
+    id: account.id,
+    email: account.email,
+    role: account.role,
+    active: account.active,
+    created_at: account.createdAt,
+    password_changed_at: account.passwordChangedAt,
+  }))
 }
 
 export async function createAccount(
@@ -343,12 +314,9 @@ export async function createAccount(
   const id = randomUUID()
   const passwordHash = await hashPassword(input.password)
   try {
-    await db().query(
-      'INSERT INTO publisher_admin.accounts (id,email,password_hash,role) VALUES ($1,$2,$3,$4)',
-      [id, email, passwordHash, role],
-    )
+    await stored(() => insertAccount(id, email, passwordHash, role))
   } catch (error) {
-    if ((error as { code?: string }).code === '23505')
+    if (error instanceof AccountStoreConflict)
       throw new AdminAuthError('Account already exists', 409)
     throw error
   }
@@ -365,60 +333,31 @@ export async function updateAccount(
     throw new AdminAuthError('Role required', 403)
   if (!/^[0-9a-f-]{36}$/i.test(accountId))
     throw new AdminAuthError('Invalid account input', 400)
-  const existing = await db().query<{
-    id: string
-    role: AdminRole
-    active: boolean
-  }>('SELECT id,role,active FROM publisher_admin.accounts WHERE id=$1', [
-    accountId,
-  ])
-  const account = existing.rows[0]
+  const account = await stored(() => findAccountById(accountId))
   if (!account) throw new AdminAuthError('Account not found', 404)
-  const updates: string[] = []
-  const values: unknown[] = []
-  let revoke = false
+  const update: { -readonly [K in keyof AccountUpdate]: AccountUpdate[K] } = {}
   if ('role' in input) {
     if (!validRole(input.role) || input.role === 'owner')
       throw new AdminAuthError('Invalid account input', 400)
     if (account.role === 'owner')
       throw new AdminAuthError('Owner account cannot be reduced', 409)
-    updates.push(`role=$${values.length + 1}`)
-    values.push(input.role)
-    revoke = true
+    update.role = input.role
   }
   if ('active' in input) {
     if (typeof input.active !== 'boolean')
       throw new AdminAuthError('Invalid account input', 400)
     if (account.role === 'owner' && !input.active)
       throw new AdminAuthError('Owner account cannot be disabled', 409)
-    updates.push(`active=$${values.length + 1}`)
-    values.push(input.active)
-    revoke = true
+    update.active = input.active
   }
   if ('password' in input) {
     if (typeof input.password !== 'string')
       throw new AdminAuthError('Invalid account input', 400)
-    updates.push(
-      `password_hash=$${values.length + 1}`,
-      'password_changed_at=CURRENT_TIMESTAMP',
-    )
-    values.push(await hashPassword(input.password))
-    revoke = true
+    update.passwordHash = await hashPassword(input.password)
   }
-  if (updates.length === 0)
+  if (Object.keys(update).length === 0)
     throw new AdminAuthError('No account changes supplied', 400)
-  values.push(accountId)
-  await runPostgresTransaction(db(), async (client) => {
-    await client.query(
-      `UPDATE publisher_admin.accounts SET ${updates.join(',')},updated_at=CURRENT_TIMESTAMP WHERE id=$${values.length}`,
-      values,
-    )
-    if (revoke)
-      await client.query(
-        'UPDATE publisher_admin.account_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE account_id=$1 AND revoked_at IS NULL',
-        [accountId],
-      )
-  })
+  await stored(() => updateAccountRecord(accountId, update, true))
   audit('account.updated', identity, {
     accountId,
     fields: Object.keys(input).filter((key) => key !== 'password'),
@@ -447,12 +386,9 @@ export function audit(
     return
   }
   try {
-    void db()
-      .query(
-        'INSERT INTO publisher_admin.audit_events (site_id,actor,event,details) VALUES ($1,$2,$3,$4)',
-        ['default', identity.email, event, JSON.stringify(details)],
-      )
-      .catch((error) => console.error('Admin audit write failed', error))
+    void insertAuditEvent(identity.email, event, details).catch((error) =>
+      console.error('Admin audit write failed', error),
+    )
   } catch (error) {
     // File-backed harness routes intentionally exercise their domain contract
     // without a PostgreSQL audit target.

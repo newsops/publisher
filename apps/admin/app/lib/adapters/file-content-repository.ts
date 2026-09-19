@@ -17,9 +17,12 @@ import {
   type DeskReview,
 } from '@publisher/content'
 import { FileArticleRepositoryAdapter } from './article-repository-adapter'
-import type { ContentRepository, PublishResult } from './repository-contract'
+import type {
+  ContentRepository,
+  PublishResult,
+} from '../services/repository-contract'
 import { publishFileContent } from './file-publication'
-import { initialPayload, type LocalState } from './repository-seed'
+import { initialPayload, type LocalState } from '@publisher/content'
 import {
   assertAuthorUnassigned,
   validatedAuthor,
@@ -31,7 +34,7 @@ import {
   upsertTaxonomyTerm,
   withDeskGateUpgrade,
   withDeskReview,
-} from './repository-validation'
+} from '@publisher/content'
 
 export class FileContentRepository implements ContentRepository {
   readonly siteId: string

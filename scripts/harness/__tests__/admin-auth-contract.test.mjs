@@ -7,7 +7,7 @@ import {
   requireIdentity,
   sessionCookieHeader,
   verifyPassword,
-} from '../../../apps/admin/app/lib/auth.ts'
+} from '../../../apps/admin/app/lib/http/auth.ts'
 
 async function withEnvironment(values, callback) {
   const previous = new Map()

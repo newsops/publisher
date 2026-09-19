@@ -3,14 +3,14 @@ import {
   apiResponse,
   auditAutomation,
   withSiteAutomation,
-} from '../../../../../lib/automation-auth'
-import { parseJsonBody } from '../../../../../lib/api-request'
-import { parsePluginCreateInput } from '../../../../../lib/plugin-api-input'
+} from '../../../../../lib/http/automation-auth'
+import { parseJsonBody } from '../../../../../lib/http/api-request'
+import { parsePluginCreateInput } from '../../../../../lib/http/plugin-api-input'
 import {
   getPluginRepositoryForSite,
   knownPluginIds,
   publicPluginInstallation,
-} from '../../../../../lib/plugin-repository'
+} from '../../../../../lib'
 
 export async function GET(
   request: Request,

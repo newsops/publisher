@@ -12,7 +12,7 @@
   "capabilities": [
     {
       "id": "posts",
-      "service": "apps/admin/app/lib/repository-contract.ts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
       "browser": ["posts", "posts/[id]"],
       "automation": ["sites/[siteId]/posts", "sites/[siteId]/posts/[id]"],
       "client": [
@@ -27,7 +27,7 @@
     },
     {
       "id": "desk-review",
-      "service": "apps/admin/app/lib/desk-review.ts",
+      "service": "apps/admin/app/lib/services/desk-review.ts",
       "browser": ["desk"],
       "automation": ["sites/[siteId]/posts/[id]/desk"],
       "client": ["getDeskReport", "decideDesk"],
@@ -41,7 +41,7 @@
     },
     {
       "id": "article-locales",
-      "service": "apps/admin/app/lib/article-repository.ts",
+      "service": "apps/admin/app/lib/services/article-repository.ts",
       "browser": ["articles/[id]"],
       "automation": ["sites/[siteId]/articles/[id]"],
       "client": [],
@@ -50,7 +50,7 @@
     },
     {
       "id": "authors",
-      "service": "apps/admin/app/lib/repository-contract.ts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
       "browser": ["authors", "authors/[slug]"],
       "automation": ["sites/[siteId]/authors", "sites/[siteId]/authors/[slug]"],
       "client": [
@@ -65,7 +65,7 @@
     },
     {
       "id": "tags",
-      "service": "apps/admin/app/lib/repository-contract.ts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
       "browser": ["tags", "tags/[slug]"],
       "automation": ["sites/[siteId]/tags", "sites/[siteId]/tags/[slug]"],
       "client": ["listTags", "createTag", "getTag", "updateTag", "archiveTag"],
@@ -77,7 +77,7 @@
     },
     {
       "id": "categories",
-      "service": "apps/admin/app/lib/repository-contract.ts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
       "browser": ["categories", "categories/[slug]"],
       "automation": [
         "sites/[siteId]/categories",
@@ -98,7 +98,7 @@
     },
     {
       "id": "settings",
-      "service": "apps/admin/app/lib/repository-contract.ts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
       "browser": ["settings"],
       "automation": ["sites/[siteId]/settings"],
       "client": ["getSettings", "updateSettings"],
@@ -107,7 +107,7 @@
     },
     {
       "id": "agent-guidance",
-      "service": "apps/admin/app/lib/agent-guidance.ts",
+      "service": "apps/admin/app/lib/adapters/agent-guidance.ts",
       "browser": ["agent-guidance"],
       "automation": ["sites/[siteId]/agent-guidance"],
       "client": ["getAgentGuidance", "updateAgentGuidance"],
@@ -116,7 +116,7 @@
     },
     {
       "id": "media",
-      "service": "apps/admin/app/lib/media-service.ts",
+      "service": "apps/admin/app/lib/adapters/media-service.ts",
       "browser": ["media", "media/[id]/approve", "media/[id]/preview"],
       "automation": ["sites/[siteId]/media"],
       "client": ["uploadMedia", "approveMedia"],
@@ -125,7 +125,7 @@
     },
     {
       "id": "publish",
-      "service": "apps/admin/app/lib/publisher.ts",
+      "service": "apps/admin/app/lib/adapters/publisher.ts",
       "browser": ["publish"],
       "automation": ["sites/[siteId]/publish"],
       "client": ["publish"],
@@ -145,7 +145,7 @@
     },
     {
       "id": "plugins",
-      "service": "apps/admin/app/lib/plugin-repository.ts",
+      "service": "apps/admin/app/lib/services/plugin-repository.ts",
       "browser": [
         "plugins",
         "plugins/[pluginId]",
@@ -163,7 +163,7 @@
     },
     {
       "id": "embeds",
-      "service": "apps/admin/app/lib/x-oembed.ts",
+      "service": "apps/admin/app/lib/services/x-oembed.ts",
       "browser": ["embeds/x"],
       "automation": ["sites/[siteId]/embeds/x"],
       "client": ["resolveXPostEmbed"],
@@ -172,7 +172,7 @@
     },
     {
       "id": "sites",
-      "service": "apps/admin/app/lib/site-registry.ts",
+      "service": "apps/admin/app/lib/adapters/site-registry.ts",
       "browser": ["sites"],
       "automation": ["sites", "sites/[siteId]", "sites/[siteId]/bootstrap"],
       "client": [
@@ -187,7 +187,7 @@
     },
     {
       "id": "content-restore",
-      "service": "apps/admin/app/lib/archive-restore.ts",
+      "service": "apps/admin/app/lib/adapters/archive-restore.ts",
       "browser": [],
       "automation": ["sites/[siteId]/content-restore"],
       "client": ["restoreContent"],
@@ -198,7 +198,7 @@
     },
     {
       "id": "accounts",
-      "service": "apps/admin/app/lib/auth.ts",
+      "service": "apps/admin/app/lib/http/auth.ts",
       "browser": ["accounts", "accounts/[id]"],
       "automation": [],
       "client": [],
@@ -209,7 +209,7 @@
     },
     {
       "id": "auth-session",
-      "service": "apps/admin/app/lib/auth.ts",
+      "service": "apps/admin/app/lib/http/auth.ts",
       "browser": [
         "auth/login",
         "auth/logout",
@@ -225,7 +225,7 @@
     },
     {
       "id": "comment-moderation",
-      "service": "apps/admin/app/lib/comment-moderation.ts",
+      "service": "apps/admin/app/lib/services/comment-moderation.ts",
       "browser": ["comments/moderation", "comments/moderation/[id]"],
       "automation": [],
       "client": [],

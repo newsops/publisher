@@ -4,9 +4,9 @@ import {
   authErrorResponse,
   enforceRateLimit,
   requireIdentity,
-} from '../../lib/auth'
-import { parseSettingsInput } from '../../lib/platform-api-input'
-import { repositoryForRequest } from '../../lib/request-repository'
+} from '../../lib/http/auth'
+import { parseSettingsInput } from '../../lib/http/platform-api-input'
+import { repositoryForRequest } from '../../lib/http/request-repository'
 
 export async function GET(request: Request): Promise<Response> {
   try {
