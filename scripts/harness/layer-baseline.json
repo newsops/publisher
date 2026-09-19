@@ -100,14 +100,6 @@
     "key": "packages/ops-cli/bin/publisher.mjs -> ../../content/src/archive.ts"
   },
   {
-    "rule": "layer-imports",
-    "key": "scripts/generate-public-metadata.mjs -> ../packages/content/src/editorial-markdown.ts"
-  },
-  {
-    "rule": "layer-imports",
-    "key": "scripts/generate-theme-runtime.mts -> ../packages/content/src/themes"
-  },
-  {
     "rule": "surface-parity",
     "key": "missing surface: article-locales cli"
   },

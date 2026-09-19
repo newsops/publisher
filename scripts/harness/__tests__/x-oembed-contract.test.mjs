@@ -4,7 +4,7 @@ import {
   resolveXPostOEmbed,
 } from '../../../apps/admin/app/lib/services/x-oembed.ts'
 import { sanitizeBodyHtml } from '../../../packages/content/src/editor.ts'
-import { getTheme } from '../../../packages/content/src/themes.ts'
+import { getTheme } from '../../../packages/publication/src/index.ts'
 import { createPublisherAdminClient } from '../../../packages/admin-client/src/client.js'
 
 const canonical = 'https://x.com/thsottiaux/status/2097559315150426222'

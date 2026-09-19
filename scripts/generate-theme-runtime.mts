@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { getTheme, isThemeId } from '../packages/content/src/themes'
+import { isThemeId } from '../packages/content/src/index'
+import { getTheme } from '../packages/publication/src/index'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const publicRoot = path.join(root, 'apps/site/public')

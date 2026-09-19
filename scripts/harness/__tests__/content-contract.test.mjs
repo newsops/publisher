@@ -14,13 +14,12 @@ import {
 } from '../../../packages/content/src/article-adapter.ts'
 import {
   getArticleVariantPath,
-  getTheme,
   importPreReleaseHtmlToMarkdown,
   parseEditorialMarkdown,
   renderEditorialMarkdown,
   serializeEditorialMarkdown,
-  themes,
 } from '../../../packages/content/src/index.ts'
+import { getTheme, themes } from '../../../packages/publication/src/index.ts'
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

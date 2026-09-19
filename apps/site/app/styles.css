@@ -1,7 +1,7 @@
 /*
  * Publisher — readable baseline
  * The complete visual design lives in the selected theme bundle
- * (packages/content/src/themes/<id>.ts), which every page
+ * (packages/publication/src/themes/<id>.ts), which every page
  * loads synchronously from /theme-runtime/current.css. This file only keeps
  * the document legible when that bundle is unavailable, mirroring the
  * production DEFAULT_BASELINE_CSS fallback.

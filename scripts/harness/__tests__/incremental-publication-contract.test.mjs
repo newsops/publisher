@@ -18,12 +18,12 @@ import {
   verifyPublicationCandidate,
   validatePopularityProjection,
   assertBuildJobTransition,
+  getTheme,
   guardBuildJobTransitions,
 } from '../../../packages/publication/src/index.ts'
 import { FileBuildJobRepository } from '../../../packages/persistence/src/index.ts'
 import {
   createPluginInstallation,
-  getTheme,
   projectPublicPluginSnapshot,
 } from '../../../packages/content/src/index.ts'
 

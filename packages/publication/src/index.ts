@@ -53,3 +53,5 @@ export {
   type ReadableArtifactStore,
 } from './static-deployment'
 export { verifyPublicationCandidate } from './verification'
+export { getTheme, themes, type ThemeDefinition } from './themes'
+export { PRESENTATION_MARKERS } from './static-policy'

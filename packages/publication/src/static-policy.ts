@@ -13,3 +13,35 @@ export const PUBLICATION_BASELINE_VERSION = 'baseline-v3'
 export function contentDigest(value: string | Uint8Array): string {
   return createHash('sha256').update(value).digest('hex')
 }
+
+/**
+ * Presentation contract (ARCH-004). `packages/publication` renders the
+ * canonical public HTML; `apps/site` is the checked-in fixture preview. Both
+ * must emit these class markers on the pages named, and every theme
+ * stylesheet must style them, so the two renderers cannot drift apart
+ * silently. Add a marker here when a theme starts depending on it.
+ */
+export const PRESENTATION_MARKERS = Object.freeze({
+  chrome: [
+    'site-shell',
+    'site-header',
+    'topbar',
+    'main-header',
+    'brand',
+    'section-nav',
+    'main-nav',
+    'site-footer',
+  ],
+  article: [
+    'post-body',
+    'article-head',
+    'breadcrumb',
+    'category',
+    'standfirst',
+    'byline',
+    'prose',
+    'article-tags',
+    'article-related',
+  ],
+  index: ['lead', 'lead-title', 'post-list', 'post-card', 'post-title'],
+} as const)
