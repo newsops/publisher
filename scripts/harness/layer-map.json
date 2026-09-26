@@ -1,0 +1,219 @@
+{
+  "$comment": "ARCH-001 single source for the layer hierarchy. Order matters: the first layer whose globs match a file wins. `allow` lists layer ids, `types:<id>` (type-only imports), `index:<id>` (package index or @publisher alias only), module classes from `modules`, `builtin`, or exact specifiers. `.agents/project-structure.md` and `.agents/rules/layer-boundaries.md` describe this file; they never override it. Package-owned scripts (`packages/*/scripts`) belong to their package's layer and are composition roots. Files under `packages/` never import `apps/`.",
+  "modules": {
+    "sdk": ["pg", "@aws-sdk/**", "sharp"],
+    "framework": ["next", "next/**", "react", "react-dom", "react-dom/**"],
+    "parser": [
+      "sanitize-html",
+      "unified",
+      "remark-*",
+      "rehype-*",
+      "mdast",
+      "mdast-*",
+      "micromark*",
+      "htmlparser2",
+      "domhandler"
+    ],
+    "tooling": [
+      "tsx/**",
+      "vitest",
+      "s3rver",
+      "@electric-sql/**",
+      "wrangler",
+      "esbuild"
+    ]
+  },
+  "aliases": {
+    "@publisher/content": "packages/content/src",
+    "@publisher/persistence": "packages/persistence/src",
+    "@publisher/publication": "packages/publication/src",
+    "@publisher/admin-client": "packages/admin-client/src"
+  },
+  "exempt": [
+    "**/__tests__/**",
+    "**/*.test.*",
+    "scripts/harness/**",
+    "packages/claude-plugin/bin/**"
+  ],
+  "layers": {
+    "contract": {
+      "level": "L0",
+      "globs": ["packages/content/src/**"],
+      "allow": ["contract", "node:crypto", "parser"]
+    },
+    "adapters": {
+      "level": "L1",
+      "globs": [
+        "packages/persistence/src/**",
+        "packages/persistence/scripts/**",
+        "apps/admin/app/lib/adapters/**"
+      ],
+      "allow": [
+        "adapters",
+        "contract",
+        "types:publication",
+        "types:services",
+        "builtin",
+        "sdk"
+      ]
+    },
+    "publication": {
+      "level": "L2",
+      "globs": ["packages/publication/src/**"],
+      "allow": ["publication", "contract", "types:adapters", "builtin"]
+    },
+    "composition": {
+      "level": "L3",
+      "globs": [
+        "apps/admin/app/lib/index.ts",
+        "apps/admin/app/lib/config.ts",
+        "apps/admin/app/lib/repository.ts"
+      ],
+      "allow": [
+        "composition",
+        "services",
+        "adapters",
+        "publication",
+        "contract",
+        "builtin"
+      ]
+    },
+    "services": {
+      "level": "L3",
+      "globs": ["apps/admin/app/lib/services/**"],
+      "allow": [
+        "services",
+        "composition",
+        "publication",
+        "contract",
+        "types:adapters",
+        "builtin"
+      ]
+    },
+    "http": {
+      "level": "L4",
+      "globs": ["apps/admin/app/lib/http/**"],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:adapters",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "routes-automation": {
+      "level": "L4",
+      "globs": ["apps/admin/app/api/v2/**"],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "routes-browser": {
+      "level": "L4",
+      "globs": ["apps/admin/app/api/**"],
+      "allow": [
+        "http",
+        "services",
+        "composition",
+        "contract",
+        "types:publication",
+        "builtin",
+        "framework"
+      ]
+    },
+    "ui": {
+      "level": "L4",
+      "globs": ["apps/admin/app/**"],
+      "allow": ["ui", "http", "types:services", "types:contract", "framework"]
+    },
+    "site": {
+      "level": "L4",
+      "globs": ["apps/site/app/**", "apps/site/next.config.ts"],
+      "allow": ["site", "contract", "framework", "builtin"]
+    },
+    "comments": {
+      "level": "L4",
+      "globs": ["apps/comments/src/**"],
+      "allow": ["comments", "adapters", "builtin"]
+    },
+    "client": {
+      "level": "L5",
+      "globs": ["packages/admin-client/src/**"],
+      "allow": ["client"]
+    },
+    "plugin": {
+      "level": "L5",
+      "globs": ["packages/claude-plugin/**"],
+      "allow": ["plugin", "builtin", "tooling"]
+    },
+    "cli": {
+      "level": "L5",
+      "globs": ["packages/ops-cli/**"],
+      "allow": ["cli", "client", "index:contract", "builtin", "tooling"]
+    },
+    "scripts": {
+      "level": "L5",
+      "globs": ["scripts/**"],
+      "allow": [
+        "scripts",
+        "composition",
+        "index:contract",
+        "index:adapters",
+        "index:publication",
+        "client",
+        "builtin",
+        "tooling"
+      ]
+    }
+  },
+  "compositionRoots": [
+    "apps/admin/app/lib/config.ts",
+    "apps/admin/app/lib/index.ts",
+    "apps/admin/next.config.ts",
+    "apps/site/next.config.ts",
+    "apps/comments/src/**",
+    "packages/persistence/src/object-storage.ts",
+    "packages/persistence/src/postgres.ts",
+    "packages/ops-cli/**",
+    "scripts/**",
+    "packages/*/scripts/**",
+    "apps/admin/app/lib/repository.ts"
+  ],
+  "envAllowedNames": ["NEXT_PUBLIC_*", "NODE_ENV"],
+  "routes": {
+    "automation": {
+      "globs": ["apps/admin/app/api/v2/**/route.ts"],
+      "requiredAny": [
+        "withSiteAutomation(",
+        "requireSiteAutomationIdentity(",
+        "withAutomation("
+      ]
+    },
+    "browser": {
+      "globs": ["apps/admin/app/api/**/route.ts"],
+      "requiredAny": ["requireIdentity("],
+      "siteResolutionAny": [
+        "repositoryForRequest(",
+        "pluginRepositoryForRequest(",
+        "authorizedSiteId("
+      ],
+      "siteResolutionExempt": [
+        "apps/admin/app/api/accounts/**",
+        "apps/admin/app/api/auth/**",
+        "apps/admin/app/api/sites/route.ts",
+        "apps/admin/app/api/embeds/**"
+      ],
+      "requiredExempt": ["apps/admin/app/api/auth/**"]
+    },
+    "forbiddenImports": ["sdk", "adapters", "route.ts"]
+  }
+}

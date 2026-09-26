@@ -1,0 +1,51 @@
+{
+  "name": "publisher-platform",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @publisher/site dev",
+    "dev:admin": "pnpm --filter @publisher/admin dev",
+    "build": "pnpm --filter @publisher/site build && pnpm --filter @publisher/claude-plugin build",
+    "build:admin": "pnpm --filter @publisher/admin build",
+    "build:comments": "pnpm --filter @publisher/comments build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test && pnpm build && pnpm harness:test",
+    "typecheck": "pnpm -r typecheck",
+    "harness:test": "vitest run --config vitest.harness.config.ts",
+    "harness:scan": "node scripts/harness/run-all-scans.mjs",
+    "harness:browser": "node scripts/harness/browser-smoke.mjs",
+    "preview:site": "node scripts/harness/static-preview.mjs",
+    "harness:edge": "node scripts/harness/edge-smoke.mjs",
+    "deploy:preflight": "node scripts/deploy/preflight.mjs --production",
+    "publication:worker": "tsx scripts/deploy/publication-worker.ts",
+    "publication:next": "tsx scripts/deploy/publication-worker.ts --next",
+    "publication:rollback": "tsx scripts/deploy/publication-worker.ts --rollback",
+    "fixture:reconcile": "tsx scripts/admin/reconcile.mts",
+    "persistence:migrate": "pnpm --filter @publisher/persistence migrate",
+    "persistence:backup": "pnpm --filter @publisher/persistence backup",
+    "persistence:restore": "pnpm --filter @publisher/persistence restore",
+    "clean-room:smoke": "tsx scripts/admin/clean-room.mts",
+    "admin:api-key": "node scripts/admin/create-api-key.mjs",
+    "format": "prettier --write .",
+    "prepare": "husky",
+    "privacy:denylist": "node scripts/privacy-denylist.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@electric-sql/pglite-socket": "^0.2.11",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
+    "s3rver": "^3.7.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  }
+}

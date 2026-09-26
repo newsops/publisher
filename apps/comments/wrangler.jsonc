@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "publisher-comments",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "PUBLIC_ORIGINS": "{}",
+    "HUMAN_VERIFICATION_URL": "",
+    "MAX_COMMENT_BODY_BYTES": "16384",
+    "RATE_LIMIT_WINDOW_SECONDS": "900",
+    "RATE_LIMIT_PER_IP": "5",
+    "RATE_LIMIT_PER_THREAD": "20",
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+}

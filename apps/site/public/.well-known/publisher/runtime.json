@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "theme": {
+    "id": "editorial",
+    "version": "1",
+    "css": "/theme-runtime/immutable/editorial.fe8a7c25f573c3dd21c814744d399ad5295e6b461a8658915d0c14363b16c656.css"
+  },
+  "projections": {
+    "recent": "/data/immutable/recent.local.json"
+  }
+}

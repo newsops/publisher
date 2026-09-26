@@ -1,0 +1,196 @@
+export type PublisherFetch = typeof fetch
+
+export interface PublisherAdminClientOptions {
+  origin: string
+  token: string
+  fetch?: PublisherFetch
+}
+
+export interface PublisherApiReply<T> {
+  status: number
+  data: T
+}
+
+export class PublisherApiError extends Error {
+  readonly code: 'REMOTE_ERROR' | 'MALFORMED_RESPONSE'
+  readonly status?: number
+  /** The server's JSON error envelope, when it sent one. */
+  readonly body?: unknown
+  toJSON(): { code: string; status?: number; body?: unknown }
+}
+
+export interface PublisherAdminClient {
+  listSites(): Promise<PublisherApiReply<unknown>>
+  createSite(input: {
+    siteId: string
+    name: string
+    canonicalOrigin: string
+    themeId?: string
+  }): Promise<PublisherApiReply<unknown>>
+  bootstrapSite(siteId: string): Promise<PublisherApiReply<unknown>>
+  updateSite(
+    siteId: string,
+    input: { name: string; canonicalOrigin: string; themeId?: string },
+  ): Promise<PublisherApiReply<unknown>>
+  archiveSite(siteId: string): Promise<PublisherApiReply<unknown>>
+  getSettings(siteId: string): Promise<PublisherApiReply<unknown>>
+  updateSettings(
+    siteId: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  getAgentGuidance(siteId: string): Promise<PublisherApiReply<unknown>>
+  updateAgentGuidance(
+    siteId: string,
+    instructions: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  listPosts(siteId: string): Promise<PublisherApiReply<unknown>>
+  resolveXPostEmbed(
+    siteId: string,
+    url: string,
+  ): Promise<PublisherApiReply<unknown>>
+  createPost(
+    siteId: string,
+    input: unknown,
+  ): Promise<PublisherApiReply<unknown>>
+  getPost(siteId: string, postId: string): Promise<PublisherApiReply<unknown>>
+  updatePost(
+    siteId: string,
+    postId: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  getDeskReport(
+    siteId: string,
+    postId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  decideDesk(
+    siteId: string,
+    postId: string,
+    decision: {
+      action: 'approve' | 'request-changes'
+      checklist?: readonly { id: string; checked: boolean; note?: string }[]
+      note?: string
+    },
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  deletePost(
+    siteId: string,
+    postId: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  listAuthors(siteId: string): Promise<PublisherApiReply<unknown>>
+  createAuthor(
+    siteId: string,
+    input: unknown,
+  ): Promise<PublisherApiReply<unknown>>
+  getAuthor(siteId: string, slug: string): Promise<PublisherApiReply<unknown>>
+  updateAuthor(
+    siteId: string,
+    slug: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  archiveAuthor(
+    siteId: string,
+    slug: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  listTags(siteId: string): Promise<PublisherApiReply<unknown>>
+  createTag(siteId: string, input: unknown): Promise<PublisherApiReply<unknown>>
+  getTag(siteId: string, slug: string): Promise<PublisherApiReply<unknown>>
+  updateTag(
+    siteId: string,
+    slug: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  archiveTag(
+    siteId: string,
+    slug: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  listCategories(siteId: string): Promise<PublisherApiReply<unknown>>
+  createCategory(
+    siteId: string,
+    input: unknown,
+  ): Promise<PublisherApiReply<unknown>>
+  getCategory(siteId: string, slug: string): Promise<PublisherApiReply<unknown>>
+  updateCategory(
+    siteId: string,
+    slug: string,
+    input: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  archiveCategory(
+    siteId: string,
+    slug: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  getOperation(siteId: string, id: string): Promise<PublisherApiReply<unknown>>
+  publish(
+    siteId: string,
+    idempotencyKey: string,
+  ): Promise<PublisherApiReply<unknown>>
+  listPlugins(siteId: string): Promise<PublisherApiReply<unknown>>
+  createPlugin(
+    siteId: string,
+    input: { pluginId: string; configuration?: Record<string, unknown> },
+  ): Promise<PublisherApiReply<unknown>>
+  getPlugin(
+    siteId: string,
+    pluginId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  configurePlugin(
+    siteId: string,
+    pluginId: string,
+    configuration: Record<string, unknown>,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  runPluginAction(
+    siteId: string,
+    pluginId: string,
+    action: 'validate' | 'enable' | 'disable',
+    revision: number,
+    configuration?: Record<string, unknown>,
+  ): Promise<PublisherApiReply<unknown>>
+  getArticle(
+    siteId: string,
+    articleId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  putArticleVariant(
+    siteId: string,
+    articleId: string,
+    variant: unknown,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  deleteArticleVariant(
+    siteId: string,
+    articleId: string,
+    locale: string,
+    revision: number,
+  ): Promise<PublisherApiReply<unknown>>
+  uploadMedia(
+    siteId: string,
+    input: {
+      fileName: string
+      mimeType: string
+      sha256: string
+      body: Uint8Array
+    },
+  ): Promise<PublisherApiReply<unknown>>
+  approveMedia(
+    siteId: string,
+    mediaId: string,
+  ): Promise<PublisherApiReply<unknown>>
+  restoreContent(
+    siteId: string,
+    input: unknown,
+    idempotencyKey: string,
+  ): Promise<PublisherApiReply<unknown>>
+}
+
+export function createPublisherAdminClient(
+  options: PublisherAdminClientOptions,
+): PublisherAdminClient

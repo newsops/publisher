@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# RULE-003: a commit message must not carry an operation's details.
+set -e
+node scripts/harness/scan-repository-privacy.mjs --message-file "$1"

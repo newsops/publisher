@@ -1,0 +1,25 @@
+{
+  "name": "publisher",
+  "displayName": "Publisher Desk",
+  "version": "0.1.0",
+  "description": "Draft, desk-review, approve, and publish Publisher articles from Claude Code through the publisher CLI",
+  "author": { "name": "newsops" },
+  "repository": "https://github.com/newsops/publisher",
+  "license": "AGPL-3.0-or-later",
+  "keywords": ["publisher", "editorial", "desk", "cms"],
+  "userConfig": {
+    "admin_origin": {
+      "type": "string",
+      "title": "Admin origin",
+      "description": "Origin of the Publisher admin, for example https://admin.example.com (no trailing slash)",
+      "required": true
+    },
+    "api_token": {
+      "type": "string",
+      "title": "Automation API token",
+      "description": "Bearer key issued by an admin owner (docs/admin-api.md). Stored in the OS keychain; exported to the session environment as PUBLISHER_API_TOKEN.",
+      "required": true,
+      "sensitive": true
+    }
+  }
+}

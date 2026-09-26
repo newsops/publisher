@@ -1,0 +1,17 @@
+{
+  "name": "@publisher/claude-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude Code plugin that runs the Publisher editorial desk through the bundled publisher CLI",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "node --check scripts/build.mjs && node --check bin/publisher",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@publisher/ops-cli": "workspace:*",
+    "esbuild": "^0.28.2",
+    "vitest": "^4.0.0"
+  }
+}

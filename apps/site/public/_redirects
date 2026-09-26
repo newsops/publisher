@@ -1,0 +1,7 @@
+# Optional adapter for static hosts that consume the conventional `_redirects`
+# file. Canonical article routes keep the `.html` form while the generated file
+# layout stays directory-based.
+
+/:year/:month/:slug.html /:year/:month/:slug 200
+/about.html /about 200
+/contact-us.html /contact-us 200

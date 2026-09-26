@@ -1,0 +1,12 @@
+# Generated artifacts. These are rewritten by `pnpm build` (which the pre-push
+# hook runs) and by the migration script, so formatting them here leaves the
+# working tree dirty after every build.
+apps/site/next-env.d.ts
+apps/admin/next-env.d.ts
+apps/site/public/search-index.json
+apps/site/public/site-runtime/projection-bootstrap.v1.js
+apps/site/public/theme-runtime/
+packages/content/src/data/posts.json
+pnpm-lock.yaml
+packages/claude-plugin/bin/
+packages/claude-plugin/skills/publisher-cli/SKILL.md

@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+set -e
+# RULE-003: scan the messages of the commits being pushed. Git passes one
+# "<local ref> <local sha> <remote ref> <remote sha>" line per ref on stdin.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "$local_sha" ] || continue
+  case "$local_sha" in
+    *[!0]*) ;;
+    *) continue ;; # deleting a remote ref pushes no commits
+  esac
+  case "$remote_sha" in
+    *[!0]*)
+      if git cat-file -e "$remote_sha^{commit}" 2>/dev/null; then
+        node scripts/harness/scan-repository-privacy.mjs --commit-range "$remote_sha..$local_sha"
+      else
+        node scripts/harness/scan-repository-privacy.mjs --unpushed "$local_sha"
+      fi
+      ;;
+    *) node scripts/harness/scan-repository-privacy.mjs --unpushed "$local_sha" ;;
+  esac
+done
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm harness:scan
+sh scripts/check-secrets.sh

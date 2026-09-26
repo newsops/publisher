@@ -1,0 +1,16 @@
+{
+  "name": "publisher",
+  "owner": { "name": "newsops" },
+  "metadata": {
+    "description": "Claude Code plugins for the Publisher static-first news platform"
+  },
+  "plugins": [
+    {
+      "name": "publisher",
+      "source": "./packages/claude-plugin",
+      "description": "Draft, desk-review, approve, and publish Publisher articles through the bundled publisher CLI",
+      "version": "0.1.0",
+      "category": "productivity"
+    }
+  ]
+}

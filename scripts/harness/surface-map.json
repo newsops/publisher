@@ -1,0 +1,285 @@
+{
+  "$comment": "ARCH-001 capability registry for the three access surfaces. `browser` and `automation` are route directories under apps/admin/app/api (automation relative to api/v2). `client` are @publisher/admin-client methods, `cli` are `publisher` command ids from the usage list, `ui` are admin panel files. A capability without `exclusive` must be reachable from every surface; `exclusive` names the only surface and `reason` says why.",
+  "sources": {
+    "browserRoutes": "apps/admin/app/api",
+    "automationRoutes": "apps/admin/app/api/v2",
+    "clientTypes": "packages/admin-client/src/index.d.ts",
+    "cliUsage": "packages/ops-cli/bin/publisher.mjs",
+    "uiPanels": "apps/admin/app",
+    "openapi": "docs/admin-api.openapi.yaml"
+  },
+  "uiShell": ["AdminDashboard.tsx", "AdminDashboardView.tsx"],
+  "capabilities": [
+    {
+      "id": "posts",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
+      "browser": ["posts", "posts/[id]"],
+      "automation": ["sites/[siteId]/posts", "sites/[siteId]/posts/[id]"],
+      "client": [
+        "listPosts",
+        "createPost",
+        "getPost",
+        "updatePost",
+        "deletePost"
+      ],
+      "cli": [
+        "post plan",
+        "post get",
+        "post create",
+        "post update",
+        "post submit",
+        "post delete"
+      ],
+      "ui": ["PostEditor.tsx"]
+    },
+    {
+      "id": "desk-review",
+      "service": "apps/admin/app/lib/services/desk-review.ts",
+      "browser": ["desk"],
+      "automation": ["sites/[siteId]/posts/[id]/desk"],
+      "client": ["getDeskReport", "decideDesk"],
+      "cli": [
+        "desk list",
+        "desk report",
+        "desk approve",
+        "desk request-changes"
+      ],
+      "ui": ["DeskReviewPanel.tsx"]
+    },
+    {
+      "id": "article-locales",
+      "service": "apps/admin/app/lib/services/article-repository.ts",
+      "browser": ["articles/[id]"],
+      "automation": ["sites/[siteId]/articles/[id]"],
+      "client": ["getArticle", "putArticleVariant", "deleteArticleVariant"],
+      "cli": ["article get", "article set", "article remove"],
+      "ui": ["ArticleVariantEditor.tsx"]
+    },
+    {
+      "id": "authors",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
+      "browser": ["authors", "authors/[slug]"],
+      "automation": ["sites/[siteId]/authors", "sites/[siteId]/authors/[slug]"],
+      "client": [
+        "listAuthors",
+        "createAuthor",
+        "getAuthor",
+        "updateAuthor",
+        "archiveAuthor"
+      ],
+      "cli": ["author get"],
+      "ui": ["ManagementPanel.tsx"]
+    },
+    {
+      "id": "tags",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
+      "browser": ["tags", "tags/[slug]"],
+      "automation": ["sites/[siteId]/tags", "sites/[siteId]/tags/[slug]"],
+      "client": ["listTags", "createTag", "getTag", "updateTag", "archiveTag"],
+      "cli": [
+        "taxonomy categories|tags list",
+        "taxonomy categories|tags create"
+      ],
+      "ui": ["ManagementPanel.tsx"]
+    },
+    {
+      "id": "categories",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
+      "browser": ["categories", "categories/[slug]"],
+      "automation": [
+        "sites/[siteId]/categories",
+        "sites/[siteId]/categories/[slug]"
+      ],
+      "client": [
+        "listCategories",
+        "createCategory",
+        "getCategory",
+        "updateCategory",
+        "archiveCategory"
+      ],
+      "cli": [
+        "taxonomy categories|tags list",
+        "taxonomy categories|tags create"
+      ],
+      "ui": ["ManagementPanel.tsx"]
+    },
+    {
+      "id": "settings",
+      "service": "apps/admin/app/lib/services/repository-contract.ts",
+      "browser": ["settings"],
+      "automation": ["sites/[siteId]/settings"],
+      "client": ["getSettings", "updateSettings"],
+      "cli": ["settings get", "settings set"],
+      "ui": ["PublicationSettingsPanel.tsx"]
+    },
+    {
+      "id": "agent-guidance",
+      "service": "apps/admin/app/lib/adapters/agent-guidance.ts",
+      "browser": ["agent-guidance"],
+      "automation": ["sites/[siteId]/agent-guidance"],
+      "client": ["getAgentGuidance", "updateAgentGuidance"],
+      "cli": ["site guidance get", "site guidance set"],
+      "ui": ["AgentGuidancePanel.tsx"]
+    },
+    {
+      "id": "media",
+      "service": "apps/admin/app/lib/adapters/media-service.ts",
+      "browser": ["media", "media/[id]/approve", "media/[id]/preview"],
+      "automation": ["sites/[siteId]/media"],
+      "client": ["uploadMedia", "approveMedia"],
+      "cli": ["media upload", "media approve"],
+      "ui": ["MediaLibraryPanel.tsx"]
+    },
+    {
+      "id": "publish",
+      "service": "apps/admin/app/lib/adapters/publisher.ts",
+      "browser": ["publish"],
+      "automation": ["sites/[siteId]/publish"],
+      "client": ["publish"],
+      "cli": ["publish", "status"],
+      "ui": ["PublicationManagementPanel.tsx"]
+    },
+    {
+      "id": "operations",
+      "service": "packages/persistence/src/build-jobs.ts",
+      "browser": [],
+      "automation": ["sites/[siteId]/operations/[id]"],
+      "client": ["getOperation"],
+      "cli": ["operation get"],
+      "ui": [],
+      "exclusive": "automation",
+      "reason": "Build-job polling is an automation workflow; the admin page shows publication state through the publish capability."
+    },
+    {
+      "id": "plugins",
+      "service": "apps/admin/app/lib/services/plugin-repository.ts",
+      "browser": [
+        "plugins",
+        "plugins/[pluginId]",
+        "plugins/[pluginId]/enable",
+        "plugins/[pluginId]/disable",
+        "plugins/[pluginId]/validate"
+      ],
+      "automation": [
+        "sites/[siteId]/plugins",
+        "sites/[siteId]/plugins/[pluginId]"
+      ],
+      "client": [
+        "listPlugins",
+        "createPlugin",
+        "getPlugin",
+        "configurePlugin",
+        "runPluginAction"
+      ],
+      "cli": [
+        "plugin list",
+        "plugin get",
+        "plugin install",
+        "plugin configure",
+        "plugin validate|enable|disable"
+      ],
+      "ui": ["PluginManagementPanel.tsx"]
+    },
+    {
+      "id": "embeds",
+      "service": "apps/admin/app/lib/services/x-oembed.ts",
+      "browser": ["embeds/x"],
+      "automation": ["sites/[siteId]/embeds/x"],
+      "client": ["resolveXPostEmbed"],
+      "cli": ["embed x resolve"],
+      "ui": ["PostEditor.tsx"]
+    },
+    {
+      "id": "sites",
+      "service": "apps/admin/app/lib/adapters/site-registry.ts",
+      "browser": ["sites"],
+      "automation": ["sites", "sites/[siteId]", "sites/[siteId]/bootstrap"],
+      "client": [
+        "listSites",
+        "createSite",
+        "bootstrapSite",
+        "updateSite",
+        "archiveSite"
+      ],
+      "cli": [
+        "site list",
+        "site create",
+        "site bootstrap",
+        "site update",
+        "site archive"
+      ],
+      "ui": ["SiteSelector.tsx"]
+    },
+    {
+      "id": "content-restore",
+      "service": "apps/admin/app/lib/adapters/archive-restore.ts",
+      "browser": [],
+      "automation": ["sites/[siteId]/content-restore"],
+      "client": ["restoreContent"],
+      "cli": ["content restore", "content inspect"],
+      "ui": [],
+      "exclusive": "automation",
+      "reason": "Archive restore is an operator recovery procedure run from a shell with a local archive; it is not a browser action."
+    },
+    {
+      "id": "accounts",
+      "service": "apps/admin/app/lib/http/auth.ts",
+      "browser": ["accounts", "accounts/[id]"],
+      "automation": [],
+      "client": [],
+      "cli": [],
+      "ui": ["AccountManagementPanel.tsx"],
+      "exclusive": "browser",
+      "reason": "Human account administration is an owner trust decision made in the admin page; automation keys are provisioned by the operator, not by the API."
+    },
+    {
+      "id": "auth-session",
+      "service": "apps/admin/app/lib/http/auth.ts",
+      "browser": [
+        "auth/login",
+        "auth/logout",
+        "auth/session",
+        "auth/bootstrap"
+      ],
+      "automation": [],
+      "client": [],
+      "cli": [],
+      "ui": ["LoginForm.tsx"],
+      "exclusive": "browser",
+      "reason": "Session cookies exist only for the browser surface."
+    },
+    {
+      "id": "comment-moderation",
+      "service": "apps/admin/app/lib/services/comment-moderation.ts",
+      "browser": ["comments/moderation", "comments/moderation/[id]"],
+      "automation": [],
+      "client": [],
+      "cli": [],
+      "ui": ["CommentModerationPanel.tsx"],
+      "exclusive": "browser",
+      "reason": "Moderating reader comments is a human judgement made in the admin page (API-001)."
+    },
+    {
+      "id": "doctor",
+      "service": "packages/ops-cli/bin/publisher.mjs",
+      "browser": [],
+      "automation": [],
+      "client": [],
+      "cli": ["doctor"],
+      "ui": [],
+      "exclusive": "cli",
+      "reason": "Local environment diagnosis of the operator process; it has no server-side counterpart."
+    },
+    {
+      "id": "cli-credentials",
+      "service": "packages/ops-cli/bin/publisher.mjs",
+      "browser": [],
+      "automation": [],
+      "client": [],
+      "cli": ["auth login"],
+      "ui": [],
+      "exclusive": "cli",
+      "reason": "`auth login` stores an automation token in the operator's local credential file; the server has no counterpart."
+    }
+  ]
+}

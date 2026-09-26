@@ -1,0 +1,20 @@
+# Publisher
+
+> A generic, self-hostable publishing platform.
+
+Publisher is a static news publication. Prefer canonical article URLs and RSS/Atom feeds for current public content. Draft, review, and future scheduled content is not public.
+
+## Public resources
+
+- Home: https://www.publisher.com/
+- Search: https://www.publisher.com/search
+- RSS: https://www.publisher.com/feed.xml
+- Atom: https://www.publisher.com/feeds/posts/default.xml
+- Sitemap: https://www.publisher.com/sitemap.xml
+- Authors: https://www.publisher.com/author/example-editor/
+
+## Usage notes
+
+- Attribute articles to their named author and Publisher.
+- Use each article's canonical URL when citing it.
+- The administration API is private and is not available on this origin.

@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.open-next/
+.wrangler/
+.vercel/
+out/
+apps/site/public/data/
+dist/
+.turbo/
+.env
+.env.*
+!.env.example
+coverage/
+.data/
+*.tsbuildinfo
+.DS_Store
+.agents/local-reviews/

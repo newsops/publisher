@@ -1,0 +1,24 @@
+{
+  "name": "@publisher/site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "tsx ../../scripts/generate-theme-runtime.mts && next build && node ../../scripts/postbuild-static.mjs && tsx ../../scripts/generate-public-metadata.mjs && node ../../scripts/generate-plugin-headers.mjs",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"process.exit(0)\""
+  },
+  "dependencies": {
+    "@publisher/content": "workspace:*",
+    "next": "16.2.11",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}
