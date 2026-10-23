@@ -52,7 +52,7 @@ issues without confusing stale records, local evidence and production delivery.
   390x844 viewports, including empty guidance, keyboard focus, explicit reload,
   mobile edit/save/copy and per-tab publication isolation. Actual Next HTTP
   checks prove new adapter routes 200 and removed routes 404.
-- Latest full `pnpm test` passed: all packages plus 71 harness suites / 420
+- Latest full `pnpm test` passed: all packages plus 72 harness suites / 426
   tests. Admin package runs eight real suites / 56 tests; operator runs eleven / 57. The owner's content-plus-version save rule is explicit in the target
   contracts and implemented as one atomic versioned workspace read with stale
   saves rejected through real SQLite connections. SECURITY-001 is now done;
@@ -71,6 +71,12 @@ issues without confusing stale records, local evidence and production delivery.
   rejection; both selected regression files passed independently. Workspace
   typecheck/lint, formatting, secret checks and all 13 scans also passed. The
   synthetic browser tabs and both task-owned local preview servers were closed.
+- Committed and pushed the reviewed checkpoint in draft PR #2. Initial CI
+  rejected ANSI-colored summary parsing and unavailable MinIO fixture images;
+  the failures are not waived. The targeted summary assertion passes after
+  terminal-control normalization. Exact-release fixture corrections have
+  separate source, download, build and runtime checks; current remote results
+  are tracked in the PR checks. No main merge or deployment occurred.
 
 ## Remaining work
 

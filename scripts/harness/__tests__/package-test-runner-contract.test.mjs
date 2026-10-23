@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { stripVTControlCharacters } from 'node:util'
 import { describe, expect, it } from 'vitest'
 
 const root = path.resolve(
@@ -28,7 +29,9 @@ describe('real package test entry points', () => {
       timeout: 30_000,
     })
     expect(result.status, result.stderr).toBe(0)
-    expect(result.stdout).toMatch(/Tests\s+[1-9]\d* passed/)
+    expect(stripVTControlCharacters(result.stdout)).toMatch(
+      /Tests\s+[1-9]\d* passed/,
+    )
     expect(result.stdout).toContain('content-contract.test.mjs')
   }, 35_000)
 

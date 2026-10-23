@@ -65,6 +65,24 @@ slice before replacing current product composition or operating live data.
 - Additional boundary regressions first failed for malformed URL errors and
   credential-bearing canonical identities, then passed after rejecting both
   before file creation. Current operator package: eleven suites / 57 tests.
+- The first draft-PR CI run exposed two additional verification-environment
+  failures: ANSI-colored test summaries broke a plain-text assertion, and the
+  existing MinIO fixture image manifests denied anonymous pulls before the
+  clean-room application ran. Summary parsing now removes terminal controls
+  without weakening exit-status or real-test assertions. The fixture repair
+  retains the exact official releases and verifies pinned artifact checksums;
+  current remote results are tracked separately in draft PR #2.
+- The repaired fixture passed six offline contract tests and independent source
+  review. All four complete official binary downloads matched their pinned
+  SHA-256 values. Both native arm64 and emulated amd64 images built; real Docker
+  negative builds rejected an unsupported architecture and a tampered checksum.
+  Full local clean-room execution stopped before the smoke script because the
+  existing Docker VM ran out of disk during PostgreSQL initialization. No
+  global cleanup, resizing or storage-threshold bypass was performed. Only the
+  fresh verification project's containers/network/volumes and uniquely owned
+  image tags were removed; shared caches and unrelated resources were retained.
+- Updated full local `pnpm test`: all packages plus 72 suites / 426 tests pass.
+  This is not a passing local Docker smoke or completed migration rehearsal.
 
 ## Remaining implementation boundaries
 

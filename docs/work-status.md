@@ -25,10 +25,14 @@ new operator package is a tested foundation, not a completed runtime cutover.
 - SECURITY-002 still needs its operated-installation acceptance. A synthetic
   consent smoke test does not close that criterion.
 
-Latest local verification passed on Node.js 22: package tests, 71 harness suites
-with 420 tests, both app builds, workspace typecheck/lint and 13 harness scans.
+Latest local verification passed on Node.js 22: package tests, 72 harness suites
+with 426 tests, both app builds, workspace typecheck/lint and 13 harness scans.
 Chrome checks used isolated generic fixtures at desktop and mobile sizes.
 No production mutation or main-branch release is implied by this checkpoint.
+Initial draft-PR CI exposed colored-summary parsing and a removed upstream
+fixture-image pull path. The corrections preserve the test assertions and exact
+official fixture versions; current remote results are recorded in the PR checks.
+Local Docker smoke is capacity-limited, not a passing clean-room run.
 
 ## Completed foundation
 
