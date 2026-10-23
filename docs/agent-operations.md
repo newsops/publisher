@@ -4,7 +4,7 @@
 operator. It calls the authenticated admin API; it never connects directly to
 PostgreSQL, object storage, Cloudflare, Vercel, or Neon.
 
-`@publisher/admin-client` is the reusable counterpart for a Claude plugin or
+`@publisher/admin-client` is the reusable counterpart for a Desk Plugin or
 another automation runtime. It accepts an explicit admin origin, bearer-token
 source, and `fetch`-compatible transport; it does not read environment
 variables, persist credentials, or gain direct access to data stores or a
@@ -51,9 +51,9 @@ publisher settings set --site example --input ./settings.json --revision 2 --non
 publisher site update --site example --input ./site.json --non-interactive --json
 publisher post get --site example --post <post-id> --json
 publisher post delete --site example --post <post-id> --revision 3 --non-interactive --json
-publisher plugin list --site example --json
-publisher plugin install --site example --plugin google.analytics --input ./plugin.json --non-interactive --json
-publisher plugin enable --site example --plugin google.analytics --revision 1 --non-interactive --json
+publisher adapter list --site example --json
+publisher adapter install --site example --id google.analytics --input ./adapter.json --non-interactive --json
+publisher adapter enable --site example --id google.analytics --revision 1 --non-interactive --json
 publisher article set --site example --article <post-id> --input ./variant.json --revision 4 --non-interactive --json
 publisher media upload --site example --file ./hero.png --mime-type image/png --non-interactive --json
 ```
@@ -61,7 +61,7 @@ publisher media upload --site example --file ./hero.png --mime-type image/png --
 `media upload` approves the image and returns its public variants unless
 `--pending` is given; `media approve --media <id>` approves a pending item.
 
-## Claude Code plugin
+## Desk Plugin
 
 `packages/claude-plugin` packages the CLI for Claude Code (PLUG-001). It is a
 consumer of the CLI surface, not a fourth surface: `bin/publisher` is an
@@ -70,15 +70,21 @@ calls, and skills carry the editorial rules. `scan-plugin-contract.mjs` fails
 `pnpm harness:scan` when the bundle is stale or a command references a CLI
 command that does not exist. Install with
 `/plugin marketplace add newsops/publisher` and
-`/plugin install publisher@publisher`; the plugin's README documents the
+`/plugin install publisher@publisher`; the Desk Plugin's README documents the
 credential flow. Archive commands (`content inspect`, `content restore`) are
 not bundled.
 
 ## Per-publication guidance
 
 An operator can retain private editorial instructions for each publication.
-Agents retrieve this context before content restore and publish operations;
-it is planning input, never an authorization bypass or public content.
+`post plan` retrieves this context alongside the current author persona. Every
+content mutation preflights the selected site's current guidance before its
+first write, including article variants, media approval, editorial taxonomy,
+author changes, desk decisions, restore, and publish. The JSON result includes
+the observed `agentContext.instructions` and positive `revision`. Missing,
+malformed, wrong-site, or unavailable guidance stops the mutation; empty valid
+guidance is allowed. This is planning input, never an authorization bypass or
+public content, and does not interpret prose as an enforceable policy engine.
 
 ```bash
 publisher site guidance get --site example --json
@@ -87,6 +93,11 @@ publisher site guidance set --site example --file ./editorial-guidance.txt \
 ```
 
 Guidance is excluded from snapshots, static HTML, feeds, and search indexes.
+The human admin provides the same read/edit/clear/save capability and a
+copyable JSON context preview. A revision conflict preserves the unsaved draft:
+compare the latest server instructions, then explicitly reload the server
+version or reapply the draft to that revision and save again. There is no
+automatic overwrite or implicit publication after saving guidance.
 
 ## Operated sites stay out of the program repository
 

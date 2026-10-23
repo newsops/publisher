@@ -1,7 +1,7 @@
-import { projectPublicPluginSnapshot } from '@publisher/content'
+import { projectPublicAdapterSnapshot } from '@publisher/content'
 import type { ArticleRepository } from '../services/article-repository'
 import { FileBuildJobRepository } from '@publisher/persistence'
-import { FilePluginRepository } from './file-plugin-repository'
+import { FileAdapterRepository } from './file-adapter-repository'
 import { deliverSnapshot } from './publisher'
 import type { PublishResult } from '../services/repository-contract'
 import type { LocalState } from '@publisher/content'
@@ -51,8 +51,8 @@ async function createFileSnapshot(
     state.authors,
     siteId,
     await articleRepository.list(),
-    projectPublicPluginSnapshot(
-      await new FilePluginRepository(directory, siteId).list(),
+    projectPublicAdapterSnapshot(
+      await new FileAdapterRepository(directory, siteId).list(),
       siteId,
     ),
     [],

@@ -170,8 +170,8 @@ button[type='submit']:hover { background: var(--accent); border-color: var(--acc
 .article-related p { margin-top: 12px; font: 15px/1.5 var(--sans); }
 .article-related a { color: var(--ink); font-weight: 700; }
 .article-related .rail-list { counter-reset: rail; margin-top: 4px; padding: 0; list-style: none; }
-.plugin-slot { max-width: 700px; margin: 28px auto 0; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--meta); font: 13px/1.5 var(--sans); }
-.plugin-slot p { margin: 0; }
+.adapter-slot { max-width: 700px; margin: 28px auto 0; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--meta); font: 13px/1.5 var(--sans); }
+.adapter-slot p { margin: 0; }
 .post-body > small { display: block; max-width: 700px; margin: 36px auto 0; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--meta); font: 11px/1.5 var(--sans); word-break: break-all; }
 .post-body > p, .post-body > ul { max-width: var(--measure); margin-top: 16px; color: var(--prose); font: 18px/1.7 var(--serif); }
 .post-body > ul { padding-left: 20px; }

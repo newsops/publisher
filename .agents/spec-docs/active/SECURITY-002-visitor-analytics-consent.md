@@ -23,8 +23,8 @@ any analytics tag runs.
 
 Layer ids follow `scripts/harness/layer-map.json`.
 
-- `packages/content/src/plugins/google-analytics.ts` (L0 contract):
-  deny-by-default runtime contract and public plugin behavior.
+- `packages/content/src/adapters/google-analytics.ts` (L0 contract):
+  deny-by-default runtime contract and public adapter behavior.
 - `packages/publication/src/static-runtime-recipes.ts` (L2 publication): the
   platform consent runtime source and its `/site-runtime/consent.v1.js`
   release artifact.
@@ -84,7 +84,7 @@ notice and regional legal requirements.
 2. Persist the choice per publication origin using a first-party preference
    key; render the layer again when no decision exists and expose a footer
    control to reopen settings.
-3. Set `window.__publisherConsent.analytics` to `false` before the plugin
+3. Set `window.__publisherConsent.analytics` to `false` before the adapter
    runtime executes. Dispatch `publisher:consent` with `analytics: true` only
    after an explicit allow action.
 4. Keep the GA release contribution and CSP provider origins site-scoped; the
@@ -92,7 +92,7 @@ notice and regional legal requirements.
 
 ## Affected Files
 
-- `packages/content/src/plugins/google-analytics.ts`
+- `packages/content/src/adapters/google-analytics.ts`
 - `packages/publication/src/static-runtime-recipes.ts`
 - `packages/publication/src/static-renderers.ts`
 - `apps/site/app/layout.tsx`

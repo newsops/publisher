@@ -16,7 +16,7 @@ export {
   pages,
   posts,
   publication,
-  publicPluginSnapshot,
+  publicAdapterSnapshot,
   getTag,
   tags,
 } from './seed'
@@ -103,6 +103,7 @@ export type {
   ValidationResult,
 } from './editor'
 export type { ArchiveMonth } from './seed'
+export { parsePublicAdapterSnapshot } from './seed-parsers'
 export {
   archiveCanonicalJson,
   archiveSummary,
@@ -116,38 +117,38 @@ export type {
   EditorialArchive,
 } from './archive'
 export {
-  assertValidPluginInstallation,
-  createPluginInstallation,
-  createPluginRegistry,
-  emptyPublicPluginSnapshot,
-  googleAnalyticsPlugin,
-  pluginCapabilities,
-  pluginProviderOrigins,
-  pluginRegistry,
-  projectPublicPluginSnapshot,
-  publicPluginSlots,
-  renderPluginContributions,
-  staticMarkerPlugin,
+  assertValidAdapterInstallation,
+  createAdapterInstallation,
+  createAdapterRegistry,
+  emptyPublicAdapterSnapshot,
+  googleAnalyticsAdapter,
+  adapterCapabilities,
+  adapterProviderOrigins,
+  adapterRegistry,
+  projectPublicAdapterSnapshot,
+  publicAdapterSlots,
+  renderAdapterContributions,
+  staticMarkerAdapter,
   validateGoogleAnalyticsConfiguration,
   googleAnalyticsRuntimeSource,
-  validatePluginInstallation,
-  validatePluginInstallations,
-} from './plugins'
+  validateAdapterInstallation,
+  validateAdapterInstallations,
+} from './adapters'
 export type {
-  PluginCapability,
-  PluginDefinition,
-  PluginHeadToken,
-  PluginInstallation,
-  PluginInstallationState,
-  PluginProviderOrigin,
-  PluginSlotToken,
-  PluginValidationResult,
+  AdapterCapability,
+  AdapterDefinition,
+  AdapterHeadToken,
+  AdapterInstallation,
+  AdapterInstallationState,
+  AdapterProviderOrigin,
+  AdapterSlotToken,
+  AdapterValidationResult,
   GoogleAnalyticsConfiguration,
-  PublicPluginContributions,
-  PublicPluginInstallation,
-  PublicPluginSlot,
-  PublicPluginSnapshot,
-} from './plugins'
+  PublicAdapterContributions,
+  PublicAdapterInstallation,
+  PublicAdapterSlot,
+  PublicAdapterSnapshot,
+} from './adapters'
 export { isThemeId, themeIds, type ThemeId } from './theme-ids'
 export {
   publicArchiveMonthPath,
@@ -173,8 +174,8 @@ export * from './managed-seed'
 export * from './content-release'
 export { assertSiteId } from './site-id'
 export {
-  assertRevision as assertPluginRevision,
-  clonePluginInstallations,
-  configuredInstallation as configuredPluginInstallation,
-  stateInstallation as statePluginInstallation,
-} from './plugins/installation-transitions'
+  assertRevision as assertAdapterRevision,
+  cloneAdapterInstallations,
+  configuredInstallation as configuredAdapterInstallation,
+  stateInstallation as stateAdapterInstallation,
+} from './adapters/installation-transitions'

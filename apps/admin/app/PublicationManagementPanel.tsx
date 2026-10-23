@@ -49,7 +49,7 @@ export default function PublicationManagementPanel() {
             pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
             value={siteId}
             onChange={(event) => setSiteId(event.target.value)}
-            placeholder="ai-trend-times"
+            placeholder="example-news"
           />
         </label>
         <label>

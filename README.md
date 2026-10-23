@@ -7,8 +7,8 @@ storage is unavailable.
 
 ## Operate a newsroom from Claude Code
 
-Editors do not need this repository checked out. The `publisher` Claude Code
-plugin bundles the CLI and drives the whole editorial loop against a deployed
+Editors do not need this repository checked out. The `publisher` Desk Plugin
+for Claude Code bundles the CLI and drives the whole editorial loop against a deployed
 admin:
 
 ```text
@@ -24,7 +24,10 @@ Every article passes the admin's desk gate before it is published: the checks
 in the desk report must pass, a separate read-only reviewer re-verifies the
 facts, headline, image, and SEO, and the approval records six attestations
 with that evidence. Static deployment stays with the operations worker
-(`corepack pnpm publication:next`), which the plugin never touches.
+(`corepack pnpm publication:next`), which the Desk Plugin never touches.
+
+Site integrations use the separate [Adapter contract](docs/adapters.md) and
+`publisher adapter` commands; they are not Desk Plugin marketplace packages.
 
 The full operator guide — prerequisites, issuing a site-scoped automation key,
 day-to-day commands, multi-site use, troubleshooting, and the security model —

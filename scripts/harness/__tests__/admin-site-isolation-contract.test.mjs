@@ -74,7 +74,16 @@ describe('ADMIN-003 multi-site isolation contract', () => {
     )
     expect(migration).toContain('site_id TEXT NOT NULL')
     expect(migration).toContain('PRIMARY KEY (site_id, id)')
+    // Immutable initial DDL keeps the original column; the forward migration
+    // preserves its site-qualified primary key while renaming that column.
     expect(migration).toContain('PRIMARY KEY (site_id, plugin_id)')
+    const rename = await readFile(
+      path.resolve(
+        'packages/persistence/migrations/admin/0006_adapter_terminology.sql',
+      ),
+      'utf8',
+    )
+    expect(rename).toContain('RENAME COLUMN plugin_id TO adapter_id')
     expect(migration).toContain('UNIQUE (site_id, idempotency_key)')
     expect(migration).toContain('UNIQUE (site_id, sha256)')
   })

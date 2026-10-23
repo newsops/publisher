@@ -1,14 +1,14 @@
 import {
   publication,
-  renderPluginContributions,
+  renderAdapterContributions,
   sanitizeBodyHtml,
 } from '@publisher/content'
 import Link from 'next/link'
 import { JsonLd } from './JsonLd'
 import SiteChrome, { longDate } from './SiteChrome'
 import CommentSection from './CommentSection'
-import { PluginSlot } from './plugins/PluginContributions'
-import { buildPublicPluginSnapshot } from '../lib/public-plugins'
+import { AdapterSlot } from './adapters/AdapterContributions'
+import { buildPublicAdapterSnapshot } from '../lib/public-adapters'
 
 export interface StaticArticlePresentation {
   readonly title: string
@@ -138,7 +138,7 @@ export default function StaticArticlePage({
 }: {
   readonly article: StaticArticlePresentation
 }) {
-  const plugins = renderPluginContributions(buildPublicPluginSnapshot())
+  const adapters = renderAdapterContributions(buildPublicAdapterSnapshot())
   return (
     <SiteChrome>
       <main className="container post-body" lang={article.language}>
@@ -167,7 +167,7 @@ export default function StaticArticlePage({
         {article.commentSlug ? (
           <CommentSection slug={article.commentSlug} />
         ) : null}
-        <PluginSlot slot="article-footer" contributions={plugins} />
+        <AdapterSlot slot="article-footer" contributions={adapters} />
         <small>Canonical path: {article.canonicalPath}</small>
       </main>
     </SiteChrome>

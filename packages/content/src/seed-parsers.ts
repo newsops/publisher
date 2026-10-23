@@ -1,4 +1,7 @@
-import { renderPluginContributions, type PublicPluginSnapshot } from './plugins'
+import {
+  renderAdapterContributions,
+  type PublicAdapterSnapshot,
+} from './adapters'
 import { assertValidArticleVariant } from './article-adapter'
 import { resolveEditorialBody } from './html-body-import'
 import type { Article, ArticleVariant, NewsPost } from './types'
@@ -140,30 +143,37 @@ export function parsePost(value: unknown): NewsPost {
   }
 }
 
-export function parsePublicPluginSnapshot(
+export function parsePublicAdapterSnapshot(
   value: unknown,
-): PublicPluginSnapshot {
+): PublicAdapterSnapshot {
   if (
     !isRecord(value) ||
-    value.schemaVersion !== 1 ||
-    !Array.isArray(value.installations)
+    value.schemaVersion !== 2 ||
+    !Array.isArray(value.installations) ||
+    Object.keys(value).some(
+      (key) => !['schemaVersion', 'installations'].includes(key),
+    )
   )
-    throw new Error('Invalid public plugin snapshot')
+    throw new Error('Invalid public adapter snapshot')
   const installations = value.installations.map((item) => {
     if (
       !isRecord(item) ||
-      typeof item.pluginId !== 'string' ||
+      typeof item.adapterId !== 'string' ||
       typeof item.definitionVersion !== 'string' ||
-      !isRecord(item.configuration)
+      !isRecord(item.configuration) ||
+      Object.keys(item).some(
+        (key) =>
+          !['adapterId', 'definitionVersion', 'configuration'].includes(key),
+      )
     )
-      throw new Error('Invalid public plugin installation')
+      throw new Error('Invalid public adapter installation')
     return {
-      pluginId: item.pluginId,
+      adapterId: item.adapterId,
       definitionVersion: item.definitionVersion,
       configuration: item.configuration,
     }
   })
-  const snapshot: PublicPluginSnapshot = { schemaVersion: 1, installations }
-  renderPluginContributions(snapshot)
+  const snapshot: PublicAdapterSnapshot = { schemaVersion: 2, installations }
+  renderAdapterContributions(snapshot)
   return snapshot
 }

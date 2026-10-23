@@ -1,5 +1,5 @@
 import type { ArtifactRecipe } from './release-manifest'
-import { pluginProviderOrigins } from '@publisher/content'
+import { adapterProviderOrigins } from '@publisher/content'
 import {
   BASELINE_CSP,
   DEFAULT_BASELINE_CSS,
@@ -21,16 +21,16 @@ function appendOrigins(
 }
 
 export function publicationCsp(input: PublicationInputs): string {
-  const plugins = input.plugins
-  if (!plugins) return BASELINE_CSP
+  const adapters = input.adapters
+  if (!adapters) return BASELINE_CSP
   return appendOrigins(
     appendOrigins(
       BASELINE_CSP,
       'script-src',
-      pluginProviderOrigins(plugins, 'script'),
+      adapterProviderOrigins(adapters, 'script'),
     ),
     'connect-src',
-    pluginProviderOrigins(plugins, 'connect'),
+    adapterProviderOrigins(adapters, 'connect'),
   )
 }
 import {

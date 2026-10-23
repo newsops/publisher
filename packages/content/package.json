@@ -14,7 +14,7 @@
   "scripts": {
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "node -e \"process.exit(0)\""
+    "test": "node ../../scripts/harness/run-package-tests.mjs @publisher/content"
   },
   "dependencies": {
     "domhandler": "5.0.3",

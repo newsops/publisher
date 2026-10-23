@@ -41,7 +41,7 @@ describe('foundation contract', () => {
       fs.readFileSync(path.join(root, 'package.json'), 'utf8'),
     )
     expect(manifest.scripts.test).toMatch(
-      /pnpm -r test && pnpm build && pnpm harness:test/,
+      /pnpm build && pnpm -r test && pnpm harness:test/,
     )
   })
 })

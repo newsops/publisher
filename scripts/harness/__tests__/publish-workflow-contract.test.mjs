@@ -39,7 +39,7 @@ const snapshotFixture = {
   tags: [],
   posts: [],
   articles: [],
-  plugins: { schemaVersion: 1, installations: [] },
+  adapters: { schemaVersion: 2, installations: [] },
   media: [],
 }
 

@@ -13,7 +13,7 @@ Publisher의 공개 사이트는 방문자 요청마다 애플리케이션 서�
 핵심이다.
 
 관리 기능은 별도의 인증된 admin 도메인에서만 제공한다. 공개 사이트는
-admin, 데이터베이스, 플러그인 설정 API, 비밀 값에 런타임으로 의존하지
+admin, 데이터베이스, 어댑터 설정 API, 비밀 값에 런타임으로 의존하지
 않는다.
 
 이 제품은 한 번도 출시되지 않은 사전 검증 단계다. 따라서 이전 시험 코드를
@@ -23,10 +23,10 @@ admin, 데이터베이스, 플러그인 설정 API, 비밀 값에 런타임으�
 
 ## 핵심 원칙
 
-1. **정적 우선**: 공개 페이지는 정적 CDN 산출물만 제공한다. 플러그인은
+1. **정적 우선**: 공개 페이지는 정적 CDN 산출물만 제공한다. 어댑터은
    방문자 요청 경로에 API route, middleware, server action, DB 조회,
    설정 fetch를 추가할 수 없다.
-2. **통제된 플러그인**: WordPress식 업로드형 코드나 marketplace 설치가
+2. **통제된 어댑터**: WordPress식 업로드형 코드나 marketplace 설치가
    아니라, 저장소에 포함되어 검토된 어댑터만 설치한다. 안정된 ID·버전,
    명시된 capability, 유효성 검사, 사이트별 설정을 갖는다.
 3. **다중 사이트 격리**: 설치·설정·권한·revision·발행 스냅샷은 정확히
@@ -38,7 +38,7 @@ admin, 데이터베이스, 플러그인 설정 API, 비밀 값에 런타임으�
 5. **실패 격리**: 동의 거부, 광고 차단, 외부 스크립트 오류, 공급자 장애가
    기사 본문·SEO·탐색·키보드 접근·레이아웃·캐시 응답을 방해해서는 안 된다.
 6. **편집 API 보존**: 글 생성·수정·발행 API는 자동화에 최적화된 상태로
-   유지한다. 플러그인이 본문, 편집 상태, canonical, robots, sitemap,
+   유지한다. 어댑터이 본문, 편집 상태, canonical, robots, sitemap,
    JSON-LD를 암묵적으로 바꾸지 못한다.
 7. **무료·공급자 독립**: 플랫폼의 필수 동작은 Cloudflare를 포함한 특정
    공급자의 유료 플랜, 독점 런타임, 관리형 보안 기능에 의존하지 않는다.
@@ -164,7 +164,7 @@ release policy는 모두 같은 graph의 독립 artifact다. 어떤 공개 경�
 
 - 공개 빌드는 Cloudflare 계정이나 비밀 값 없이 로컬에서 완성되어야 하며,
   결과 디렉터리는 표준 정적 호스팅 또는 CDN에 그대로 배포할 수 있어야 한다.
-- 핵심 콘텐츠·플러그인·발행 스냅샷 형식에는 D1, R2, Workers, Pages,
+- 핵심 콘텐츠·어댑터·발행 스냅샷 형식에는 D1, R2, Workers, Pages,
   Cloudflare Access 전용 타입이나 식별자를 넣지 않는다. 공급자별 연결은
   명시적인 어댑터와 배포 설정에만 둔다.
 - admin 인증은 애플리케이션 소유 계정, 메모리-하드 암호 해시, 폐기 가능한
@@ -189,12 +189,12 @@ release policy는 모두 같은 graph의 독립 artifact다. 어떤 공개 경�
 
 ## 영속성 제품 결정
 
-| 데이터                                            | 기준 계약            | 초기 선택                                                    | 교체 가능성                                                                |
-| ------------------------------------------------- | -------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| admin 콘텐츠·분류·플러그인·감사·릴리스 메타데이터 | PostgreSQL           | Neon Free를 초기 호스팅 예시로 권장하되 필수로 지정하지 않음 | 표준 PostgreSQL 연결과 migration을 지원하는 관리형 또는 자체 호스팅 서비스 |
-| 댓글                                              | PostgreSQL           | admin과 별도 DB 또는 schema 및 별도 최소권한 계정            | 같은 서버를 쓸 수 있으나 테이블과 자격증명을 공유하지 않음                 |
-| 이미지·첨부·불변 발행 snapshot                    | S3 호환 API          | 사업자 미고정; 로컬은 MinIO 또는 파일 fixture                | R2, AWS S3, Backblaze B2, MinIO 등 호환성 시험을 통과한 구현               |
-| 공개 사이트                                       | 완성된 정적 artifact | 무료 정적 호스팅/CDN                                         | Cloudflare Pages를 포함한 임의의 정적 호스트                               |
+| 데이터                                          | 기준 계약            | 초기 선택                                                    | 교체 가능성                                                                |
+| ----------------------------------------------- | -------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| admin 콘텐츠·분류·어댑터·감사·릴리스 메타데이터 | PostgreSQL           | Neon Free를 초기 호스팅 예시로 권장하되 필수로 지정하지 않음 | 표준 PostgreSQL 연결과 migration을 지원하는 관리형 또는 자체 호스팅 서비스 |
+| 댓글                                            | PostgreSQL           | admin과 별도 DB 또는 schema 및 별도 최소권한 계정            | 같은 서버를 쓸 수 있으나 테이블과 자격증명을 공유하지 않음                 |
+| 이미지·첨부·불변 발행 snapshot                  | S3 호환 API          | 사업자 미고정; 로컬은 MinIO 또는 파일 fixture                | R2, AWS S3, Backblaze B2, MinIO 등 호환성 시험을 통과한 구현               |
+| 공개 사이트                                     | 완성된 정적 artifact | 무료 정적 호스팅/CDN                                         | Cloudflare Pages를 포함한 임의의 정적 호스트                               |
 
 D1은 Cloudflare가 제공하는 SQLite 계열 제품이므로 영속성 기준 DB로 사용하지
 않는다. 출시 데이터가 없는 시험 구현의 D1 runtime, binding, 환경 변수,
@@ -385,11 +385,11 @@ graph가 선언한 index만 바꾸고, 댓글 projection 변경은 기사 HTML �
 무효화해야 한다. 이 행렬, 원자적 활성화, 장애 시 이전 artifact 생존은
 자동화 시험으로 관리한다.
 
-## 발행과 플러그인 흐름
+## 발행과 어댑터 흐름
 
 ```text
 admin / site-scoped API
-  → 검증된 플러그인 설치 설정 (revision-safe)
+  → 검증된 어댑터 설치 설정 (revision-safe)
   → 사이트별 발행 스냅샷 (public-safe projection만)
   → 정적 빌드 입력 materialization
   → typed head / named-slot contribution + exact CSP
@@ -408,7 +408,7 @@ admin / site-scoped API
 | 정적 공개 사이트와 별도 admin | 단일 PostgreSQL/S3 계약 구현 완료, pilot 검증 중 | 공개 정적 export, 일반 OIDC, PostgreSQL, S3 호환 저장, 비용 정책별 fail-closed preflight가 구현됐다. 특정 사업자 결제 상태는 공개 저장소에 기록하지 않는다. |
 | AI 지원 배포 온보딩           | 가이드 완료, 첫 pilot 대기                       | 선택 인터뷰, 공식 비용 검증, 권한·비밀 경계, AI 실행, 검증·인계를 한 문서로 연결했다. 저장소 소유자의 첫 실배포 전까지 `pilot-pending`이다.                 |
 | 증분 정적 발행·runtime 테마   | 구현 완료, 최종 회귀 검증 중                     | 의미론적 SEO HTML, route 의존성 manifest, 전역 projection, self-hosted theme bundle, 원자적 활성화와 1,000개 기사 invalidation 회귀 시험을 구현했다.        |
-| 다중 사이트 플러그인 플랫폼   | 완료                                             | typed registry, 사이트별 설치, revision-safe API/UI, public-safe snapshot, build-time CSP, 복제·비밀 격리, 장애 회복 검증을 제공한다.                       |
+| 다중 사이트 어댑터 플랫폼     | 완료                                             | typed registry, 사이트별 설치, revision-safe API/UI, public-safe snapshot, build-time CSP, 복제·비밀 격리, 장애 회복 검증을 제공한다.                       |
 | Google Analytics 4            | 완료                                             | `google.analytics`는 GA4 measurement ID만 받고, 기본 동의 모델에서 승인된 consent signal 이후에만 플랫폼 소유 loader가 태그를 비동기로 추가한다.            |
 | Google AdSense                | 아키텍처 결정 대기                               | named-slot·static ads.txt 설계는 작성됐지만, Google의 현재 CSP 요구가 완전 정적 exact-origin CSP 계약과 충돌한다. 승인 없는 우회 구현은 하지 않는다.        |
 
@@ -432,7 +432,7 @@ responsive layout만 사용한다.
 
 그러나 Google의 현재 AdSense CSP 안내는 허용 리소스 도메인이 변할 수 있고
 strict CSP에는 응답마다 생성하는 nonce를 요구한다. 현재의 immutable static
-Pages header와 exact-origin 플러그인 계약으로는 그 요구를 지원되는
+Pages header와 exact-origin 어댑터 계약으로는 그 요구를 지원되는
 프로덕션 통합으로 표현할 수 없다.
 
 따라서 다음 중 하나를 **별도 승인**으로 선택해야 한다.
@@ -453,14 +453,14 @@ Pages header와 exact-origin 플러그인 계약으로는 그 요구를 지원�
 
 1. PostgreSQL migration과 S3 호환 contract test를 통과시키고 다른 저장 경로를
    추가하지 않는다.
-2. 콘텐츠와 플러그인 변경은 admin 또는 versioned site API로 작성한다.
+2. 콘텐츠와 어댑터 변경은 admin 또는 versioned site API로 작성한다.
 3. 설정을 validate하고 revision 충돌을 해소한 뒤 enable한다.
 4. 발행해서 immutable public snapshot과 정적 artifact를 생성한다.
 5. desktop/mobile에서 기사·search·feed·sitemap·metadata·keyboard·overflow·
    console을 확인한다.
 6. 공급자 장애나 정책/동의 미검증 시 어댑터를 disable하고 새 정적 artifact를
    발행한다. 이미 배포된 파일을 런타임으로 변경하지 않는다.
-7. 새 플러그인은 공식 문서 조사, typed manifest, site-scoped config,
+7. 새 어댑터은 공식 문서 조사, typed manifest, site-scoped config,
    exact origin/slot budget, secret projection, disabled/failure tests,
    operator runbook을 먼저 갖춘 뒤 별도 승인으로 구현한다.
 8. 배포 전 비용 게이트에서 활성 유료 구독과 과금 가능 필수 기능을 확인한다.
@@ -471,6 +471,6 @@ Pages header와 exact-origin 플러그인 계약으로는 그 요구를 지원�
 
 - [AI 지원 배포·온보딩 가이드](./ai-assisted-deployment.ko.md)
 - [개발 기준](./development-spec.md)
-- [플러그인 운영 가이드](./plugins.md)
-- [플러그인 시스템 조사와 ADR](./research/plugin-system-evaluation.md)
+- [어댑터 운영 가이드](./adapters.md)
+- [어댑터 시스템 조사와 ADR](./research/plugin-system-evaluation.md)
 - [배포·운영 전제](./deployment.md)

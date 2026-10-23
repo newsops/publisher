@@ -9,7 +9,7 @@
     "start": "node dist/node.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "test": "node -e \"process.exit(0)\""
+    "test": "node ../../scripts/harness/run-package-tests.mjs @publisher/comments"
   },
   "dependencies": {
     "@publisher/persistence": "workspace:*"

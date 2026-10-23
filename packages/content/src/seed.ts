@@ -3,7 +3,7 @@ import taxonomy from './data/taxonomy.json'
 import publicationData from './data/publication.json'
 import authorsData from './data/authors.json'
 import articlesData from './data/articles.json'
-import pluginsData from './data/plugins.json'
+import adaptersData from './data/adapters.json'
 import type {
   AuthorProfile,
   Article,
@@ -19,7 +19,7 @@ import {
   isRecord,
   parseArticle,
   parsePost,
-  parsePublicPluginSnapshot,
+  parsePublicAdapterSnapshot,
   requiredString,
 } from './seed-parsers'
 
@@ -73,7 +73,7 @@ export const categories: readonly string[] = tags
   .filter((tag) => tag.active)
   .map((tag) => tag.slug)
 
-export const publicPluginSnapshot = parsePublicPluginSnapshot(pluginsData)
+export const publicAdapterSnapshot = parsePublicAdapterSnapshot(adaptersData)
 
 export const pages: readonly SitePage[] = [
   {

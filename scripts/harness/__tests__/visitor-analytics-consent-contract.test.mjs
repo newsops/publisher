@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { googleAnalyticsRuntimeSource } from '../../../packages/content/src/plugins/google-analytics.ts'
+import { googleAnalyticsRuntimeSource } from '../../../packages/content/src/adapters/google-analytics.ts'
 import { consentRuntimeSource } from '../../../packages/publication/src/static-runtime-recipes.ts'
 
 /**
@@ -312,7 +312,7 @@ describe('visitor analytics consent (SECURITY-002)', () => {
   it('never treats an absent preference as consent in either runtime source', () => {
     for (const source of [
       googleAnalyticsRuntimeSource,
-      read('apps/site/public/plugin-runtime/google-analytics.js'),
+      read('apps/site/public/adapter-runtime/google-analytics.js'),
     ]) {
       expect(source).toContain('analytics === true')
       expect(source).not.toContain('analytics !== false')

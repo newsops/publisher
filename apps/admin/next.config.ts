@@ -1,5 +1,11 @@
 import type { NextConfig } from 'next'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const workspaceRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../..',
+)
 
 const nativeImageRuntimePaths = [
   'node_modules/sharp/**/*',
@@ -13,7 +19,8 @@ const nativeImageRuntimePaths = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
-  outputFileTracingRoot: path.join(process.cwd(), '../../'),
+  outputFileTracingRoot: workspaceRoot,
+  turbopack: { root: workspaceRoot },
   outputFileTracingIncludes: {
     '/api/v2/sites/\\[siteId\\]/media': nativeImageRuntimePaths,
     '/api/v2/sites/\\[siteId\\]/content-restore': nativeImageRuntimePaths,

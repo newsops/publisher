@@ -1,7 +1,7 @@
 import type { ArtifactRecipe } from './release-manifest'
 import {
   googleAnalyticsRuntimeSource,
-  renderPluginContributions,
+  renderAdapterContributions,
 } from '@publisher/content'
 import type { StaticIndexGraph } from './static-indexes'
 import { contentDigest } from './static-policy'
@@ -210,17 +210,17 @@ export function appendRuntimeRecipes(
   recipes.push(
     runtimeScript('/site-runtime/consent.v1.js', consentRuntimeSource),
   )
-  const pluginHead = input.plugins
-    ? renderPluginContributions(input.plugins).head
+  const adapterHead = input.adapters
+    ? renderAdapterContributions(input.adapters).head
     : []
   if (
-    pluginHead.some(
-      (token) => token.src === '/plugin-runtime/google-analytics.js',
+    adapterHead.some(
+      (token) => token.src === '/adapter-runtime/google-analytics.js',
     )
   )
     recipes.push(
       runtimeScript(
-        '/plugin-runtime/google-analytics.js',
+        '/adapter-runtime/google-analytics.js',
         googleAnalyticsRuntimeSource,
       ),
     )

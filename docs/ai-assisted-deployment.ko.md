@@ -101,7 +101,7 @@ private object storage의 필수 제공자로 간주하지 않으며 저장소�
 - 인기글을 켤지: 집계 source, window, timestamp, privacy 승인 없이는
   “인기글”을 표시하지 않고 편집자 추천만 사용
 - 정적 댓글 SEO embedding을 켤지: 승인된 댓글만 한 기사 단위로 반영
-- 선택 plugin이 요구하는 정확한 CSP origin
+- 선택 adapter이 요구하는 정확한 CSP origin
 
 ## 비용·신뢰성 게이트
 

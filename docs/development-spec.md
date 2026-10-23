@@ -6,6 +6,13 @@ implementation agreement is
 [WEB-001](../.agents/spec-docs/done/WEB-001-static-public-site-and-admin.md).
 The spec index is [specs/README.md](../specs/README.md).
 
+The [approved local-first architecture](./design/local-first-proposal.ko.md)
+and its [target contracts and acceptance scenarios](./design/local-first-contracts.md)
+govern the replacement now in progress. A local SQLite/encrypted-sync proof
+slice exists in `packages/operator`; UI/CLI cutover is not complete. The runtime
+contracts below describe the current callers, not the final local-first target.
+See [verification and remaining gates](./design/local-first-verification.md).
+
 Every cloned-repository deployment starts with the
 [AI-assisted deployment guide](./ai-assisted-deployment.ko.md). It requires
 user-selected providers, current official cost checks, explicit authority for

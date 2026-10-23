@@ -1,5 +1,10 @@
 # Plugin system evaluation for a static, multi-site publisher
 
+Terminology note: this research originally used Plugin for site integrations.
+ARCH-007 renames that product concept to Adapter; the current contract is
+[Controlled publication adapters](../adapters.md). External products and their
+linked documentation retain their own Plugin terminology below.
+
 **Status:** Phase 1 architecture decision
 **Date:** 2026-09-11
 **Scope:** Controlled extensions for Publisher public sites and the separate authenticated administration application.

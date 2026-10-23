@@ -81,11 +81,11 @@ Other `ok: true` codes (`SITES`, `POST_SUBMITTED`, `DESK_CHANGES_REQUESTED`, `ME
 | `article get` | `article get --site <id> --article <post-id> --json` |
 | `article set` | `article set --site <id> --article <post-id> --input <variant.json> --revision <n> --non-interactive --json` |
 | `article remove` | `article remove --site <id> --article <post-id> --locale <tag> --revision <n> --non-interactive --json` |
-| `plugin list` | `plugin list --site <id> --json` |
-| `plugin get` | `plugin get --site <id> --plugin <plugin-id> --json` |
-| `plugin install` | `plugin install --site <id> --plugin <plugin-id> [--input <configuration.json>] --non-interactive --json` |
-| `plugin configure` | `plugin configure --site <id> --plugin <plugin-id> --input <configuration.json> --revision <n> --non-interactive --json` |
-| `plugin validate\|enable\|disable` | `plugin validate\|enable\|disable --site <id> --plugin <plugin-id> --revision <n> [--input <configuration.json>] --non-interactive --json` |
+| `adapter list` | `adapter list --site <id> --json` |
+| `adapter get` | `adapter get --site <id> --id <adapter-id> --json` |
+| `adapter install` | `adapter install --site <id> --id <adapter-id> [--input <configuration.json>] --non-interactive --json` |
+| `adapter configure` | `adapter configure --site <id> --id <adapter-id> --input <configuration.json> --revision <n> --non-interactive --json` |
+| `adapter validate\|enable\|disable` | `adapter validate\|enable\|disable --site <id> --id <adapter-id> --revision <n> [--input <configuration.json>] --non-interactive --json` |
 | `media upload` | `media upload --site <id> --file <path> --mime-type <type> [--pending] --non-interactive --json` |
 | `media approve` | `media approve --site <id> --media <media-id> --non-interactive --json` |
 | `desk list` | `desk list --site <id> --json` |

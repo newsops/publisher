@@ -1,5 +1,5 @@
 import type { ArtifactRecipe } from './release-manifest'
-import type { PublicPluginSnapshot } from '@publisher/content'
+import type { PublicAdapterSnapshot } from '@publisher/content'
 
 export interface ArticleDocument {
   readonly id: string
@@ -56,7 +56,7 @@ export interface PublicationInputs {
   readonly recent: PublicationProjection
   readonly popular?: PublicationProjection
   readonly theme: ThemeBundle
-  readonly plugins?: PublicPluginSnapshot
+  readonly adapters?: PublicAdapterSnapshot
   readonly media?: readonly MaterializedMedia[]
   readonly comments?: Readonly<
     Record<

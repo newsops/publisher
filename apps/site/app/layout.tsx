@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { publication, renderPluginContributions } from '@publisher/content'
-import { PluginHeadContributions } from './components/plugins/PluginContributions'
-import { buildPublicPluginSnapshot } from './lib/public-plugins'
+import { publication, renderAdapterContributions } from '@publisher/content'
+import { AdapterHeadContributions } from './components/adapters/AdapterContributions'
+import { buildPublicAdapterSnapshot } from './lib/public-adapters'
 import './styles.css'
 
 export const metadata: Metadata = {
@@ -27,13 +27,13 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  const pluginContributions = renderPluginContributions(
-    buildPublicPluginSnapshot(),
+  const adapterContributions = renderAdapterContributions(
+    buildPublicAdapterSnapshot(),
   )
   return (
     <html lang={publication.language}>
       <head>
-        <PluginHeadContributions contributions={pluginContributions} />
+        <AdapterHeadContributions contributions={adapterContributions} />
         <link rel="stylesheet" href="/theme-runtime/current.css" />
         <script src="/site-runtime/consent.v1.js" defer />
         <script src="/site-runtime/projection-bootstrap.v1.js" defer />

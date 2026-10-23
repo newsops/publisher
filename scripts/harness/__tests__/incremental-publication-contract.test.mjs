@@ -23,8 +23,8 @@ import {
 } from '../../../packages/publication/src/index.ts'
 import { FileBuildJobRepository } from '../../../packages/persistence/src/index.ts'
 import {
-  createPluginInstallation,
-  projectPublicPluginSnapshot,
+  createAdapterInstallation,
+  projectPublicAdapterSnapshot,
 } from '../../../packages/content/src/index.ts'
 
 class MemoryArtifactStore {
@@ -1192,12 +1192,12 @@ describe('WEB-008 incremental publication contract', () => {
     expect(BASELINE_CSP).not.toMatch(/https?:|\*|unsafe-/)
   })
 
-  it('carries a granted public plugin through HTML, runtime, and CSP output', async () => {
+  it('carries a granted public adapter through HTML, runtime, and CSP output', async () => {
     const store = new MemoryArtifactStore()
-    const plugins = projectPublicPluginSnapshot(
+    const adapters = projectPublicAdapterSnapshot(
       [
         {
-          ...createPluginInstallation('default', 'google.analytics', {
+          ...createAdapterInstallation('default', 'google.analytics', {
             measurementId: 'G-ABC12345',
             consent: 'granted',
           }),
@@ -1206,7 +1206,7 @@ describe('WEB-008 incremental publication contract', () => {
       ],
       'default',
     )
-    const result = await build(store, 'plugin-granted', inputs({ plugins }))
+    const result = await build(store, 'adapter-granted', inputs({ adapters }))
     const htmlEntry = result.manifest.entries.find(
       (entry) => entry.kind === 'index-html',
     )
@@ -1214,9 +1214,9 @@ describe('WEB-008 incremental publication contract', () => {
       store.objects.get(htmlEntry.objectKey).body,
     )
     expect(html).toContain('publisher-google-analytics-id')
-    expect(html).toContain('/plugin-runtime/google-analytics.js')
+    expect(html).toContain('/adapter-runtime/google-analytics.js')
     const runtime = result.manifest.entries.find(
-      (entry) => entry.path === '/plugin-runtime/google-analytics.js',
+      (entry) => entry.path === '/adapter-runtime/google-analytics.js',
     )
     expect(runtime).toBeDefined()
     const headers = new TextDecoder().decode(
@@ -1232,10 +1232,10 @@ describe('WEB-008 incremental publication contract', () => {
 
   it('keeps denied analytics byte-inert and provider-neutral', async () => {
     const store = new MemoryArtifactStore()
-    const plugins = projectPublicPluginSnapshot(
+    const adapters = projectPublicAdapterSnapshot(
       [
         {
-          ...createPluginInstallation('default', 'google.analytics', {
+          ...createAdapterInstallation('default', 'google.analytics', {
             measurementId: 'G-ABC12345',
             consent: 'denied',
           }),
@@ -1244,7 +1244,7 @@ describe('WEB-008 incremental publication contract', () => {
       ],
       'default',
     )
-    const result = await build(store, 'plugin-denied', inputs({ plugins }))
+    const result = await build(store, 'adapter-denied', inputs({ adapters }))
     const htmlEntry = result.manifest.entries.find(
       (entry) => entry.kind === 'index-html',
     )
@@ -1254,7 +1254,7 @@ describe('WEB-008 incremental publication contract', () => {
     expect(html).not.toContain('publisher-google-analytics-id')
     expect(
       result.manifest.entries.some(
-        (entry) => entry.path === '/plugin-runtime/google-analytics.js',
+        (entry) => entry.path === '/adapter-runtime/google-analytics.js',
       ),
     ).toBe(false)
     const headers = new TextDecoder().decode(

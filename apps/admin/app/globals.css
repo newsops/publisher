@@ -198,7 +198,7 @@ textarea.body {
 .management-panel,
 .settings-panel,
 .moderation-panel,
-.plugin-panel,
+.adapter-panel,
 .media-panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -216,7 +216,7 @@ textarea.body {
 .moderation-panel {
   margin-top: 24px;
 }
-.plugin-panel {
+.adapter-panel {
   display: grid;
   gap: 16px;
   margin-top: 24px;
@@ -278,30 +278,30 @@ textarea.body {
 .selected-media {
   outline: 2px solid var(--accent);
 }
-.plugin-summary {
+.adapter-summary {
   color: var(--muted);
   margin: 0;
   max-width: 72ch;
 }
-.plugin-card {
+.adapter-card {
   display: grid;
   gap: 14px;
   border-top: 1px solid var(--line);
   padding-top: 16px;
 }
-.plugin-card h3,
-.plugin-card p {
+.adapter-card h3,
+.adapter-card p {
   margin: 0;
 }
-.plugin-card p,
-.plugin-card small {
+.adapter-card p,
+.adapter-card small {
   color: var(--muted);
 }
 .field-error {
   color: #9b1c1c;
   font-weight: 600;
 }
-.plugin-actions {
+.adapter-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

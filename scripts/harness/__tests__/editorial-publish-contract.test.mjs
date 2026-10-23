@@ -51,8 +51,8 @@ describe('editorial publish privacy contract', () => {
       const result = await repository.publish()
       expect(result.snapshot.schemaVersion).toBe(4)
       expect(result.snapshot.media).toEqual([])
-      expect(result.snapshot.plugins).toEqual({
-        schemaVersion: 1,
+      expect(result.snapshot.adapters).toEqual({
+        schemaVersion: 2,
         installations: [],
       })
       expect(result.snapshot.settings.name).toBe('Publisher')

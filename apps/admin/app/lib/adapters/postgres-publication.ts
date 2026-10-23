@@ -1,5 +1,5 @@
 import {
-  projectPublicPluginSnapshot,
+  projectPublicAdapterSnapshot,
   withCanonicalBody,
 } from '@publisher/content'
 import {
@@ -10,7 +10,7 @@ import {
 } from '@publisher/persistence'
 import { PostgresArticleRepository } from './postgres-article-repository'
 import { PostgresBuildJobRepository } from '@publisher/persistence'
-import { PostgresPluginRepository } from './postgres-plugin-repository'
+import { PostgresAdapterRepository } from './postgres-adapter-repository'
 import { deliverSnapshot } from './publisher'
 import type { PublishResult } from '../services/repository-contract'
 import { initialPayload, type LocalState } from '@publisher/content'
@@ -132,7 +132,7 @@ async function createPostgresSnapshot(
   siteId: string,
 ) {
   const articles = new PostgresArticleRepository(siteId, pool)
-  const plugins = new PostgresPluginRepository(siteId, pool)
+  const adapters = new PostgresAdapterRepository(siteId, pool)
   const media = new PostgresMediaRepository(undefined, pool)
   return makeSnapshot(
     state.posts,
@@ -141,7 +141,7 @@ async function createPostgresSnapshot(
     state.authors,
     siteId,
     await articles.listUsing(database),
-    projectPublicPluginSnapshot(await plugins.listUsing(database), siteId),
+    projectPublicAdapterSnapshot(await adapters.listUsing(database), siteId),
     snapshotMedia(await media.listApprovedUsing(database, siteId)),
     state.categories,
   )

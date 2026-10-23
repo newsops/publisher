@@ -8,7 +8,7 @@ import {
   type AuthorProfileInput,
   articleFromPost,
   type ContentSnapshot,
-  emptyPublicPluginSnapshot,
+  emptyPublicAdapterSnapshot,
   type ManagedAuthorProfile,
   type ManagedPost,
   type ManagedPublicationSettings,
@@ -355,7 +355,7 @@ export function makeSnapshot(
   articles: readonly import('@publisher/content').Article[] = posts.map(
     (post) => articleFromPost(post, settings.locale),
   ),
-  plugins = emptyPublicPluginSnapshot,
+  adapters = emptyPublicAdapterSnapshot,
   media: readonly import('@publisher/content').SnapshotMedia[],
   categories: readonly ManagedTaxonomyTerm[] = tags,
 ): { snapshot: ContentSnapshot; checksum: string } {
@@ -399,7 +399,7 @@ export function makeSnapshot(
         ),
       }))
       .filter((article) => article.variants.length > 0),
-    plugins,
+    adapters,
     media,
   }
   const checksum = createHash('sha256')

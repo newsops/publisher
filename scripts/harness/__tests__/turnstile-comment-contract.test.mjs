@@ -82,7 +82,7 @@ describe('optional Turnstile comment verification', () => {
       'utf8',
     )
     const headers = fs.readFileSync(
-      path.join(root, 'scripts/generate-plugin-headers.mjs'),
+      path.join(root, 'scripts/generate-adapter-headers.mjs'),
       'utf8',
     )
     expect(component).toContain('NEXT_PUBLIC_TURNSTILE_SITE_KEY')

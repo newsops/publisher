@@ -206,8 +206,8 @@ button[type='submit']:hover { background: transparent; color: var(--accent); }
 .article-related a:hover { color: var(--accent); }
 .article-related .rail-list { counter-reset: rail; margin: 4px 0 0; padding: 0; list-style: none; }
 .article-related .rail-list a { text-decoration: none; }
-.plugin-slot { max-width: none; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--rule-soft); color: var(--meta); font: 12px/1.6 var(--mono); }
-.plugin-slot p { margin: 0; }
+.adapter-slot { max-width: none; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--rule-soft); color: var(--meta); font: 12px/1.6 var(--mono); }
+.adapter-slot p { margin: 0; }
 .post-body > small { display: block; max-width: none; margin: 40px 0 0; padding-top: 16px; border-top: 1px solid var(--rule-soft); color: var(--meta); font: 11px/1.5 var(--mono); word-break: break-all; }
 .post-body > p, .post-body > ul { max-width: var(--measure); margin-top: 16px; color: var(--prose); font: 19px/1.7 var(--serif); }
 .post-body > ul { padding-left: 22px; }

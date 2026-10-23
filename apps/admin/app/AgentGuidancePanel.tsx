@@ -1,44 +1,41 @@
-import type { AdminAgentGuidance } from './admin-model'
+import type { ReactElement } from 'react'
+import {
+  useAgentGuidanceEditor,
+  type AgentGuidancePanelProps,
+} from './useAgentGuidanceEditor'
+import {
+  GuidanceConflict,
+  GuidanceDraftField,
+  GuidanceIntroduction,
+  GuidanceMachineContext,
+  GuidanceSaveActions,
+} from './AgentGuidanceFields'
 
-export default function AgentGuidancePanel({
-  guidance,
-  setGuidance,
-  save,
-}: Readonly<{
-  guidance: AdminAgentGuidance
-  setGuidance: (next: AdminAgentGuidance) => void
-  save: () => Promise<void>
-}>) {
+export default function AgentGuidancePanel(
+  props: Readonly<AgentGuidancePanelProps>,
+): ReactElement {
+  const editor = useAgentGuidanceEditor(props)
+  const loaded = props.guidance.revision > 0
   return (
     <section
       className="settings-panel"
       aria-labelledby="agent-guidance-heading"
     >
-      <div className="settings-heading">
-        <div>
-          <p className="eyebrow">Agent operations</p>
-          <h2 id="agent-guidance-heading">Agent guidance</h2>
-        </div>
-        <small>r{guidance.revision || '—'}</small>
-      </div>
-      <p>
-        Private instructions supplied to CLI/API agents before content changes.
-        They never appear in the public site.
-      </p>
-      <label htmlFor="agent-guidance">Editorial instructions</label>
-      <textarea
-        id="agent-guidance"
-        rows={7}
-        maxLength={12000}
-        value={guidance.instructions}
-        onChange={(event) =>
-          setGuidance({ ...guidance, instructions: event.target.value })
-        }
-        placeholder="Example: Do not publish an article without a representative image."
+      <GuidanceIntroduction guidance={props.guidance} />
+      <GuidanceDraftField
+        guidance={props.guidance}
+        setGuidance={props.setGuidance}
+        busy={editor.busy}
       />
-      <button className="secondary" type="button" onClick={() => void save()}>
-        Save agent guidance
-      </button>
+      <GuidanceSaveActions editor={editor} loaded={loaded} />
+      {editor.conflict && (
+        <GuidanceConflict
+          guidance={editor.conflict}
+          reload={editor.reloadConflict}
+          reapply={editor.reapplyDraft}
+        />
+      )}
+      <GuidanceMachineContext editor={editor} loaded={loaded} />
     </section>
   )
 }

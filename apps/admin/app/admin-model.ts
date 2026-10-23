@@ -86,14 +86,17 @@ export interface AdminAgentGuidance {
   updatedAt?: string
 }
 
+export type GuidanceSaveResult =
+  { kind: 'saved' } | { kind: 'conflict' } | { kind: 'failed' }
+
 export const emptyAgentGuidance: AdminAgentGuidance = {
   instructions: '',
   revision: 0,
 }
 
-export interface AdminPlugin {
+export interface AdminAdapter {
   siteId: string
-  pluginId: string
+  adapterId: string
   definitionVersion: string
   state: 'disabled' | 'configured' | 'enabled'
   revision: number
