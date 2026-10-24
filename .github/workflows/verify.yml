@@ -81,6 +81,11 @@ jobs:
   clean-room:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROJECT_NAME: publisher-fixture-${{ github.run_id }}-${{ github.run_attempt }}-clean-room
+      PUBLISHER_FIXTURE_POSTGRES_PORT: '0'
+      PUBLISHER_FIXTURE_OBJECT_PORT: '0'
+      PUBLISHER_FIXTURE_CONSOLE_PORT: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -89,14 +94,43 @@ jobs:
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - run: docker compose -f infra/local/compose.yml up -d --wait postgres object-storage
+      - name: Discover fixture endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture_address() {
+            local mapping port
+            mapping="$(docker compose -f infra/local/compose.yml port "$1" "$2" && printf '.')" || return
+            mapping="${mapping%.}"
+            mapping="${mapping%$'\n'}"
+            if [[ ! "$mapping" =~ ^127\.0\.0\.1:([0-9]{1,5})$ ]]; then
+              printf 'Invalid fixture mapping for %s:%s\n' "$1" "$2" >&2
+              return 1
+            fi
+            port="${BASH_REMATCH[1]}"
+            if (( 10#$port < 1 || 10#$port > 65535 )); then
+              printf 'Invalid fixture port for %s:%s\n' "$1" "$2" >&2
+              return 1
+            fi
+            printf '%s\n' "$mapping"
+          }
+          postgres_address="$(fixture_address postgres 5432)"
+          object_address="$(fixture_address object-storage 9000)"
+          console_address="$(fixture_address object-storage 9001)"
+          {
+            printf 'PUBLISHER_RECOVERY_TEST_DATABASE_URL=postgresql://postgres:postgres-local-only@%s/postgres\n' "$postgres_address"
+            printf 'DATABASE_URL=postgresql://publisher_admin_app:admin-local-only@%s/publisher_admin\n' "$postgres_address"
+            printf 'COMMENTS_DATABASE_URL=postgresql://publisher_comments_app:comments-local-only@%s/publisher_comments\n' "$postgres_address"
+            printf 'RESTORE_DATABASE_URL=postgresql://publisher_admin_app:admin-local-only@%s/publisher_admin_restore\n' "$postgres_address"
+            printf 'COMMENTS_RESTORE_DATABASE_URL=postgresql://publisher_comments_app:comments-local-only@%s/publisher_comments_restore\n' "$postgres_address"
+            printf 'OBJECT_STORAGE_ENDPOINT=http://%s\n' "$object_address"
+          } >> "$GITHUB_ENV"
+      - name: Independent-connection recovery regression
+        # The fixture creates and removes its own database on this disposable server.
+        run: corepack pnpm exec vitest run --config vitest.harness.config.ts scripts/harness/__tests__/logical-recovery-contract.test.mjs scripts/harness/__tests__/archive-starter-safety.test.mjs
       - run: docker compose -f infra/local/compose.yml run --rm object-storage-init
       - run: corepack pnpm clean-room:smoke
         env:
-          DATABASE_URL: postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin
-          COMMENTS_DATABASE_URL: postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments
-          RESTORE_DATABASE_URL: postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin_restore
-          COMMENTS_RESTORE_DATABASE_URL: postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments_restore
-          OBJECT_STORAGE_ENDPOINT: http://127.0.0.1:59000
           OBJECT_STORAGE_REGION: us-east-1
           OBJECT_STORAGE_BUCKET: publisher-fixture
           OBJECT_STORAGE_ACCESS_KEY_ID: publisher-local

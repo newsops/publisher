@@ -42,6 +42,17 @@ function appendCommentRecipes(
   })
 }
 
+function articleRuntimeDependency(
+  input: PublicationInputs,
+  hasProjection: boolean,
+): string {
+  return JSON.stringify({
+    commentRuntime: input.commentRuntime ?? null,
+    hasProjection,
+    embedApprovedComments: input.embedApprovedComments ?? false,
+  })
+}
+
 function appendArticleRecipe(
   input: PublicationInputs,
   article: ArticleDocument,
@@ -57,6 +68,8 @@ function appendArticleRecipe(
   )
   const commentPayload = JSON.stringify(comments)
   dependencies[articleKey] = JSON.stringify(article)
+  const runtimeKey = `article-runtime:${article.id}`
+  dependencies[runtimeKey] = articleRuntimeDependency(input, hasProjection)
   if (hasProjection || input.embedApprovedComments)
     dependencies[commentKey] = commentPayload
   const keys = [
@@ -64,6 +77,8 @@ function appendArticleRecipe(
     'template:semantic',
     'theme:baseline',
     'site:identity',
+    'public:head',
+    runtimeKey,
     ...(input.embedApprovedComments ? [commentKey] : []),
   ]
   recipes.push({

@@ -5,7 +5,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres-local-only
     ports:
-      - '55432:5432'
+      - '127.0.0.1:${PUBLISHER_FIXTURE_POSTGRES_PORT:-55432}:5432'
     volumes:
       - ./postgres-init.sql:/docker-entrypoint-initdb.d/001-publisher.sql:ro
     healthcheck:
@@ -24,8 +24,8 @@ services:
       MINIO_ROOT_USER: publisher-local
       MINIO_ROOT_PASSWORD: publisher-local-secret
     ports:
-      - '59000:9000'
-      - '59001:9001'
+      - '127.0.0.1:${PUBLISHER_FIXTURE_OBJECT_PORT:-59000}:9000'
+      - '127.0.0.1:${PUBLISHER_FIXTURE_CONSOLE_PORT:-59001}:9001'
 
   object-storage-init:
     build:

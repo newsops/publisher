@@ -4,6 +4,7 @@ import type { ReadableArtifactStore } from './static-deployment'
 import { BASELINE_CSP } from './static-policy'
 import { extractLocalArtifactReferences } from './html-references'
 import { STATIC_HOST_HEADERS } from './static-host-policy'
+import { verifyCandidateCsp } from './static-csp-policy'
 
 function sha256(value: Uint8Array): string {
   return createHash('sha256').update(value).digest('hex')
@@ -20,40 +21,6 @@ function safeLocalPath(value: unknown): value is string {
     !value.startsWith('//') &&
     !value.includes('..')
   )
-}
-
-function cspDirectives(value: string): Map<string, Set<string>> {
-  return new Map(
-    value
-      .split(';')
-      .map((directive) => directive.trim().split(/\s+/))
-      .filter(([name]) => Boolean(name))
-      .map(([name, ...tokens]) => [name!, new Set(tokens)]),
-  )
-}
-
-function isSafeCsp(value: string): boolean {
-  const baseline = cspDirectives(BASELINE_CSP)
-  const actual = cspDirectives(value)
-  const allowedExtras = new Map<string, Set<string>>([
-    ['script-src', new Set(['https://www.googletagmanager.com'])],
-    ['connect-src', new Set(['https://www.google-analytics.com'])],
-  ])
-  for (const [directive, tokens] of baseline) {
-    const observed = actual.get(directive)
-    if (!observed) return false
-    for (const token of tokens) if (!observed.has(token)) return false
-    for (const token of observed) {
-      if (tokens.has(token)) continue
-      if (!allowedExtras.get(directive)?.has(token)) return false
-    }
-  }
-  for (const [directive, tokens] of actual) {
-    if (!baseline.has(directive)) return false
-    for (const token of tokens)
-      if (token === '*' || token.includes('unsafe-')) return false
-  }
-  return true
 }
 
 function verifyHtml(body: string, article: boolean): void {
@@ -127,8 +94,10 @@ function verifyStaticHostPolicy(
   if (!line)
     throw new Error('Candidate static-host policy is missing or invalid')
   const csp = line.slice('  Content-Security-Policy: '.length)
-  if (!isSafeCsp(csp))
-    throw new Error('Candidate static-host policy is missing or invalid')
+  verifyCandidateCsp(
+    csp,
+    bodies.get('/.well-known/publisher/release-policy.json'),
+  )
   return csp
 }
 

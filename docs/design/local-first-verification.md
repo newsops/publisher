@@ -76,6 +76,14 @@ prove that an untested product journey works.
 `repository-documentation-contract.test.mjs` checks selected documentation
 invariants. Neither proves all links, complete documentation, or product safety.
 
+The [operating-installation continuity runbook](./operating-installation-continuity.md)
+separates the current recovery/rendering corrections in INFRA-007 from this
+target. Current browser site selection checks the required role, normally owner;
+it does not consume persisted `site_administrators` memberships. Automation site
+scope comes from an external keyring. A restored membership row proves data
+retention, not assigned-site browser permission. LF-01, LF-07, and LF-24 still
+need effective scoped authorization and complete independent caller acceptance.
+
 ## Planned behavior suites and traceability
 
 The table is the target coverage matrix under `scripts/harness/__tests__/`.

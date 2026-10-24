@@ -80,6 +80,11 @@ admin, object-store, or comments Worker access.
 
 ### Control-plane contract
 
+For an already operating installation, follow the
+[continuity runbook](../../../docs/design/operating-installation-continuity.md)
+before a schema/runtime upgrade or migration. The full local-first replacement
+remains gated by ARCH-008, not by this current-runtime pilot contract.
+
 - Admin is on a separate, unlinked domain with application-owned accounts,
   revocable sessions, role checks, CSRF protection, rate limiting, audit logs,
   and noindex/robots controls.

@@ -20,6 +20,11 @@ For an AI-led setup, read
 [ai-assisted-deployment.ko.md](./ai-assisted-deployment.ko.md) first. It owns
 the user interview, provider selection, authority boundaries, and owner pilot.
 
+For an existing installation, start with
+[Keep existing publications running during an upgrade](./design/operating-installation-continuity.md).
+It separates a current-runtime upgrade from the incomplete local-first cutover
+and owns the preservation, isolated rehearsal, and rollback checklist.
+
 ## Clean checkout
 
 Use Node.js 22.x and pnpm 9:
@@ -73,11 +78,15 @@ feature is required for this caching design.
 ## Provider-independent clean-room smoke
 
 Docker can verify the real PostgreSQL 16 and S3-compatible boundary without a
-Cloudflare account or any provider console:
+Cloudflare account or any provider console. The example uses the default
+loopback host ports and one explicit Compose project. For concurrent runs or
+occupied defaults, choose a distinct project name and follow the
+[fixture port allocation and discovery instructions](../infra/local/README.md#ports-and-parallel-runs),
+then use the discovered addresses in the URLs below:
 
 ```bash
-docker compose -f infra/local/compose.yml up -d --wait postgres object-storage
-docker compose -f infra/local/compose.yml run --rm object-storage-init
+docker compose -p publisher-fixture -f infra/local/compose.yml up -d --wait postgres object-storage
+docker compose -p publisher-fixture -f infra/local/compose.yml run --rm object-storage-init
 
 export DATABASE_URL=postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin
 export COMMENTS_DATABASE_URL=postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments
@@ -103,7 +112,7 @@ The same flow runs in `.github/workflows/verify.yml` on Node.js 22.
 Remove only these local disposable containers and volumes after the smoke:
 
 ```bash
-docker compose -f infra/local/compose.yml down -v
+docker compose -p publisher-fixture -f infra/local/compose.yml down -v
 ```
 
 ## Provider selection
@@ -233,6 +242,34 @@ documented `publisher:verification-token` event on the article comment section.
 The generic Worker verifier still receives only a verification endpoint and its
 secret; no provider-specific persistence, proxy, or database service is added.
 
+The publication worker uses explicit, provider-neutral public runtime settings
+instead of the preview build's `NEXT_PUBLIC_*` variables:
+See `scripts/deploy/publication.env.example` for the public-only variable names.
+
+```text
+COMMENTS_PUBLIC_ORIGIN=https://comments.example.com
+COMMENTS_SUBMISSION_ENABLED=true
+HUMAN_VERIFICATION_SITE_KEY=your-public-site-key
+HUMAN_VERIFICATION_SCRIPT_URL=https://verification.example.com/widget.js
+HUMAN_VERIFICATION_GLOBAL=verification
+HUMAN_VERIFICATION_FRAME_ORIGINS=["https://frames.example.com"]
+HUMAN_VERIFICATION_CONNECT_ORIGINS=["https://verification.example.com"]
+```
+
+Both origin variables are JSON arrays and are mandatory when verification is
+configured; use `[]` only when the selected provider needs no such capability.
+An absent `COMMENTS_SUBMISSION_ENABLED` defaults to read-only comments. If
+supplied, it must be exactly `true` or `false`; empty or misspelled values fail
+the build rather than silently turning submissions off.
+Origins must be exact HTTPS origins without paths, credentials or wildcards.
+The script origin does not imply its frame or connection origins. For a
+selected Turnstile widget, use its documented public script URL/global and
+explicitly set the required capability arrays to
+`["https://challenges.cloudflare.com"]`; do not copy that origin for another
+provider. The build rejects enabled submissions without complete verification
+configuration rather than silently removing the form. Read-only comments need
+only their receiver origin. Loopback HTTP is accepted solely for local tests.
+
 The bundled Node comment adapter discards any inbound `X-Client-IP` value and
 sets it from the TCP peer address. If a reverse proxy is placed in front, it
 must strip the public header and set one trusted `X-Client-IP` value at the
@@ -290,10 +327,13 @@ corepack pnpm persistence:restore -- \
   --scope comments --input /secure-backup/comments.json
 ```
 
-The restore fails on a non-empty target and verifies row counts plus a data-only
-SHA-256 that is stable across backup timestamps. Copy private media, snapshots,
-manifests, and artifacts to a provider-external bucket or offline archive and
-periodically verify a clean restore.
+The current backup format validates exact schema and migration provenance and
+captures each scope in one repeatable-read transaction. Restore requires empty
+managed tables and verifies durable data inside its transaction. Account
+sessions remain empty; retained password verifiers still require credential
+review. Follow the [continuity runbook](./design/operating-installation-continuity.md)
+for the migrated target's bootstrap row, independent object recovery, encryption,
+and isolated restore drill. A logical backup is not an encrypted media bundle.
 
 ## Billing and recovery evidence
 
@@ -396,9 +436,9 @@ contain a provider token, account identifier, bucket name, or private endpoint.
 
 ## Publish and incremental generation
 
-## Private archive recovery
+## Draft archive interchange
 
-Before replacing the generic starter fixture with a private archive, create a
+Before replacing the generic starter fixture with a draft archive, create a
 logical admin backup outside the repository and retain its checksum evidence.
 An autonomous operator uses the authenticated CLI/API contract; it never
 opens the browser editor, connects to PostgreSQL, or uses a hosting-provider
@@ -411,17 +451,20 @@ publisher content restore --archive /secure/archive --site default \
   --idempotency-key restore-<unique-id> --non-interactive --json
 ```
 
-The restore API accepts only an untouched checked-in starter fixture and an
-exact expected state revision. It verifies the versioned archive, binds the
+The restore API accepts only an untouched checked-in starter fixture, draft
+posts, and an exact expected state revision. Omitted status means draft;
+explicit non-draft status fails before mutation. It verifies the archive, binds the
 idempotency key to a canonical archive digest, uses approved checksum-addressed
 media variants, replaces state and articles in one PostgreSQL transaction, and
 does not publish or activate a public release. Replay of the same key and
 digest returns the original operation; reuse with different archive content,
 stale revisions, or any already-edited/published target fail closed.
 
-Only after a successful restore should the operator send the normal publish
-request, materialize the verified candidate, and pass that directory to the
-chosen static-host CLI. This is an existing-production-data overwrite boundary:
+After import, review drafts through the normal workflow. Only approved content
+can enter the normal publish request and verified candidate. This interchange
+does not preserve a complete private installation's identities, review history,
+permissions, or comments. Use the [continuity runbook](./design/operating-installation-continuity.md)
+for whole-installation recovery. Any existing-production-data overwrite remains a boundary:
 the operator must give an immediate, narrowly scoped confirmation before the
 real command is run.
 

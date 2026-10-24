@@ -35,6 +35,7 @@ export default function RootLayout({
       <head>
         <AdapterHeadContributions contributions={adapterContributions} />
         <link rel="stylesheet" href="/theme-runtime/current.css" />
+        <link rel="stylesheet" href="/site-runtime/consent.v1.css" />
         <script src="/site-runtime/consent.v1.js" defer />
         <script src="/site-runtime/projection-bootstrap.v1.js" defer />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" />

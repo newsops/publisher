@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises'
-import { createLogicalBackup, type PersistenceScope } from '../src/recovery'
+import { createLogicalBackup } from '../src/recovery'
 import { createPostgresPool } from '../src/postgres'
 
 function argument(name: string): string | undefined {
@@ -7,7 +7,7 @@ function argument(name: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : undefined
 }
 
-const scope = argument('--scope') as PersistenceScope | undefined
+const scope = argument('--scope')
 const output = argument('--output')
 if ((scope !== 'admin' && scope !== 'comments') || !output)
   throw new Error('Usage: backup --scope admin|comments --output <file>')
@@ -21,6 +21,7 @@ try {
   await writeFile(output, `${JSON.stringify(backup, null, 2)}\n`, {
     encoding: 'utf8',
     mode: 0o600,
+    flag: 'wx',
   })
   console.log(`[persistence:backup] ${scope} ${backup.sha256} -> ${output}`)
 } finally {

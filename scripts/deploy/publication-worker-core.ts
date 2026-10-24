@@ -27,8 +27,10 @@ import {
   verifyPublicationCandidate,
 } from '../../packages/publication/src/index'
 import type { ObjectStore } from '../../packages/persistence/src/index'
+import { commentRuntimeFromEnvironment } from './publication-runtime-config'
 import {
   ObjectArtifactStore,
+  materializedMedia,
   persistReleaseManifest,
   sha256Bytes,
 } from './publication-worker-artifacts'
@@ -59,23 +61,6 @@ async function selectedTheme(snapshot: ContentSnapshot) {
   if (theme.id !== snapshot.settings.themeId)
     throw new Error(`Unknown theme: ${snapshot.settings.themeId}`)
   return theme
-}
-
-async function materializedMedia(
-  snapshot: ContentSnapshot,
-  store: ObjectStore,
-) {
-  return Promise.all(
-    snapshot.media.map(async (item) => {
-      const body = await store.get(item.objectKey)
-      if (
-        body.byteLength !== item.byteSize ||
-        sha256Bytes(body) !== item.sha256
-      )
-        throw new Error(`Snapshot media verification failed: ${item.id}`)
-      return { ...item, body }
-    }),
-  )
 }
 
 function articleInputs(snapshot: ContentSnapshot) {
@@ -123,24 +108,6 @@ export async function publicationInputs(
   store: ObjectStore,
 ): Promise<PublicationInputs> {
   const articles = articleInputs(snapshot)
-  const commentOrigin = process.env.COMMENTS_PUBLIC_ORIGIN?.trim()
-  const commentSubmissionEnabled =
-    process.env.COMMENTS_SUBMISSION_ENABLED === 'true'
-  const humanVerificationSiteKey =
-    process.env.HUMAN_VERIFICATION_SITE_KEY?.trim()
-  const humanVerificationScriptUrl =
-    process.env.HUMAN_VERIFICATION_SCRIPT_URL?.trim()
-  const humanVerificationGlobal = process.env.HUMAN_VERIFICATION_GLOBAL?.trim()
-  if (
-    commentSubmissionEnabled &&
-    (!commentOrigin ||
-      !humanVerificationSiteKey ||
-      !humanVerificationScriptUrl ||
-      !humanVerificationGlobal)
-  )
-    throw new Error(
-      'COMMENTS_SUBMISSION_ENABLED requires COMMENTS_PUBLIC_ORIGIN and human-verification public configuration',
-    )
   return {
     siteId: snapshot.siteId,
     origin: snapshot.settings.canonicalOrigin,
@@ -157,26 +124,7 @@ export async function publicationInputs(
     theme: await selectedTheme(snapshot),
     adapters: snapshot.adapters,
     media: await materializedMedia(snapshot, store),
-    ...(commentOrigin
-      ? {
-          commentRuntime: {
-            origin: commentOrigin.replace(/\/$/, ''),
-            siteId: snapshot.siteId,
-            submissionEnabled: commentSubmissionEnabled,
-            ...(humanVerificationSiteKey &&
-            humanVerificationScriptUrl &&
-            humanVerificationGlobal
-              ? {
-                  humanVerification: {
-                    siteKey: humanVerificationSiteKey,
-                    scriptUrl: humanVerificationScriptUrl,
-                    globalName: humanVerificationGlobal,
-                  },
-                }
-              : {}),
-          },
-        }
-      : {}),
+    commentRuntime: commentRuntimeFromEnvironment(snapshot.siteId),
   }
 }
 

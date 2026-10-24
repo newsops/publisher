@@ -32,9 +32,13 @@ export function projectionPayload(
 export function indexPageDependency(
   title: string,
   articles: readonly ArticleDocument[],
+  leadAuthor?: Pick<ArticleDocument, 'authorName' | 'authorPath'>,
 ): string {
   return JSON.stringify({
     title,
+    leadAuthor: leadAuthor
+      ? { authorName: leadAuthor.authorName, authorPath: leadAuthor.authorPath }
+      : undefined,
     articles: articles.map(
       ({
         slug,

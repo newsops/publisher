@@ -68,7 +68,11 @@ function addPage(
   pageArticles: readonly ArticleDocument[],
 ): void {
   const key = `index:${route}`
-  context.dependencies[key] = indexPageDependency(title, pageArticles)
+  context.dependencies[key] = indexPageDependency(
+    title,
+    pageArticles,
+    route === '/' ? pageArticles[0] : undefined,
+  )
   context.recipes.push({
     path: route,
     kind: 'index-html',
@@ -80,6 +84,7 @@ function addPage(
       'template:semantic',
       'theme:baseline',
       'site:identity',
+      'public:head',
     ],
     render: (read) => {
       read(key)
@@ -87,6 +92,7 @@ function addPage(
       read('template:semantic')
       read('theme:baseline')
       read('site:identity')
+      read('public:head')
       return renderProjectionPage(
         context.input,
         title,
@@ -174,12 +180,15 @@ function addSearchArtifacts(context: IndexContext): void {
 
 function addFeed(context: IndexContext): void {
   context.dependencies['metadata:feed'] = JSON.stringify(
-    context.input.articles.map(({ title, path, publishedAt, description }) => ({
-      title,
-      path,
-      publishedAt,
-      description,
-    })),
+    context.input.articles.map(
+      ({ title, path, publishedAt, description, bodyHtml }) => ({
+        title,
+        path,
+        publishedAt,
+        description,
+        bodyHtml,
+      }),
+    ),
   )
   context.recipes.push({
     path: '/feed.xml',

@@ -28,7 +28,10 @@ export const STATIC_HOST_HEADERS = `# Portable static-host cache and security po
 /search-index.json
   Cache-Control: ${REVALIDATE_CACHE_CONTROL}
 
-/site-runtime/*
+/site-runtime/immutable/*
+  Cache-Control: ${IMMUTABLE_CACHE_CONTROL}
+
+/site-runtime/*.js
   Cache-Control: ${REVALIDATE_CACHE_CONTROL}
 
 /*
