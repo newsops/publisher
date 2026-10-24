@@ -7,7 +7,8 @@ S3 API; it does not select a provider for an operated publication.
 ## Build and run
 
 Use a fresh explicit Compose project name for verification. Check that the
-configured ports are free and do not replace another project's containers.
+configured ports are free, or request Docker-assigned ports as described below.
+Use the same project name for every command; concurrent runs need distinct names.
 
 ```sh
 docker compose -p publisher-fixture -f infra/local/compose.yml build object-storage object-storage-init
@@ -22,6 +23,46 @@ belong in this fixture. Remove only the verification project that you created:
 ```sh
 docker compose -p publisher-fixture -f infra/local/compose.yml down -v
 ```
+
+## Ports and parallel runs
+
+Published ports bind only to `127.0.0.1`. Local defaults remain:
+
+| Environment variable              | Default host port | Service port          |
+| --------------------------------- | ----------------- | --------------------- |
+| `PUBLISHER_FIXTURE_POSTGRES_PORT` | 55432             | `postgres:5432`       |
+| `PUBLISHER_FIXTURE_OBJECT_PORT`   | 59000             | `object-storage:9000` |
+| `PUBLISHER_FIXTURE_CONSOLE_PORT`  | 59001             | `object-storage:9001` |
+
+To let Docker allocate all three host ports, set these values before startup:
+
+```sh
+export PUBLISHER_FIXTURE_POSTGRES_PORT=0
+export PUBLISHER_FIXTURE_OBJECT_PORT=0
+export PUBLISHER_FIXTURE_CONSOLE_PORT=0
+```
+
+After startup, discover the actual addresses with the same project name:
+
+```sh
+docker compose -p publisher-fixture -f infra/local/compose.yml port postgres 5432
+docker compose -p publisher-fixture -f infra/local/compose.yml port object-storage 9000
+docker compose -p publisher-fixture -f infra/local/compose.yml port object-storage 9001
+```
+
+Use the returned PostgreSQL address in every database URL and prefix the object
+API address with `http://` for `OBJECT_STORAGE_ENDPOINT`. The console address is
+for fixture inspection. Initialization continues to use the Compose service
+address `http://object-storage:9000`. Do not stop another listener to free a
+default port.
+
+The clean-room CI job always requests port `0` for all three bindings and uses a
+run/attempt/job-specific Compose project. Its discovery step requires each
+lookup to succeed with one loopback address and a port from 1 through 65535,
+then exports every consumer URL together. Fixture contract tests execute that
+workflow shell with controlled Docker output, including occupied-default-port
+and invalid-mapping cases. They do not prove real PostgreSQL/MinIO startup;
+the clean-room CI regression and smoke results provide that separate evidence.
 
 ## Artifact provenance
 

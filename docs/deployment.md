@@ -78,11 +78,15 @@ feature is required for this caching design.
 ## Provider-independent clean-room smoke
 
 Docker can verify the real PostgreSQL 16 and S3-compatible boundary without a
-Cloudflare account or any provider console:
+Cloudflare account or any provider console. The example uses the default
+loopback host ports and one explicit Compose project. For concurrent runs or
+occupied defaults, choose a distinct project name and follow the
+[fixture port allocation and discovery instructions](../infra/local/README.md#ports-and-parallel-runs),
+then use the discovered addresses in the URLs below:
 
 ```bash
-docker compose -f infra/local/compose.yml up -d --wait postgres object-storage
-docker compose -f infra/local/compose.yml run --rm object-storage-init
+docker compose -p publisher-fixture -f infra/local/compose.yml up -d --wait postgres object-storage
+docker compose -p publisher-fixture -f infra/local/compose.yml run --rm object-storage-init
 
 export DATABASE_URL=postgresql://publisher_admin_app:admin-local-only@127.0.0.1:55432/publisher_admin
 export COMMENTS_DATABASE_URL=postgresql://publisher_comments_app:comments-local-only@127.0.0.1:55432/publisher_comments
@@ -108,7 +112,7 @@ The same flow runs in `.github/workflows/verify.yml` on Node.js 22.
 Remove only these local disposable containers and volumes after the smoke:
 
 ```bash
-docker compose -f infra/local/compose.yml down -v
+docker compose -p publisher-fixture -f infra/local/compose.yml down -v
 ```
 
 ## Provider selection
