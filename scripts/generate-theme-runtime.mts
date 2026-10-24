@@ -5,7 +5,10 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { isThemeId } from '../packages/content/src/index'
-import { getTheme } from '../packages/publication/src/index'
+import {
+  createPublicationRecipes,
+  getTheme,
+} from '../packages/publication/src/index'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const publicRoot = path.join(root, 'apps/site/public')
@@ -49,6 +52,32 @@ await fs.writeFile(
   path.join(publicRoot, 'site-runtime/projection-bootstrap.v1.js'),
   bootstrap,
 )
+const consentGraph = createPublicationRecipes({
+  siteId: 'default',
+  origin: 'https://example.com',
+  publicationName: 'Example News',
+  language: 'en',
+  semanticVersion: 'semantic-v3',
+  runtimeVersion: 'runtime-v1',
+  baselineVersion: 'baseline-v3',
+  articles: [],
+  recent: { generatedAt: '2026-01-01T00:00:00.000Z', slugs: [] },
+  theme: selected,
+})
+for (const recipe of consentGraph.recipes) {
+  if (
+    recipe.path !== '/site-runtime/consent.v1.js' &&
+    !recipe.path.startsWith('/site-runtime/immutable/consent.')
+  )
+    continue
+  const target = recipe.path.endsWith('.css')
+    ? '/site-runtime/consent.v1.css'
+    : recipe.path
+  await fs.writeFile(
+    path.join(publicRoot, target),
+    recipe.render((key) => consentGraph.dependencies[key]),
+  )
+}
 await fs.writeFile(
   path.join(publicRoot, '.well-known/publisher/runtime.json'),
   `${JSON.stringify(runtime, null, 2)}\n`,

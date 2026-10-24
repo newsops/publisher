@@ -4,11 +4,30 @@ import type {
   ArtifactStore,
   ReadableArtifactStore,
   ReleaseManifest,
+  MaterializedMedia,
 } from '../../packages/publication/src/index'
 import type { ObjectStore } from '../../packages/persistence/src/index'
+import type { ContentSnapshot } from '../../packages/content/src/index'
 
 export function sha256Bytes(body: Uint8Array): string {
   return createHash('sha256').update(body).digest('hex')
+}
+
+export async function materializedMedia(
+  snapshot: ContentSnapshot,
+  store: ObjectStore,
+): Promise<readonly MaterializedMedia[]> {
+  return Promise.all(
+    snapshot.media.map(async (item) => {
+      const body = await store.get(item.objectKey)
+      if (
+        body.byteLength !== item.byteSize ||
+        sha256Bytes(body) !== item.sha256
+      )
+        throw new Error(`Snapshot media verification failed: ${item.id}`)
+      return { ...item, body }
+    }),
+  )
 }
 
 export class ObjectArtifactStore

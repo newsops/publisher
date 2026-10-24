@@ -13,6 +13,11 @@ slice exists in `packages/operator`; UI/CLI cutover is not complete. The runtime
 contracts below describe the current callers, not the final local-first target.
 See [verification and remaining gates](./design/local-first-verification.md).
 
+Existing operators use the
+[continuity runbook](./design/operating-installation-continuity.md) for current
+runtime upgrades, private recovery, and isolated rehearsal. Draft interchange
+and the partial local core are not complete site migrations.
+
 Every cloned-repository deployment starts with the
 [AI-assisted deployment guide](./ai-assisted-deployment.ko.md). It requires
 user-selected providers, current official cost checks, explicit authority for

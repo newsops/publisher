@@ -207,11 +207,15 @@ HTTPS URLs. Plain Markdown image syntax is rejected so every published image
 has the required accessible figure attribution contract. The server returns
 canonical deterministic Markdown after validation.
 
-## Archive recovery
+## Draft archive interchange
 
-`content restore` is the agent-first recovery path for a private archive kept
-outside this repository. It is not a database client and it is not browser
-automation. The archive directory contains `archive.json` plus only the
+`content restore` imports draft content into an untouched starter from an
+archive kept outside this repository. It is not full private recovery, an
+operated-installation migration, a database client or browser automation.
+Omitted post status becomes `draft`; explicit non-draft status is rejected,
+not silently downgraded. Choose draft explicitly when preparing interchange;
+the archive supplies no desk approval or existing editorial lifecycle evidence.
+The archive directory contains `archive.json` plus only the
 relative media files declared by its checksum. The CLI validates the manifest,
 paths, byte sizes, and SHA-256 values locally; its inspection result exposes
 only counts and an archive digest.
@@ -237,7 +241,8 @@ the server. The response has a durable restore operation ID and safe counts;
 it does not print article bodies, local paths, asset bytes, credentials, or
 private object keys.
 
-After a successful restore, publish with a separate idempotency key, process
+After a successful restore, review imported drafts through the normal desk
+workflow before publishing with a separate idempotency key. Process
 the immutable snapshot into a verified candidate directory, and use the
 operator-selected static-host CLI to upload that directory. A browser remains
 the parallel human editorial surface and the final public-result check; it is

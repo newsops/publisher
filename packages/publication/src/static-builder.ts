@@ -10,6 +10,7 @@ import {
 import { createStaticIndexRecipes, staticIndexPaths } from './static-indexes'
 import { validatePopularityProjection } from './projections'
 import { appendRuntimeRecipes } from './static-runtime-recipes'
+import { validateCommentRuntime } from './static-runtime-config'
 import type {
   ArticleDocument,
   PublicationGraph,
@@ -35,6 +36,7 @@ export type {
 export function createPublicationRecipes(
   input: PublicationInputs,
 ): PublicationGraph {
+  validateCommentRuntime(input)
   if (input.popular) validatePopularityProjection(input.popular)
   const graph = createBasePublicationGraph(input)
   appendMediaRecipes(input, graph.dependencies, graph.recipes)

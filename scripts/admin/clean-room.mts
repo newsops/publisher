@@ -86,6 +86,24 @@ async function verifyRestore(): Promise<{
   const commentsBackup = await createLogicalBackup(comments, 'comments')
   await applyMigrations(adminRestoreUrl, 'admin', adminRestore)
   await applyMigrations(commentsRestoreUrl, 'comments', commentsRestore)
+  const emptyTarget = await createLogicalBackup(adminRestore, 'admin')
+  if (
+    Object.entries(emptyTarget.rowCounts).some(
+      ([table, count]) => count !== (table === 'publisher_admin.sites' ? 1 : 0),
+    )
+  )
+    throw new Error('Clean-room target has application data beyond its starter')
+  const seed = await adminRestore.query(
+    `SELECT site_id FROM publisher_admin.sites WHERE site_id = 'default'
+     AND name = 'Publication' AND canonical_origin = 'https://publisher.com'
+     AND theme_id = 'editorial' AND active = TRUE`,
+  )
+  if (seed.rowCount !== 1)
+    throw new Error('Clean-room target lacks the untouched migration starter')
+  await adminRestore.query(`DELETE FROM publisher_admin.sites
+    WHERE site_id = 'default' AND name = 'Publication'
+    AND canonical_origin = 'https://publisher.com'
+    AND theme_id = 'editorial' AND active = TRUE`)
   await restoreLogicalBackup(adminRestore, adminBackup)
   await restoreLogicalBackup(commentsRestore, commentsBackup)
   const [restoredAdmin, restoredComments] = await Promise.all([

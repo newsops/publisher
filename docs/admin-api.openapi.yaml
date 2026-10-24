@@ -520,7 +520,12 @@ paths:
       - { name: siteId, in: path, required: true, schema: { type: string } }
     post:
       operationId: restoreContent
-      summary: Restore a local archive into an empty publication (publisher role)
+      summary: Import draft archive content into an untouched starter (publisher role)
+      description: >-
+        EditorialArchive is draft-only interchange, not full private recovery.
+        Omitted post status becomes draft; explicit non-draft status is rejected
+        before mutation. Existing revision, site, approved-media and idempotency
+        checks apply. No desk approval or release activation is created.
       parameters:
         - {
             name: Idempotency-Key,

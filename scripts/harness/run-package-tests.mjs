@@ -10,15 +10,20 @@ const suites = {
     'html-body-import-contract',
     'desk-review-contract',
     'editorial-persona-contract',
+    'archive-restore-contract',
   ],
   '@publisher/publication': [
     'incremental-publication-contract',
+    'publication-continuity',
+    'publication-runtime-config',
     'incremental-publication-scale',
     'visitor-analytics-consent-contract',
+    'publication-continuity',
   ],
   '@publisher/persistence': [
     'portable-persistence-integration',
     'local-first-conditional-storage',
+    'logical-recovery-contract',
   ],
   '@publisher/admin': [
     'admin-auth-contract',
@@ -27,6 +32,7 @@ const suites = {
     'admin-launch-root',
     'admin-site-tab-isolation',
     'admin-taxonomy-contract',
+    'archive-starter-safety',
     'agent-guidance-contract',
     'agent-guidance-editor',
   ],

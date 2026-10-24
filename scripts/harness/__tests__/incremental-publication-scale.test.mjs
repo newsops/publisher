@@ -188,8 +188,30 @@ describe('WEB-008 1,000-article invalidation regression', () => {
       }),
       baseline.manifest,
     )
-    expect(comment.metrics.renderedByKind['article-html']).toBe(0)
+    // First projection activation adds its bootstrap script to this article.
+    expect(comment.metrics.renderedByKind['article-html']).toBe(1)
     expect(comment.metrics.renderedByKind.projection).toBe(1)
+    const nextComment = await build(
+      store,
+      'comment-body-change',
+      fixture({
+        articles: baselineInput.articles,
+        comments: {
+          'article-0001': [
+            {
+              id: 'comment-1',
+              authorName: 'Reader',
+              body: 'Corrected comment',
+              status: 'approved',
+              createdAt: '2026-09-11T04:00:00.000Z',
+            },
+          ],
+        },
+      }),
+      comment.manifest,
+    )
+    expect(nextComment.metrics.renderedByKind['article-html']).toBe(0)
+    expect(nextComment.metrics.renderedByKind.projection).toBe(1)
   })
 
   it('intentionally invalidates all article HTML for a semantic template change', async () => {

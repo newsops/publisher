@@ -80,6 +80,8 @@ export interface PublicationInputs {
       readonly siteKey: string
       readonly scriptUrl: string
       readonly globalName: string
+      readonly frameOrigins: readonly string[]
+      readonly connectOrigins: readonly string[]
     }
   }
 }

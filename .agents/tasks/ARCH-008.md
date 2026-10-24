@@ -87,6 +87,8 @@ slice before replacing current product composition or operating live data.
 ## Remaining implementation boundaries
 
 - Complete UI and direct-core CLI callers, site/account/authorization parity.
+  Current browser selection checks a role rather than persisted site membership;
+  restoring ACL rows does not establish assigned-site access enforcement.
 - OS key custody, offline-root enrollment/revocation, secure handoff and full
   independently keyed fresh-PC recovery, including long-history checkpoints.
 - Immutable private media closure (capture currently rejects media references).

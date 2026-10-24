@@ -51,11 +51,32 @@ function fixture() {
 describe('archive restore contract', () => {
   it('accepts a generic versioned archive and exposes only a summary', () => {
     const archive = validateEditorialArchive(fixture())
+    expect(archive.posts[0].status).toBe('draft')
     expect(archiveSummary(archive)).toEqual({
       schemaVersion: 1,
       counts: { authors: 1, tags: 1, posts: 1, media: 1 },
     })
   })
+
+  it('accepts explicit draft status without manufacturing review evidence', () => {
+    const value = fixture()
+    value.posts[0].status = 'draft'
+    const post = validateEditorialArchive(value).posts[0]
+    expect(post.status).toBe('draft')
+    expect(post.deskReview).toBeUndefined()
+  })
+
+  it.each(['review', 'scheduled', 'published', 'unknown'])(
+    'rejects explicit %s status with an actionable draft-import error',
+    (status) => {
+      const value = fixture()
+      value.posts[0].status = status
+      expect(() => validateEditorialArchive(value)).toThrow(
+        'draft import requires status "draft"; choose draft before importing',
+      )
+      expect(value.posts[0].status).toBe(status)
+    },
+  )
 
   it.each([
     ['traversal', (value) => (value.media[0].assetPath = '../private.png')],

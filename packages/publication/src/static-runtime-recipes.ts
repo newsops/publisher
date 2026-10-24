@@ -60,27 +60,6 @@ export const consentRuntimeSource = `;(() => {
     return element
   }
 
-  const styles = () => {
-    if (document.querySelector('[data-consent-styles]')) return
-    const sheet = document.createElement('style')
-    sheet.dataset.consentStyles = 'true'
-    sheet.textContent =
-      '[data-consent-layer]{position:fixed;inset-inline:0;bottom:0;z-index:2147483000;' +
-      'display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:center;' +
-      'padding:1rem clamp(1rem,4vw,2rem);background:#111;color:#fff;font:inherit;' +
-      'box-shadow:0 -2px 12px rgba(0,0,0,.35)}' +
-      '[data-consent-layer] p{margin:0;flex:1 1 20rem;font-size:.95rem;line-height:1.45}' +
-      '[data-consent-layer] .consent-actions{display:flex;flex-wrap:wrap;gap:.5rem}' +
-      '[data-consent-layer] .consent-action{min-height:2.75rem;padding:.55rem 1.1rem;' +
-      'border:1px solid #fff;border-radius:.25rem;background:transparent;color:inherit;' +
-      'font:inherit;font-weight:600;cursor:pointer}' +
-      '[data-consent-layer] .consent-action:focus-visible{outline:3px solid #7cc4ff;outline-offset:2px}' +
-      '[data-consent-state]{flex:1 1 100%;margin:0;font-size:.85rem;opacity:.85}' +
-      '[data-consent-reopen]{background:none;border:0;padding:0;color:inherit;' +
-      'font:inherit;text-decoration:underline;cursor:pointer}'
-    document.head.append(sheet)
-  }
-
   const removeLayer = () => {
     document.querySelector('[data-consent-layer]')?.remove()
   }
@@ -103,7 +82,6 @@ export const consentRuntimeSource = `;(() => {
 
   function open(current) {
     removeLayer()
-    styles()
     const layer = document.createElement('div')
     layer.dataset.consentLayer = 'true'
     layer.setAttribute('role', 'region')
@@ -143,26 +121,31 @@ export const consentRuntimeSource = `;(() => {
   else mountReopen()
 })()`
 
-function runtimeScript(path: string, source: string): ArtifactRecipe {
+function runtimeScript(
+  path: string,
+  source: string,
+  dependencies: Record<string, string>,
+): ArtifactRecipe {
+  const key = `runtime:source:${path}`
+  dependencies[key] = source
   return {
     path,
     kind: 'runtime',
     contentType: 'text/javascript; charset=utf-8',
     cacheClass: 'runtime-pointer',
-    dependencyKeys: ['runtime:version'],
+    dependencyKeys: ['runtime:version', key],
     render: (read) => {
       read('runtime:version')
-      return source
+      return read(key)
     },
   }
 }
 
-export function appendRuntimeRecipes(
+function appendThemeRecipes(
   input: PublicationInputs,
-  indexes: StaticIndexGraph,
   dependencies: Record<string, string>,
   recipes: ArtifactRecipe[],
-): void {
+): string {
   const themeKey = `theme:${input.theme.id}:${input.theme.version}`
   dependencies[themeKey] = input.theme.css
   const themePath =
@@ -190,6 +173,16 @@ export function appendRuntimeRecipes(
       return input.theme.css
     },
   })
+  return themePath
+}
+
+export function appendRuntimeRecipes(
+  input: PublicationInputs,
+  indexes: StaticIndexGraph,
+  dependencies: Record<string, string>,
+  recipes: ArtifactRecipe[],
+): void {
+  const themePath = appendThemeRecipes(input, dependencies, recipes)
   dependencies['runtime:pointer'] = JSON.stringify({
     schemaVersion: 1,
     themeCss: themePath,
@@ -204,11 +197,25 @@ export function appendRuntimeRecipes(
     dependencyKeys: ['runtime:pointer'],
     render: (read) => read('runtime:pointer'),
   })
+  appendPublicScripts(input, dependencies, recipes)
+}
+
+function appendPublicScripts(
+  input: PublicationInputs,
+  dependencies: Record<string, string>,
+  recipes: ArtifactRecipe[],
+): void {
   recipes.push(
-    runtimeScript('/site-runtime/comment-bootstrap.v1.js', commentBootstrap),
-  )
-  recipes.push(
-    runtimeScript('/site-runtime/consent.v1.js', consentRuntimeSource),
+    runtimeScript(
+      '/site-runtime/comment-bootstrap.v1.js',
+      commentBootstrap,
+      dependencies,
+    ),
+    runtimeScript(
+      '/site-runtime/consent.v1.js',
+      consentRuntimeSource,
+      dependencies,
+    ),
   )
   const adapterHead = input.adapters
     ? renderAdapterContributions(input.adapters).head
@@ -222,10 +229,13 @@ export function appendRuntimeRecipes(
       runtimeScript(
         '/adapter-runtime/google-analytics.js',
         googleAnalyticsRuntimeSource,
+        dependencies,
       ),
     )
   if (input.commentRuntime) {
-    recipes.push(runtimeScript('/site-runtime/comments.v1.js', liveComments))
+    recipes.push(
+      runtimeScript('/site-runtime/comments.v1.js', liveComments, dependencies),
+    )
     if (
       input.commentRuntime.submissionEnabled &&
       input.commentRuntime.humanVerification
@@ -234,6 +244,7 @@ export function appendRuntimeRecipes(
         runtimeScript(
           '/site-runtime/human-verification.v1.js',
           humanVerificationRuntime,
+          dependencies,
         ),
       )
   }

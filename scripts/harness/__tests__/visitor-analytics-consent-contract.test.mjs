@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { googleAnalyticsRuntimeSource } from '../../../packages/content/src/adapters/google-analytics.ts'
 import { consentRuntimeSource } from '../../../packages/publication/src/static-runtime-recipes.ts'
+import { createPublicationRecipes } from '../../../packages/publication/src/index.ts'
 
 /**
  * SECURITY-002: analytics consent is opt-in. The platform consent layer is the
@@ -304,9 +305,24 @@ describe('visitor analytics consent (SECURITY-002)', () => {
     expect(read('apps/site/app/layout.tsx')).toContain(
       '/site-runtime/consent.v1.js',
     )
-    expect(read('packages/publication/src/static-renderers.ts')).toContain(
-      '/site-runtime/consent.v1.js',
-    )
+    const graph = createPublicationRecipes({
+      siteId: 'default',
+      origin: 'https://example.com',
+      publicationName: 'Example News',
+      language: 'en',
+      semanticVersion: 'semantic-v3',
+      runtimeVersion: 'runtime-v1',
+      baselineVersion: 'baseline-v3',
+      articles: [],
+      recent: { generatedAt: '2026-09-11T00:00:00.000Z', slugs: [] },
+      theme: { id: 'editorial', version: '1', css: 'body{color:#111}' },
+    })
+    for (const recipe of graph.recipes.filter(
+      (item) => item.kind === 'index-html',
+    ))
+      expect(recipe.render((key) => graph.dependencies[key])).toContain(
+        '/site-runtime/consent.v1.js',
+      )
   })
 
   it('never treats an absent preference as consent in either runtime source', () => {

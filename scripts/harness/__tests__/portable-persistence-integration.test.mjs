@@ -36,6 +36,7 @@ import {
 } from '../../../apps/comments/src/postgres-db.ts'
 import { runNextPublicationJob } from '../../../scripts/deploy/publication-worker.ts'
 import { restoreArchive } from '../../../apps/admin/app/lib/adapters/archive-restore.ts'
+import { validateEditorialArchive } from '../../../packages/content/src/archive.ts'
 
 const root = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -267,7 +268,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
     try {
       await applyMigrations(database.url, 'admin', database.pool)
       await seedCheckedInPostgresFixture(database.pool, 'default')
-      const archive = {
+      const archive = validateEditorialArchive({
         schemaVersion: 1,
         settings: {
           name: 'Restored News',
@@ -297,13 +298,42 @@ describe('INFRA-005 PostgreSQL integration', () => {
             categories: ['General'],
           },
         ],
-      }
+      })
       const input = {
         archive,
         expectedRevision: 1,
         idempotencyKey: 'restore-fixture-001',
         media: {},
       }
+      const starter = await database.pool.query(
+        'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
+      )
+      await expect(
+        restoreArchive(
+          'default',
+          { ...input, expectedRevision: 2 },
+          database.pool,
+        ),
+      ).rejects.toThrow('Content revision conflict')
+      await expect(
+        restoreArchive('example', input, database.pool),
+      ).rejects.toThrow()
+      expect(
+        (
+          await database.pool.query(
+            'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+            ['default'],
+          )
+        ).rows,
+      ).toEqual(starter.rows)
+      expect(
+        (
+          await database.pool.query(
+            'SELECT operation_id FROM publisher_admin.archive_restore_operations',
+          )
+        ).rowCount,
+      ).toBe(0)
       const first = await restoreArchive('default', input, database.pool)
       const replay = await restoreArchive('default', input, database.pool)
       expect(replay).toEqual(first)
@@ -314,6 +344,8 @@ describe('INFRA-005 PostgreSQL integration', () => {
       )
       expect(state.rows[0].revision).toBe('2')
       expect(state.rows[0].state.posts).toHaveLength(1)
+      expect(state.rows[0].state.posts[0].status).toBe('draft')
+      expect(state.rows[0].state.posts[0].deskReview).toBeUndefined()
       expect(archive.posts[0].seoTitle).toHaveLength(71)
       expect(state.rows[0].state.posts[0].seoTitle).toHaveLength(70)
       expect(state.rows[0].state.snapshots).toEqual([])
@@ -327,6 +359,21 @@ describe('INFRA-005 PostgreSQL integration', () => {
         'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
         ['default'],
       )
+      for (const status of ['review', 'scheduled', 'published']) {
+        await expect(
+          restoreArchive(
+            'default',
+            {
+              ...input,
+              archive: {
+                ...archive,
+                posts: archive.posts.map((post) => ({ ...post, status })),
+              },
+            },
+            database.pool,
+          ),
+        ).rejects.toThrow('draft import requires status "draft"')
+      }
       await expect(
         restoreArchive(
           'default',
@@ -358,6 +405,13 @@ describe('INFRA-005 PostgreSQL integration', () => {
       expect(afterRejectedRestore.rows[0]).toEqual(
         beforeRejectedRestore.rows[0],
       )
+      expect(
+        (
+          await database.pool.query(
+            'SELECT operation_id FROM publisher_admin.archive_restore_operations',
+          )
+        ).rowCount,
+      ).toBe(1)
     } finally {
       await database.close()
     }
@@ -424,7 +478,10 @@ describe('INFRA-005 PostgreSQL integration', () => {
       expect(backup.rowCounts['publisher_admin.build_jobs']).toBe(1)
       expect(backup.rowCounts['publisher_admin.audit_events']).toBe(1)
       expect(backup.rowCounts['publisher_admin.media']).toBe(1)
+      expect(backup.rowCounts['publisher_admin.sites']).toBe(1)
+      expect(backup.schemaVersion).toBe(2)
       await applyMigrations(target.url, 'admin', target.pool)
+      await target.pool.query('DELETE FROM publisher_admin.sites')
       await restoreLogicalBackup(target.pool, backup)
       const restored = await createLogicalBackup(target.pool, 'admin')
       expect(restored.dataSha256).toBe(backup.dataSha256)
@@ -727,65 +784,99 @@ describe('INFRA-005 S3-compatible and image integration', () => {
       )
 
       await seedCheckedInPostgresFixture(database.pool, 'default')
-      await restoreArchive(
-        'default',
-        {
-          archive: {
-            schemaVersion: 1,
-            settings: {
-              name: 'Media Restore',
-              shortName: 'Media',
-              description: 'Generic media restore fixture.',
-              canonicalOrigin: 'https://media-restore.example.test',
-              language: 'en',
-              locale: 'en-US',
-              publisherName: 'Media Restore',
-              themeId: 'editorial',
-            },
-            authors: [
-              { slug: 'editor', name: 'Editor', bio: 'Fixture editor.' },
-            ],
-            tags: [{ slug: 'General', name: 'General' }],
-            media: [
-              {
-                assetPath: 'media/pixel.png',
-                sha256: pending.sha256,
-                mimeType: 'image/png',
-                byteSize: png.byteLength,
-              },
-            ],
-            posts: [
-              {
-                sourceId: 'media-restore-1',
-                slug: 'media-restore-story',
-                title: 'Media restore story',
-                excerpt: 'A generic media restore fixture.',
-                bodyMarkdown:
-                  'Media restore fixture.\n\n:::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::',
-                author: 'Editor',
-                authorSlug: 'editor',
-                seoTitle: 'Media restore story',
-                seoDescription: 'A generic media restore fixture.',
-                publishedAt: '2026-09-13T00:00:00.000Z',
-                categories: ['General'],
-                imageAsset: 'media/pixel.png',
-                bodyMediaAssets: {
-                  '/media/pixel.png': 'media/pixel.png',
-                },
-              },
-            ],
+      const restoreInput = {
+        archive: validateEditorialArchive({
+          schemaVersion: 1,
+          settings: {
+            name: 'Media Restore',
+            shortName: 'Media',
+            description: 'Generic media restore fixture.',
+            canonicalOrigin: 'https://media-restore.example.test',
+            language: 'en',
+            locale: 'en-US',
+            publisherName: 'Media Restore',
+            themeId: 'editorial',
           },
-          expectedRevision: 1,
-          idempotencyKey: 'media-restore-fixture-001',
-          media: {
-            'media/pixel.png': {
-              mediaId: approved.id,
-              variantSha256: first.sha256,
+          authors: [{ slug: 'editor', name: 'Editor', bio: 'Fixture editor.' }],
+          tags: [{ slug: 'General', name: 'General' }],
+          media: [
+            {
+              assetPath: 'media/pixel.png',
+              sha256: pending.sha256,
+              mimeType: 'image/png',
+              byteSize: png.byteLength,
             },
+          ],
+          posts: [
+            {
+              sourceId: 'media-restore-1',
+              slug: 'media-restore-story',
+              title: 'Media restore story',
+              status: 'draft',
+              excerpt: 'A generic media restore fixture.',
+              bodyMarkdown:
+                'Media restore fixture.\n\n:::figure{src="/media/pixel.png" alt="Fixture pixel"}\n:::',
+              author: 'Editor',
+              authorSlug: 'editor',
+              seoTitle: 'Media restore story',
+              seoDescription: 'A generic media restore fixture.',
+              publishedAt: '2026-09-13T00:00:00.000Z',
+              categories: ['General'],
+              imageAsset: 'media/pixel.png',
+              bodyMediaAssets: {
+                '/media/pixel.png': 'media/pixel.png',
+              },
+            },
+          ],
+        }),
+        expectedRevision: 1,
+        idempotencyKey: 'media-restore-fixture-001',
+        media: {
+          'media/pixel.png': {
+            mediaId: approved.id,
+            variantSha256: first.sha256,
           },
         },
-        database.pool,
+      }
+      await expect(
+        restoreArchive(
+          'default',
+          { ...restoreInput, media: {} },
+          database.pool,
+        ),
+      ).rejects.toThrow('Approved media binding is required')
+      await expect(
+        restoreArchive(
+          'default',
+          {
+            ...restoreInput,
+            media: {
+              'media/pixel.png': {
+                mediaId: approved.id,
+                variantSha256: 'f'.repeat(64),
+              },
+            },
+          },
+          database.pool,
+        ),
+      ).rejects.toThrow('Approved media variant is unavailable')
+      await seedCheckedInPostgresFixture(database.pool, 'example')
+      await expect(
+        restoreArchive('example', restoreInput, database.pool),
+      ).rejects.toThrow('Approved media is unavailable')
+      const beforeMediaRestore = await database.pool.query(
+        'SELECT state, revision FROM publisher_admin.site_states WHERE site_id = $1',
+        ['default'],
       )
+      expect(beforeMediaRestore.rows[0].revision).toBe('1')
+      expect(
+        (
+          await database.pool.query(
+            'SELECT operation_id FROM publisher_admin.archive_restore_operations',
+          )
+        ).rowCount,
+      ).toBe(0)
+      await restoreArchive('default', restoreInput, database.pool)
       const restoredState = await database.pool.query(
         'SELECT state FROM publisher_admin.site_states WHERE site_id = $1',
         ['default'],

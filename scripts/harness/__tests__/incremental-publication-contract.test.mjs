@@ -347,6 +347,7 @@ describe('WEB-008 incremental publication contract', () => {
       '/media/*',
       '/theme-runtime/immutable/*',
       '/data/immutable/*',
+      '/site-runtime/immutable/*',
     ])
       expect(policy).toContain(
         `${path}\n  Cache-Control: public, max-age=31536000, immutable`,
@@ -356,7 +357,7 @@ describe('WEB-008 incremental publication contract', () => {
       '/.well-known/publisher/*',
       '/data/comments/*',
       '/search-index.json',
-      '/site-runtime/*',
+      '/site-runtime/*.js',
     ])
       expect(policy).toContain(
         `${path}\n  Cache-Control: public, max-age=0, must-revalidate`,
@@ -1120,6 +1121,7 @@ describe('WEB-008 incremental publication contract', () => {
       `${JSON.stringify({
         schemaVersion: 1,
         contentSecurityPolicy: "default-src * 'unsafe-inline'",
+        allowedOrigins: { script: [], connect: [], frame: [] },
       })}\n`,
     )
     await expect(verifyPublicationCandidate(policy, store)).rejects.toThrow(

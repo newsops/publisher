@@ -1,9 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import {
-  restoreLogicalBackup,
-  type LogicalBackup,
-  type PersistenceScope,
-} from '../src/recovery'
+import { restoreLogicalBackup, verifyLogicalBackup } from '../src/recovery'
 import { createPostgresPool } from '../src/postgres'
 
 function argument(name: string): string | undefined {
@@ -11,14 +7,15 @@ function argument(name: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : undefined
 }
 
-const scope = argument('--scope') as PersistenceScope | undefined
+const scope = argument('--scope')
 const input = argument('--input')
 if ((scope !== 'admin' && scope !== 'comments') || !input)
   throw new Error('Usage: restore --scope admin|comments --input <file>')
 const variable = scope === 'admin' ? 'DATABASE_URL' : 'COMMENTS_DATABASE_URL'
 const connectionString = process.env[variable]
 if (!connectionString) throw new Error(`${variable} is required`)
-const backup = JSON.parse(await readFile(input, 'utf8')) as LogicalBackup
+const backup: unknown = JSON.parse(await readFile(input, 'utf8'))
+verifyLogicalBackup(backup)
 if (backup.scope !== scope)
   throw new Error('Backup scope does not match --scope')
 
