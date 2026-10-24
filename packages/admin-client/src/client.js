@@ -340,27 +340,27 @@ export function createPublisherAdminClient(options) {
     })
 
   /** @param {string} siteId */
-  const listPlugins = (siteId) =>
-    request(`/api/v2/sites/${encodeURIComponent(siteId)}/plugins`)
+  const listAdapters = (siteId) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/adapters`)
 
-  /** @param {string} siteId @param {{ pluginId: string, configuration?: Record<string, unknown> }} input */
-  const createPlugin = (siteId, input) =>
-    request(`/api/v2/sites/${encodeURIComponent(siteId)}/plugins`, {
+  /** @param {string} siteId @param {{ adapterId: string, configuration?: Record<string, unknown> }} input */
+  const createAdapter = (siteId, input) =>
+    request(`/api/v2/sites/${encodeURIComponent(siteId)}/adapters`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(input),
     })
 
-  /** @param {string} siteId @param {string} pluginId */
-  const getPlugin = (siteId, pluginId) =>
+  /** @param {string} siteId @param {string} adapterId */
+  const getAdapter = (siteId, adapterId) =>
     request(
-      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+      `/api/v2/sites/${encodeURIComponent(siteId)}/adapters/${encodeURIComponent(adapterId)}`,
     )
 
-  /** @param {string} siteId @param {string} pluginId @param {Record<string, unknown>} configuration @param {number} revision */
-  const configurePlugin = (siteId, pluginId, configuration, revision) =>
+  /** @param {string} siteId @param {string} adapterId @param {Record<string, unknown>} configuration @param {number} revision */
+  const configureAdapter = (siteId, adapterId, configuration, revision) =>
     request(
-      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+      `/api/v2/sites/${encodeURIComponent(siteId)}/adapters/${encodeURIComponent(adapterId)}`,
       {
         method: 'PATCH',
         headers: {
@@ -371,10 +371,16 @@ export function createPublisherAdminClient(options) {
       },
     )
 
-  /** @param {string} siteId @param {string} pluginId @param {'validate' | 'enable' | 'disable'} action @param {number} revision @param {Record<string, unknown>} [configuration] */
-  const runPluginAction = (siteId, pluginId, action, revision, configuration) =>
+  /** @param {string} siteId @param {string} adapterId @param {'validate' | 'enable' | 'disable'} action @param {number} revision @param {Record<string, unknown>} [configuration] */
+  const runAdapterAction = (
+    siteId,
+    adapterId,
+    action,
+    revision,
+    configuration,
+  ) =>
     request(
-      `/api/v2/sites/${encodeURIComponent(siteId)}/plugins/${encodeURIComponent(pluginId)}`,
+      `/api/v2/sites/${encodeURIComponent(siteId)}/adapters/${encodeURIComponent(adapterId)}`,
       {
         method: 'POST',
         headers: {
@@ -490,11 +496,11 @@ export function createPublisherAdminClient(options) {
     uploadMedia,
     approveMedia,
     restoreContent,
-    listPlugins,
-    createPlugin,
-    getPlugin,
-    configurePlugin,
-    runPluginAction,
+    listAdapters,
+    createAdapter,
+    getAdapter,
+    configureAdapter,
+    runAdapterAction,
     getArticle,
     putArticleVariant,
     deleteArticleVariant,

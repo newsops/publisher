@@ -1,21 +1,49 @@
 # Work status
 
-Last reconciled: 2026-09-25
+Last reconciled: 2026-10-24
 
 A feature is completed only after every criterion is checked and its spec has a
 passing `GATE-COMPLETE` entry. Earlier completed specs remain decision records;
 current active specs override their provider details.
 
+## Current execution checkpoint
+
+The approved target is local-first management: per-publication SQLite on the
+operator's PC, encrypted private object-storage synchronization and independent
+static public delivery. See [the architecture contracts](./design/local-first-contracts.md)
+and [ARCH-008](../.agents/spec-docs/active/ARCH-008-local-first-product-boundaries.md).
+The existing admin and CLI still use the hosted PostgreSQL composition. The
+new operator package is a tested foundation, not a completed runtime cutover.
+
+- ADMIN-002, CLI-005, SECURITY-001 and ARCH-007 passed their local completion
+  gates. Publication extensions now use Adapter terminology; the agent-facing
+  Desk Plugin retains its name.
+- ARCH-008 remains in progress: complete callers, local security/key custody,
+  media, encrypted intake, publication, recovery and controlled migration.
+- INFRA-005 remains active for complete multisite lifecycle/domain parity and
+  separately recorded external acceptance.
+- SECURITY-002 still needs its operated-installation acceptance. A synthetic
+  consent smoke test does not close that criterion.
+
+Latest local verification passed on Node.js 22: package tests, 72 harness suites
+with 426 tests, both app builds, workspace typecheck/lint and 13 harness scans.
+Chrome checks used isolated generic fixtures at desktop and mobile sizes.
+No production mutation or main-branch release is implied by this checkpoint.
+Initial draft-PR CI exposed colored-summary parsing and a removed upstream
+fixture-image pull path. The corrections preserve the test assertions and exact
+official fixture versions; current remote results are recorded in the PR checks.
+Local Docker smoke is capacity-limited, not a passing clean-room run.
+
 ## Completed foundation
 
-| ID            | Status   | Scope                                                                                                   |
-| ------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| ARCH-001..006 | Complete | Six-layer hierarchy and three access surfaces enforced by harness scans; baseline empty                 |
-| PLUG-001      | Complete | Claude Code desk plugin: bundled CLI, five commands, three skills, reviewer agent, plugin contract scan |
-| INFRA-005     | Complete | PostgreSQL, S3-compatible object storage, media, recovery, `$0` preflight, clean-room onboarding        |
-| WEB-008       | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation     |
-| WEB-001       | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision         |
-| INFRA-003     | Complete | Provider-neutral managed static-host activation evidence                                                |
+| ID            | Status   | Scope                                                                                               |
+| ------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| ARCH-001..006 | Complete | Six-layer hierarchy and three access surfaces enforced by harness scans; baseline empty             |
+| PLUG-001      | Complete | Desk Plugin: bundled CLI, five commands, three skills, reviewer agent, Desk Plugin contract scan    |
+| Persistence   | Complete | Existing PostgreSQL/S3 foundation, media, recovery, `$0` preflight and clean-room onboarding        |
+| WEB-008       | Complete | Idempotent build jobs, incremental static artifacts, projections, runtime themes, atomic activation |
+| WEB-001       | Complete | Static public site, separate admin, portable PostgreSQL/S3, and direct comments Worker decision     |
+| INFRA-003     | Complete | Provider-neutral managed static-host activation evidence                                            |
 
 ## Completed implementation
 
@@ -39,13 +67,14 @@ current active specs override their provider details.
   included-usage billing evidence, separate credentials, recovery evidence,
   and an implemented static adapter.
 
-The checked-in fixture is generic starter content; no alternate database, bucket
-binding, importer, or runtime fallback is shipped.
+The checked-in fixture is generic starter content. The local-first operator
+foundation does not enable a parallel legacy runtime or silently switch the
+current admin/CLI persistence.
 
-## External pilot blocker
+## External acceptance
 
-The owner-first pilot still needs user-selected real providers and authority for
-account setup and production DNS. Local builds cannot satisfy these checks:
+Each operated installation keeps its provider choices, credentials and evidence
+outside this repository. Local builds cannot satisfy these checks for it:
 
 1. Current official plan and billing evidence for database, object storage, and
    static hosting with the selected cost policy.
@@ -64,10 +93,13 @@ The admin remains a provider-neutral Node.js 22 application.
 
 ## Current release sequence
 
-1. Keep the completed INFRA-005 and WEB-008 contracts green on Node.js 22 and
-   real PostgreSQL/S3-compatible clean-room CI.
-2. Record real billing, DNS, local-account bootstrap, isolation, activation, rollback, resilience,
-   and restore evidence before declaring the production deployment complete.
+1. Keep the existing release contracts and local-first foundation green on
+   Node.js 22 while completing every ARCH-008 acceptance criterion.
+2. Rehearse import and cutover in isolation, then remove replaced runtime paths;
+   do not introduce a legacy or dual-write product mode.
+3. Record the selected installation's real billing, DNS, authentication,
+   isolation, activation, rollback, resilience and recovery evidence before
+   declaring its deployment complete.
 
 See [deployment.md](./deployment.md),
 [ai-assisted-deployment.ko.md](./ai-assisted-deployment.ko.md), and

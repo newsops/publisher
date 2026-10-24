@@ -6,6 +6,7 @@ import {
   publicAuthorPath,
   publicCategoryPath,
   publicPostPath,
+  parsePublicAdapterSnapshot,
   resolveEditorialBody,
   type ContentSnapshot,
 } from '../../packages/content/src/index'
@@ -49,6 +50,7 @@ export function snapshotFromBytes(bytes: Uint8Array): ContentSnapshot {
     !Array.isArray(snapshot.media)
   )
     throw new Error('Publication worker requires a schemaVersion 4 snapshot')
+  parsePublicAdapterSnapshot(snapshot.adapters)
   return snapshot
 }
 
@@ -153,7 +155,7 @@ export async function publicationInputs(
       slugs: articles.slice(0, 10).map((article) => article.slug),
     },
     theme: await selectedTheme(snapshot),
-    plugins: snapshot.plugins,
+    adapters: snapshot.adapters,
     media: await materializedMedia(snapshot, store),
     ...(commentOrigin
       ? {

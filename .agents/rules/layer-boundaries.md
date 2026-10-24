@@ -6,16 +6,19 @@ source: it assigns every source directory to a layer and lists what each layer
 may import. `.agents/project-structure.md` repeats the table for humans and is
 never the authority when the two disagree.
 
-| Layer | Name        | Owns                                                                             | Directories                                                                      |
-| ----- | ----------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| L0    | contract    | Content types, URL derivation, editorial Markdown, validation and desk rules     | `packages/content/src`                                                           |
-| L1    | adapters    | PostgreSQL, S3-compatible store, image pipeline, repository implementations      | `packages/persistence/src`, `apps/admin/app/lib/{postgres-*,file-*,…}`           |
-| L2    | publication | Snapshot → release: renderers, indexes, manifest, verification, activation       | `packages/publication/src`                                                       |
-| L3    | services    | Admin domain services and the composition root that wires adapters into them     | `apps/admin/app/lib/*.ts` (services), `repository.ts` (composition)              |
-| L4    | surfaces    | Browser routes, automation routes, HTTP helpers, admin UI, public site, comments | `apps/admin/app/api`, `apps/admin/app/lib/{auth,api-*,…}.ts`, `apps/site`        |
-| L5    | operators   | Admin API client, CLI, Claude Code plugin, build/deploy/harness scripts          | `packages/admin-client`, `packages/ops-cli`, `packages/claude-plugin`, `scripts` |
+| Layer | Name        | Owns                                                                               | Directories                                                                                 |
+| ----- | ----------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| L0    | contract    | Content types, URL derivation, editorial Markdown, validation and operator errors  | `packages/content/src`, `packages/operator/src/contracts`                                   |
+| L1    | adapters    | PostgreSQL, S3-compatible bytes, SQLite/private encryption and repository adapters | `packages/persistence/src`, `packages/operator/src/adapters`, `apps/admin/app/lib/adapters` |
+| L2    | publication | Snapshot → release: renderers, indexes, manifest, verification, activation         | `packages/publication/src`                                                                  |
+| L3    | services    | Admin/operator domain services and composition roots that wire their adapters      | `apps/admin/app/lib/services`, `packages/operator/src/core`, mapped composition roots       |
+| L4    | surfaces    | Browser routes, automation routes, HTTP helpers, admin UI, public site, comments   | `apps/admin/app/api`, `apps/admin/app/lib/{auth,api-*,…}.ts`, `apps/site`                   |
+| L5    | operators   | Admin API client, CLI, Desk Plugin, build/deploy/harness scripts                   | `packages/admin-client`, `packages/ops-cli`, `packages/claude-plugin`, `scripts`            |
 
 Cross-cutting rules, each enforced by a scan in `pnpm harness:scan`:
+
+Local-first operator modules are an isolated foundation until the controlled
+cutover passes; their presence does not change the active browser/CLI runtime.
 
 - **Imports** (`scan-layer-imports.mjs`): a file imports only the layers, module
   classes (`sdk`, `framework`, `parser`, `tooling`), and builtins its layer
@@ -28,7 +31,7 @@ Cross-cutting rules, each enforced by a scan in `pnpm harness:scan`:
   parameters. `NEXT_PUBLIC_*` and `NODE_ENV` are allowed everywhere.
 - **Route shape** (`scan-route-shape.mjs`): a browser `route.ts` calls
   `requireIdentity` and resolves the site through `repositoryForRequest` (or
-  `pluginRepositoryForRequest`); an automation `route.ts` uses
+  `adapterRepositoryForRequest`); an automation `route.ts` uses
   `withSiteAutomation`/`withAutomation`. Routes never import adapters, SDKs, or
   other routes — business rules live in a service shared by both surfaces.
 - **Surfaces** (`scan-surface-parity.mjs`): `scripts/harness/surface-map.json`

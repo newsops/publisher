@@ -7,7 +7,7 @@ import type {
   NewsPost,
   PublicationSettings,
 } from './types'
-import type { PublicPluginSnapshot } from './plugins'
+import type { PublicAdapterSnapshot } from './adapters'
 import type { DeskReview } from './desk-review'
 import { resolveValidatedPost } from './post-validation'
 
@@ -100,7 +100,7 @@ export interface ContentSnapshot {
   readonly categories: readonly ManagedTaxonomyTerm[]
   readonly posts: readonly NewsPost[]
   readonly articles: readonly Article[]
-  readonly plugins: PublicPluginSnapshot
+  readonly adapters: PublicAdapterSnapshot
   readonly media: readonly SnapshotMedia[]
 }
 

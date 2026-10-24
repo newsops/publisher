@@ -8,7 +8,7 @@
   },
   "scripts": {
     "typecheck": "node --check bin/publisher.mjs",
-    "test": "node --check bin/publisher.mjs"
+    "test": "node ../../scripts/harness/run-package-tests.mjs @publisher/ops-cli"
   },
   "dependencies": {
     "@publisher/admin-client": "workspace:*",

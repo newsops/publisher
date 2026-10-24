@@ -37,7 +37,7 @@ and agent CLI/API.
 - Admin PostgreSQL repository and its tests: an idempotent empty-state insert
   for a configured site, without copying another site's state or starter posts.
 - All management domains: publication settings, authors, taxonomy, posts,
-  media, plugins, publication jobs, archive/restore operations, comments,
+  media, adapters, publication jobs, archive/restore operations, comments,
   audit events, and per-site administrator assignment.
 - API retirement: remove default-site-only v1 automation routes rather than
   retaining a legacy path beside complete site-scoped v2 routes.
@@ -130,6 +130,10 @@ submissions.
 3. Complete site qualification and UI/API/CLI parity for every management
    domain, and remove default-only machine routes before activating the new
    production publication.
+   The browser's selected publication belongs to its own tab. Selecting another
+   publication in a different tab must not retarget an already open document's
+   read or save requests. Site identity and observed revision remain paired;
+   matching revision numbers in different sites never authorize cross-site edits.
 4. Materialize an `second-site` release and deploy it only to a new Pages
    project.
 5. After explicit owner confirmation, attach the verified Second Example domain
@@ -188,7 +192,7 @@ submissions.
 - [ ] TC-08: An owner can create, update, bootstrap, and archive a publication
       through either the authenticated web UI or the CLI/API, with matching
       validation, authorization, idempotency, and audit-visible operation results.
-- [ ] TC-09: For settings, authors, taxonomy, posts, media, plugins,
+- [ ] TC-09: For settings, authors, taxonomy, posts, media, adapters,
       publish/build status, archive/restore, comments, audit history, and site
       administrators, each supported operation is site-qualified and is available
       through both the authenticated UI and CLI/API with matching authorization,

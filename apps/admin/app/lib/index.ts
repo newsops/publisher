@@ -25,7 +25,7 @@ import {
   restoreArchive as restoreArchiveWith,
   type ArchiveRestoreInput,
 } from './adapters/archive-restore'
-import { FilePluginRepository } from './adapters/file-plugin-repository'
+import { FileAdapterRepository } from './adapters/file-adapter-repository'
 import {
   approveImage as approveImageWith,
   listMedia as listMediaWith,
@@ -34,7 +34,7 @@ import {
   uploadImage as uploadImageWith,
   type MediaDependencies,
 } from './adapters/media-service'
-import { PostgresPluginRepository } from './adapters/postgres-plugin-repository'
+import { PostgresAdapterRepository } from './adapters/postgres-adapter-repository'
 import { PostgresSiteRegistry } from './adapters/site-registry'
 import { adminConfig, adminDataDirectory } from './config'
 import { adminPool, useFileStores } from './repository'
@@ -44,7 +44,7 @@ import {
   type DeskDecisionInput,
   type DeskDependencies,
 } from './services/desk-review'
-import type { PluginRepository } from './services/plugin-repository'
+import type { AdapterRepository } from './services/adapter-repository'
 
 export { adminConfig, adminDataDirectory } from './config'
 export {
@@ -95,11 +95,11 @@ export {
   parseDeskDecision,
 } from './services/desk-review'
 export {
-  knownPluginIds,
-  publicPluginInstallation,
-  type PluginInstallationView,
-  type PluginRepository,
-} from './services/plugin-repository'
+  knownAdapterIds,
+  publicAdapterInstallation,
+  type AdapterInstallationView,
+  type AdapterRepository,
+} from './services/adapter-repository'
 
 function requireProductionDatabase(): never {
   throw new Error('DATABASE_URL is required for production persistence')
@@ -192,12 +192,12 @@ export function findArchiveRestoreOperation(siteId: string, id: string) {
     : Promise.resolve(undefined)
 }
 
-export function getPluginRepositoryForSite(siteId: string): PluginRepository {
+export function getAdapterRepositoryForSite(siteId: string): AdapterRepository {
   assertSiteId(siteId)
   if (useFileStores())
-    return new FilePluginRepository(adminDataDirectory(siteId), siteId)
+    return new FileAdapterRepository(adminDataDirectory(siteId), siteId)
   const pool = adminPool()
-  if (pool) return new PostgresPluginRepository(siteId, pool)
+  if (pool) return new PostgresAdapterRepository(siteId, pool)
   return requireProductionDatabase()
 }
 

@@ -6,9 +6,10 @@ import type {
   AdminPost,
   AdminSettings,
   AdminTag,
-  AdminPlugin,
+  AdminAdapter,
   AdminMedia,
   AdminAgentGuidance,
+  GuidanceSaveResult,
 } from './admin-model'
 import ManagementPanel from './ManagementPanel'
 import PostEditor from './PostEditor'
@@ -16,7 +17,7 @@ import PublicationSettingsPanel from './PublicationSettingsPanel'
 import ArticleVariantEditor from './ArticleVariantEditor'
 import CommentModerationPanel from './CommentModerationPanel'
 import SiteSelector from './SiteSelector'
-import PluginManagementPanel from './PluginManagementPanel'
+import AdapterManagementPanel from './AdapterManagementPanel'
 import AccountManagementPanel from './AccountManagementPanel'
 import MediaLibraryPanel from './MediaLibraryPanel'
 import PublicationManagementPanel from './PublicationManagementPanel'
@@ -29,7 +30,7 @@ export interface DashboardState {
   categories: AdminTag[]
   authors: AdminAuthor[]
   settings: AdminSettings
-  plugins: AdminPlugin[]
+  adapters: AdminAdapter[]
   media: AdminMedia[]
   selected: AdminPost
   newTagName: string
@@ -55,17 +56,17 @@ export interface DashboardActions {
   savePost: () => Promise<void>
   removePost: () => Promise<void>
   saveSettings: () => Promise<void>
-  configurePlugin: (
-    pluginId: string,
+  configureAdapter: (
+    adapterId: string,
     configuration: Record<string, unknown>,
     revision?: number,
   ) => Promise<void>
-  validatePlugin: (
-    pluginId: string,
+  validateAdapter: (
+    adapterId: string,
     configuration: Record<string, unknown>,
   ) => Promise<string | undefined>
-  setPluginState: (
-    pluginId: string,
+  setAdapterState: (
+    adapterId: string,
     state: 'enabled' | 'disabled',
     revision: number,
   ) => Promise<void>
@@ -83,7 +84,8 @@ export interface DashboardActions {
   approveMedia: (media: AdminMedia) => Promise<void>
   setActiveLocale: Dispatch<SetStateAction<string>>
   setGuidance: Dispatch<SetStateAction<AdminAgentGuidance>>
-  saveAgentGuidance: () => Promise<void>
+  saveAgentGuidance: () => Promise<GuidanceSaveResult>
+  reloadAgentGuidance: () => Promise<AdminAgentGuidance | undefined>
   updateVariant: (
     field: keyof AdminArticleVariant,
     value: string | number,
@@ -231,14 +233,15 @@ export default function AdminDashboardView({
         guidance={state.guidance}
         setGuidance={actions.setGuidance}
         save={actions.saveAgentGuidance}
+        reload={actions.reloadAgentGuidance}
       />
       <DeskReviewPanel />
       <PublicationManagementPanel />
-      <PluginManagementPanel
-        plugins={state.plugins}
-        configure={actions.configurePlugin}
-        validate={actions.validatePlugin}
-        setState={actions.setPluginState}
+      <AdapterManagementPanel
+        adapters={state.adapters}
+        configure={actions.configureAdapter}
+        validate={actions.validateAdapter}
+        setState={actions.setAdapterState}
       />
       <AccountManagementPanel />
       <DashboardGrid state={state} actions={actions} />

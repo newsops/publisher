@@ -127,36 +127,36 @@ paths:
       responses:
         '202': { $ref: '#/components/responses/PublishResponse' }
         '403': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v2/sites/{siteId}/plugins:
+  /api/v2/sites/{siteId}/adapters:
     parameters:
       - { name: siteId, in: path, required: true, schema: { type: string } }
     get:
-      operationId: listSitePlugins
-      summary: List reviewed plugin installations for an authorized site
+      operationId: listSiteAdapters
+      summary: List reviewed adapter installations for an authorized site
       responses:
-        '200': { $ref: '#/components/responses/PluginsResponse' }
+        '200': { $ref: '#/components/responses/AdaptersResponse' }
         '403': { $ref: '#/components/responses/ErrorResponse' }
     post:
-      operationId: configureSitePlugin
-      summary: Configure a reviewed plugin for an authorized site
-      requestBody: { $ref: '#/components/requestBodies/PluginCreateInput' }
+      operationId: configureSiteAdapter
+      summary: Configure a reviewed adapter for an authorized site
+      requestBody: { $ref: '#/components/requestBodies/AdapterCreateInput' }
       responses:
-        '201': { $ref: '#/components/responses/PluginResponse' }
+        '201': { $ref: '#/components/responses/AdapterResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
-  /api/v2/sites/{siteId}/plugins/{pluginId}:
+  /api/v2/sites/{siteId}/adapters/{adapterId}:
     parameters:
       - { name: siteId, in: path, required: true, schema: { type: string } }
-      - { name: pluginId, in: path, required: true, schema: { type: string } }
+      - { name: adapterId, in: path, required: true, schema: { type: string } }
     get:
-      operationId: getSitePlugin
-      summary: Read a site-scoped plugin installation without secret references
+      operationId: getSiteAdapter
+      summary: Read a site-scoped adapter installation without secret references
       responses:
-        '200': { $ref: '#/components/responses/PluginResponse' }
+        '200': { $ref: '#/components/responses/AdapterResponse' }
         '403': { $ref: '#/components/responses/ErrorResponse' }
         '404': { $ref: '#/components/responses/ErrorResponse' }
     patch:
-      operationId: updateSitePlugin
-      summary: Update validated non-secret plugin configuration
+      operationId: updateSiteAdapter
+      summary: Update validated non-secret adapter configuration
       parameters:
         - {
             name: If-Match,
@@ -165,12 +165,12 @@ paths:
             schema: { type: string },
           }
       requestBody:
-        { $ref: '#/components/requestBodies/PluginConfigurationInput' }
+        { $ref: '#/components/requestBodies/AdapterConfigurationInput' }
       responses:
-        '200': { $ref: '#/components/responses/PluginResponse' }
+        '200': { $ref: '#/components/responses/AdapterResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
     post:
-      operationId: actOnSitePlugin
+      operationId: actOnSiteAdapter
       summary: Validate, enable, or disable an installation with optimistic concurrency
       parameters:
         - {
@@ -179,9 +179,9 @@ paths:
             required: false,
             schema: { type: string },
           }
-      requestBody: { $ref: '#/components/requestBodies/PluginActionInput' }
+      requestBody: { $ref: '#/components/requestBodies/AdapterActionInput' }
       responses:
-        '200': { $ref: '#/components/responses/PluginResponse' }
+        '200': { $ref: '#/components/responses/AdapterResponse' }
         '400': { $ref: '#/components/responses/ErrorResponse' }
         '409': { $ref: '#/components/responses/ErrorResponse' }
   /api/v2/sites/{siteId}/tags:
@@ -631,21 +631,21 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/ArticleVariant' }
-    PluginCreateInput:
+    AdapterCreateInput:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PluginCreateInput' }
-    PluginConfigurationInput:
+          schema: { $ref: '#/components/schemas/AdapterCreateInput' }
+    AdapterConfigurationInput:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PluginConfigurationInput' }
-    PluginActionInput:
+          schema: { $ref: '#/components/schemas/AdapterConfigurationInput' }
+    AdapterActionInput:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PluginActionInput' }
+          schema: { $ref: '#/components/schemas/AdapterActionInput' }
   responses:
     SiteResponse:
       description: One publication
@@ -894,31 +894,31 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/PublishResult' }
-    PluginResponse:
-      description: Site-scoped plugin configuration without secret references
+    AdapterResponse:
+      description: Site-scoped adapter configuration without secret references
       content:
         application/json:
           schema:
             type: object
-            required: [siteId, plugin]
+            required: [siteId, adapter]
             properties:
               siteId: { type: string }
-              plugin: { $ref: '#/components/schemas/PluginInstallation' }
-    PluginsResponse:
-      description: Reviewed plugin definitions and installed configurations
+              adapter: { $ref: '#/components/schemas/AdapterInstallation' }
+    AdaptersResponse:
+      description: Reviewed adapter definitions and installed configurations
       content:
         application/json:
           schema:
             type: object
-            required: [siteId, definitions, plugins]
+            required: [siteId, definitions, adapters]
             properties:
               siteId: { type: string }
               definitions:
                 type: array
                 items: { type: string }
-              plugins:
+              adapters:
                 type: array
-                items: { $ref: '#/components/schemas/PluginInstallation' }
+                items: { $ref: '#/components/schemas/AdapterInstallation' }
   schemas:
     Site:
       type: object
@@ -1045,29 +1045,29 @@ components:
       properties:
         expectedRevision: { type: integer }
         archive: { type: object, description: Serialized content archive }
-    PluginCreateInput:
+    AdapterCreateInput:
       type: object
-      required: [pluginId, configuration]
+      required: [adapterId, configuration]
       properties:
-        pluginId: { type: string }
+        adapterId: { type: string }
         configuration: { type: object, additionalProperties: true }
-    PluginConfigurationInput:
+    AdapterConfigurationInput:
       type: object
       required: [configuration]
       properties:
         configuration: { type: object, additionalProperties: true }
-    PluginActionInput:
+    AdapterActionInput:
       type: object
       required: [action]
       properties:
         action: { type: string, enum: [validate, enable, disable] }
         configuration: { type: object, additionalProperties: true }
-    PluginInstallation:
+    AdapterInstallation:
       type: object
       required:
         [
           siteId,
-          pluginId,
+          adapterId,
           definitionVersion,
           state,
           revision,
@@ -1078,7 +1078,7 @@ components:
         ]
       properties:
         siteId: { type: string }
-        pluginId: { type: string }
+        adapterId: { type: string }
         definitionVersion: { type: string }
         state: { type: string, enum: [disabled, configured, enabled] }
         revision: { type: integer, minimum: 1 }

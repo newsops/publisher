@@ -13,7 +13,7 @@
     "build:admin": "pnpm --filter @publisher/admin build",
     "build:comments": "pnpm --filter @publisher/comments build",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test && pnpm build && pnpm harness:test",
+    "test": "pnpm build && pnpm -r test && pnpm harness:test",
     "typecheck": "pnpm -r typecheck",
     "harness:test": "vitest run --config vitest.harness.config.ts",
     "harness:scan": "node scripts/harness/run-all-scans.mjs",

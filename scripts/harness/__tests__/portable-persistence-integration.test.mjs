@@ -26,6 +26,7 @@ import {
 } from '../../../apps/admin/app/lib/index.ts'
 import { PostgresContentRepository } from '../../../apps/admin/app/lib/adapters/postgres-content-repository.ts'
 import { PostgresArticleRepository } from '../../../apps/admin/app/lib/adapters/postgres-article-repository.ts'
+import { PostgresAdapterRepository } from '../../../apps/admin/app/lib/adapters/postgres-adapter-repository.ts'
 import { seedCheckedInPostgresFixture } from '../../../apps/admin/app/lib/adapters/postgres-publication.ts'
 import { InMemoryBuildJobRepository } from '../../../packages/publication/src/index.ts'
 import { reconcileCheckedInFixture } from '../../admin/reconcile.mts'
@@ -124,12 +125,68 @@ function createWorkerSnapshot(snapshotId = 'worker-fixture') {
       },
     ],
     articles: [],
-    plugins: { schemaVersion: 1, installations: [] },
+    adapters: { schemaVersion: 2, installations: [] },
     media: [],
   }
 }
 
 describe('INFRA-005 PostgreSQL integration', () => {
+  it('creates only the adapter table on a clean migration run', async () => {
+    const database = await postgresFixture()
+    try {
+      await applyMigrations(database.url, 'admin', database.pool)
+      const result = await database.pool.query(
+        `SELECT table_name FROM information_schema.tables WHERE table_schema = 'publisher_admin' AND table_name IN ('plugin_installations', 'adapter_installations')`,
+      )
+      expect(result.rows).toEqual([{ table_name: 'adapter_installations' }])
+      expect(
+        await applyMigrations(database.url, 'admin', database.pool),
+      ).toEqual([])
+    } finally {
+      await database.close()
+    }
+  }, 30_000)
+
+  it('renames stored installation IDs and columns through a forward migration', async () => {
+    const database = await postgresFixture()
+    try {
+      const initial = await readFile(
+        path.join(
+          root,
+          'packages/persistence/migrations/admin/0001_initial.sql',
+        ),
+        'utf8',
+      )
+      await database.pool.query(initial)
+      const installation = {
+        siteId: 'example',
+        pluginId: 'platform.static-marker',
+        definitionVersion: '1.0.0',
+        state: 'configured',
+        revision: 1,
+        configuration: { label: 'Example' },
+        secretReferences: [],
+        createdAt: '2026-10-24T00:00:00.000Z',
+        updatedAt: '2026-10-24T00:00:00.000Z',
+      }
+      await database.pool.query(
+        'INSERT INTO publisher_admin.plugin_installations (site_id, plugin_id, payload, revision) VALUES ($1, $2, $3::jsonb, $4)',
+        ['example', 'platform.static-marker', JSON.stringify(installation), 1],
+      )
+      await applyMigrations(database.url, 'admin', database.pool)
+      const records = await new PostgresAdapterRepository(
+        'example',
+        database.pool,
+      ).list()
+      expect(records).toHaveLength(1)
+      expect(records[0].adapterId).toBe('platform.static-marker')
+      expect(records[0]).not.toHaveProperty('pluginId')
+      expect(records[0].revision).toBe(1)
+    } finally {
+      await database.close()
+    }
+  }, 30_000)
+
   it('keeps empty PostgreSQL empty until fixture reconciliation is explicit', async () => {
     const database = await postgresFixture()
     try {
@@ -318,6 +375,7 @@ describe('INFRA-005 PostgreSQL integration', () => {
         '0003_archive_restore_operations.sql',
         '0004_site_registry.sql',
         '0005_site_agent_guidance.sql',
+        '0006_adapter_terminology.sql',
       ])
       expect(await applyMigrations(source.url, 'admin', source.pool)).toEqual(
         [],

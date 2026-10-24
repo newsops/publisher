@@ -6,9 +6,10 @@ import {
   type AdminPost,
   type AdminSettings,
   type AdminTag,
-  type AdminPlugin,
+  type AdminAdapter,
   type AdminMedia,
   type AdminAgentGuidance,
+  type GuidanceSaveResult,
 } from './admin-model'
 
 type Setter<Value> = Dispatch<SetStateAction<Value>>
@@ -76,18 +77,19 @@ export async function loadSettings(
 
 export async function loadAgentGuidance(
   setGuidance: Setter<AdminAgentGuidance>,
-): Promise<void> {
+): Promise<AdminAgentGuidance | undefined> {
   const response = await adminFetch('/api/agent-guidance')
   if (!response.ok) return
   const data = (await response.json()) as { agentContext: AdminAgentGuidance }
   setGuidance(data.agentContext)
+  return data.agentContext
 }
 
 export async function saveAgentGuidance(
   guidance: AdminAgentGuidance,
   setMessage: Setter<string>,
-  reload: () => Promise<void>,
-): Promise<void> {
+  reload: () => Promise<unknown>,
+): Promise<GuidanceSaveResult> {
   const response = await adminFetch('/api/agent-guidance', {
     method: 'PATCH',
     headers: {
@@ -101,16 +103,19 @@ export async function saveAgentGuidance(
       ? '에이전트 운영 지침을 저장했습니다.'
       : `지침 저장 실패 (${response.status}).`,
   )
-  if (response.ok) await reload()
+  if (response.status === 409) return { kind: 'conflict' }
+  if (!response.ok) return { kind: 'failed' }
+  await reload()
+  return { kind: 'saved' }
 }
 
-export async function loadPlugins(
-  setPlugins: Setter<AdminPlugin[]>,
+export async function loadAdapters(
+  setAdapters: Setter<AdminAdapter[]>,
 ): Promise<void> {
-  const response = await adminFetch('/api/plugins')
+  const response = await adminFetch('/api/adapters')
   if (!response.ok) return
-  const data = (await response.json()) as { plugins: AdminPlugin[] }
-  setPlugins(data.plugins)
+  const data = (await response.json()) as { adapters: AdminAdapter[] }
+  setAdapters(data.adapters)
 }
 
 export async function loadMedia(setMedia: Setter<AdminMedia[]>): Promise<void> {
@@ -155,15 +160,15 @@ export async function approveMedia(
   if (response.ok) await reload()
 }
 
-export async function configurePlugin(
-  pluginId: string,
+export async function configureAdapter(
+  adapterId: string,
   configuration: Record<string, unknown>,
   revision: number | undefined,
   setMessage: Setter<string>,
   reload: () => Promise<void>,
 ): Promise<void> {
   const response = await adminFetch(
-    revision === undefined ? '/api/plugins' : '/api/plugins/' + pluginId,
+    revision === undefined ? '/api/adapters' : '/api/adapters/' + adapterId,
     {
       method: revision === undefined ? 'POST' : 'PATCH',
       headers: {
@@ -172,7 +177,7 @@ export async function configurePlugin(
       },
       body: JSON.stringify(
         revision === undefined
-          ? { pluginId, configuration }
+          ? { adapterId, configuration }
           : { configuration },
       ),
     },
@@ -188,15 +193,18 @@ export async function configurePlugin(
   if (response.ok) await reload()
 }
 
-export async function validatePluginConfiguration(
-  pluginId: string,
+export async function validateAdapterConfiguration(
+  adapterId: string,
   configuration: Record<string, unknown>,
 ): Promise<string | undefined> {
-  const response = await adminFetch('/api/plugins/' + pluginId + '/validate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ configuration }),
-  })
+  const response = await adminFetch(
+    '/api/adapters/' + adapterId + '/validate',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ configuration }),
+    },
+  )
   const payload = (await response.json().catch(() => ({}))) as {
     valid?: boolean
     errors?: string[]
@@ -208,8 +216,8 @@ export async function validatePluginConfiguration(
   )
 }
 
-export async function setPluginState(
-  pluginId: string,
+export async function setAdapterState(
+  adapterId: string,
   state: 'enabled' | 'disabled',
   revision: number,
   setMessage: Setter<string>,
@@ -218,10 +226,13 @@ export async function setPluginState(
   // The route contract uses the action name `enable`, while the domain state
   // exposed to the UI is `enabled`.
   const action = state === 'enabled' ? 'enable' : 'disable'
-  const response = await adminFetch('/api/plugins/' + pluginId + '/' + action, {
-    method: 'POST',
-    headers: { 'If-Match': String(revision) },
-  })
+  const response = await adminFetch(
+    '/api/adapters/' + adapterId + '/' + action,
+    {
+      method: 'POST',
+      headers: { 'If-Match': String(revision) },
+    },
+  )
   setMessage(
     response.ok
       ? state === 'enabled'

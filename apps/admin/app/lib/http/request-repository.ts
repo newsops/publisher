@@ -1,6 +1,6 @@
 import { assertSiteId } from '@publisher/content'
 import { AdminAuthError, type AdminIdentity, type AdminRole } from './auth'
-import { getPluginRepositoryForSite, getRepositoryForSite } from '../index'
+import { getAdapterRepositoryForSite, getRepositoryForSite } from '../index'
 
 export function requestedSiteId(request: Request): string {
   return request.headers.get('x-admin-site-id')?.trim() || 'default'
@@ -30,9 +30,9 @@ export function repositoryForRequest(
   return getRepositoryForSite(authorizedSiteId(request, identity))
 }
 
-export function pluginRepositoryForRequest(
+export function adapterRepositoryForRequest(
   request: Request,
   identity: AdminIdentity,
 ) {
-  return getPluginRepositoryForSite(authorizedSiteId(request, identity))
+  return getAdapterRepositoryForSite(authorizedSiteId(request, identity))
 }

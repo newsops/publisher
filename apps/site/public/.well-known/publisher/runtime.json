@@ -3,7 +3,7 @@
   "theme": {
     "id": "editorial",
     "version": "1",
-    "css": "/theme-runtime/immutable/editorial.fe8a7c25f573c3dd21c814744d399ad5295e6b461a8658915d0c14363b16c656.css"
+    "css": "/theme-runtime/immutable/editorial.00728a7741543df470273cb38ae971e7f4fe3bac2328fdbec5e50e5001569643.css"
   },
   "projections": {
     "recent": "/data/immutable/recent.local.json"

@@ -34,6 +34,13 @@ export {
 } from './recovery'
 export { applyMigrations, type MigrationScope } from './migrations'
 export {
+  ConditionalStoreError,
+  S3ConditionalByteStore,
+  type ConditionalByteStore,
+  type ConditionalObject,
+  type ConditionalWriteResult,
+} from './conditional-object-storage'
+export {
   FileBuildJobRepository,
   PostgresBuildJobRepository,
 } from './build-jobs'

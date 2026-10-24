@@ -1,6 +1,6 @@
-# Publisher Desk — Claude Code plugin
+# Publisher Desk — Desk Plugin for Claude Code
 
-Run a Publisher newsroom from Claude Code. The plugin turns a source URL into
+Run a Publisher newsroom from Claude Code. The Desk Plugin turns a source URL into
 a desk-approved, published article: it drafts the story, sources an official
 press image, runs the admin's desk gate, has an independent reviewer re-check
 the facts, records the attestations, and publishes — every step through the

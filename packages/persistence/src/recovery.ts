@@ -25,8 +25,8 @@ const tables: Record<PersistenceScope, readonly TableDefinition[]> = {
       jsonColumns: ['payload'],
     },
     {
-      name: 'publisher_admin.plugin_installations',
-      orderBy: 'site_id, plugin_id',
+      name: 'publisher_admin.adapter_installations',
+      orderBy: 'site_id, adapter_id',
       jsonColumns: ['payload'],
     },
     {

@@ -72,7 +72,7 @@ describe('Publisher Admin API client', () => {
     )
   })
 
-  it('mirrors the plugin and article-locale operations one to one (ARCH-006)', async () => {
+  it('mirrors the adapter and article-locale operations one to one (ARCH-006)', async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = []
     const client = createPublisherAdminClient({
       origin: 'https://admin.example.test',
@@ -83,16 +83,16 @@ describe('Publisher Admin API client', () => {
       },
     })
 
-    await client.listPlugins('default')
-    await client.createPlugin('default', { pluginId: 'google.analytics' })
-    await client.getPlugin('default', 'google.analytics')
-    await client.configurePlugin(
+    await client.listAdapters('default')
+    await client.createAdapter('default', { adapterId: 'google.analytics' })
+    await client.getAdapter('default', 'google.analytics')
+    await client.configureAdapter(
       'default',
       'google.analytics',
       { id: 'G-1' },
       1,
     )
-    await client.runPluginAction('default', 'google.analytics', 'enable', 2)
+    await client.runAdapterAction('default', 'google.analytics', 'enable', 2)
     await client.getArticle('default', 'post-1')
     await client.putArticleVariant('default', 'post-1', { locale: 'ko-KR' }, 3)
     await client.deleteArticleVariant('default', 'post-1', 'ko-KR', 4)
@@ -100,11 +100,11 @@ describe('Publisher Admin API client', () => {
     expect(
       calls.map((call) => `${call.init?.method ?? 'GET'} ${call.url}`),
     ).toEqual([
-      'GET https://admin.example.test/api/v2/sites/default/plugins',
-      'POST https://admin.example.test/api/v2/sites/default/plugins',
-      'GET https://admin.example.test/api/v2/sites/default/plugins/google.analytics',
-      'PATCH https://admin.example.test/api/v2/sites/default/plugins/google.analytics',
-      'POST https://admin.example.test/api/v2/sites/default/plugins/google.analytics',
+      'GET https://admin.example.test/api/v2/sites/default/adapters',
+      'POST https://admin.example.test/api/v2/sites/default/adapters',
+      'GET https://admin.example.test/api/v2/sites/default/adapters/google.analytics',
+      'PATCH https://admin.example.test/api/v2/sites/default/adapters/google.analytics',
+      'POST https://admin.example.test/api/v2/sites/default/adapters/google.analytics',
       'GET https://admin.example.test/api/v2/sites/default/articles/post-1',
       'PUT https://admin.example.test/api/v2/sites/default/articles/post-1',
       'DELETE https://admin.example.test/api/v2/sites/default/articles/post-1?locale=ko-KR',

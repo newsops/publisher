@@ -39,12 +39,21 @@ export interface PublisherAdminClient {
     input: unknown,
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
-  getAgentGuidance(siteId: string): Promise<PublisherApiReply<unknown>>
+  getAgentGuidance(siteId: string): Promise<
+    PublisherApiReply<{
+      siteId: string
+      agentContext: {
+        instructions: string
+        revision: number
+        updatedAt: string
+      }
+    }>
+  >
   updateAgentGuidance(
     siteId: string,
     instructions: string,
     revision: number,
-  ): Promise<PublisherApiReply<unknown>>
+  ): ReturnType<PublisherAdminClient['getAgentGuidance']>
   listPosts(siteId: string): Promise<PublisherApiReply<unknown>>
   resolveXPostEmbed(
     siteId: string,
@@ -133,24 +142,24 @@ export interface PublisherAdminClient {
     siteId: string,
     idempotencyKey: string,
   ): Promise<PublisherApiReply<unknown>>
-  listPlugins(siteId: string): Promise<PublisherApiReply<unknown>>
-  createPlugin(
+  listAdapters(siteId: string): Promise<PublisherApiReply<unknown>>
+  createAdapter(
     siteId: string,
-    input: { pluginId: string; configuration?: Record<string, unknown> },
+    input: { adapterId: string; configuration?: Record<string, unknown> },
   ): Promise<PublisherApiReply<unknown>>
-  getPlugin(
+  getAdapter(
     siteId: string,
-    pluginId: string,
+    adapterId: string,
   ): Promise<PublisherApiReply<unknown>>
-  configurePlugin(
+  configureAdapter(
     siteId: string,
-    pluginId: string,
+    adapterId: string,
     configuration: Record<string, unknown>,
     revision: number,
   ): Promise<PublisherApiReply<unknown>>
-  runPluginAction(
+  runAdapterAction(
     siteId: string,
-    pluginId: string,
+    adapterId: string,
     action: 'validate' | 'enable' | 'disable',
     revision: number,
     configuration?: Record<string, unknown>,

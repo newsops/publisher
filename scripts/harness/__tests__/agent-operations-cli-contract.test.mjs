@@ -44,7 +44,19 @@ function runAsync(args, environment = {}) {
 }
 
 async function withServer(handler, callback) {
-  const server = createServer(handler)
+  const server = createServer((request, response) => {
+    if (request.url?.endsWith('/agent-guidance')) {
+      response.setHeader('content-type', 'application/json')
+      response.end(
+        JSON.stringify({
+          siteId: 'default',
+          agentContext: { instructions: '', revision: 1 },
+        }),
+      )
+      return
+    }
+    handler(request, response)
+  })
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()
   const origin = `http://127.0.0.1:${address.port}`
@@ -706,63 +718,56 @@ describe('agent operations CLI contract', () => {
             'DELETE /api/v2/sites/default/posts/p1',
           ],
           [
-            ['plugin', 'list', '--site', 'default'],
-            'PLUGINS',
-            'GET /api/v2/sites/default/plugins',
+            ['adapter', 'list', '--site', 'default'],
+            'ADAPTERS',
+            'GET /api/v2/sites/default/adapters',
+          ],
+          [
+            ['adapter', 'get', '--site', 'default', '--id', 'google.analytics'],
+            'ADAPTER',
+            'GET /api/v2/sites/default/adapters/google.analytics',
           ],
           [
             [
-              'plugin',
-              'get',
-              '--site',
-              'default',
-              '--plugin',
-              'google.analytics',
-            ],
-            'PLUGIN',
-            'GET /api/v2/sites/default/plugins/google.analytics',
-          ],
-          [
-            [
-              'plugin',
+              'adapter',
               'install',
               '--site',
               'default',
-              '--plugin',
+              '--id',
               'google.analytics',
             ],
-            'PLUGIN_INSTALLED',
-            'POST /api/v2/sites/default/plugins',
+            'ADAPTER_INSTALLED',
+            'POST /api/v2/sites/default/adapters',
           ],
           [
             [
-              'plugin',
+              'adapter',
               'configure',
               '--site',
               'default',
-              '--plugin',
+              '--id',
               'google.analytics',
               '--input',
               input,
               '--revision',
               '1',
             ],
-            'PLUGIN_CONFIGURED',
-            'PATCH /api/v2/sites/default/plugins/google.analytics',
+            'ADAPTER_CONFIGURED',
+            'PATCH /api/v2/sites/default/adapters/google.analytics',
           ],
           [
             [
-              'plugin',
+              'adapter',
               'enable',
               '--site',
               'default',
-              '--plugin',
+              '--id',
               'google.analytics',
               '--revision',
               '2',
             ],
-            'PLUGIN_ENABLED',
-            'POST /api/v2/sites/default/plugins/google.analytics',
+            'ADAPTER_ENABLED',
+            'POST /api/v2/sites/default/adapters/google.analytics',
           ],
           [
             ['article', 'get', '--site', 'default', '--article', 'p1'],

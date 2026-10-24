@@ -8,10 +8,19 @@ import { createHash } from 'node:crypto'
 import { readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { register } from 'tsx/esm/api'
+import {
+  AgentContextUnavailableError,
+  withAgentGuidance,
+} from './agent-guidance.mjs'
+import {
+  AdapterValidationInputError,
+  installedAdapterConfiguration,
+} from './adapter-validation.mjs'
 
 const args = process.argv.slice(2)
 const json = args.includes('--json')
 const nonInteractive = args.includes('--non-interactive')
+let currentAgentContext
 
 register()
 
@@ -23,10 +32,24 @@ function option(name) {
 function emit(ok, code, data = {}, exitCode = ok ? 0 : 1) {
   // Envelope fields win over payload keys so a remote body can never rename
   // the documented `code`.
-  const body = { ...data, schemaVersion: 1, ok, code }
-  process.stdout.write(
-    `${json ? JSON.stringify(body) : `${code}: ${JSON.stringify(data)}`}\n`,
+  if (
+    code === 'REMOTE_ERROR' &&
+    data.clientCode === 'AGENT_CONTEXT_UNAVAILABLE'
   )
+    code = 'AGENT_CONTEXT_UNAVAILABLE'
+  const body = {
+    ...(currentAgentContext ? { agentContext: currentAgentContext } : {}),
+    ...data,
+    schemaVersion: 1,
+    ok,
+    code,
+  }
+  const serialized = JSON.stringify(body)
+  const token = process.env.PUBLISHER_API_TOKEN
+  const safe = token
+    ? serialized.split(JSON.stringify(token).slice(1, -1)).join('[REDACTED]')
+    : serialized
+  process.stdout.write(`${json ? safe : `${code}: ${safe}`}\n`)
   process.exitCode = exitCode
 }
 
@@ -35,7 +58,12 @@ function client() {
   const token = process.env.PUBLISHER_API_TOKEN
   if (!origin || !token) return undefined
 
-  return createPublisherAdminClient({ origin, token })
+  return withAgentGuidance(
+    createPublisherAdminClient({ origin, token }),
+    (context) => {
+      currentAgentContext = context
+    },
+  )
 }
 
 function missingClientConfiguration() {
@@ -88,6 +116,24 @@ async function archiveManifest(directory) {
 }
 
 async function main() {
+  if (
+    args[0] === 'adapter' &&
+    ![
+      'list',
+      'get',
+      'install',
+      'configure',
+      'validate',
+      'enable',
+      'disable',
+    ].includes(args[1])
+  )
+    return emit(
+      false,
+      'USAGE',
+      { command: 'adapter list|get|install|configure|validate|enable|disable' },
+      10,
+    )
   if (args[0] === 'post' && ['plan', 'create', 'update'].includes(args[1])) {
     const action = args[1]
     const siteId = option('--site')
@@ -133,6 +179,7 @@ async function main() {
         : undefined
       if (!authorContext)
         return emit(false, 'AUTHOR_CONTEXT_UNAVAILABLE', { siteId }, 30)
+      await api.getAgentGuidance(siteId)
       if (action === 'plan')
         return emit(true, 'POST_PLAN', { siteId, authorContext })
       if (!nonInteractive)
@@ -392,7 +439,7 @@ async function main() {
     (args[0] === 'site' && (args[1] === 'update' || args[1] === 'archive')) ||
     (args[0] === 'post' && args[1] === 'delete') ||
     (args[0] === 'post' && args[1] === 'get') ||
-    args[0] === 'plugin' ||
+    args[0] === 'adapter' ||
     args[0] === 'article' ||
     args[0] === 'media'
   ) {
@@ -472,27 +519,27 @@ async function main() {
         const response = await api.getPost(siteId, postId)
         return emit(true, 'POST', response.data ?? {})
       }
-      if (args[0] === 'plugin') {
-        const pluginId = option('--plugin')
+      if (args[0] === 'adapter') {
+        const adapterId = option('--id')
         if (args[1] === 'list') {
-          const response = await api.listPlugins(siteId)
-          return emit(true, 'PLUGINS', response.data ?? {})
+          const response = await api.listAdapters(siteId)
+          return emit(true, 'ADAPTERS', response.data ?? {})
         }
-        if (!pluginId)
-          return emit(false, 'INPUT_REQUIRED', { field: '--plugin' }, 10)
+        if (!adapterId)
+          return emit(false, 'INPUT_REQUIRED', { field: '--id' }, 10)
         if (args[1] === 'get') {
-          const response = await api.getPlugin(siteId, pluginId)
-          return emit(true, 'PLUGIN', response.data ?? {})
+          const response = await api.getAdapter(siteId, adapterId)
+          return emit(true, 'ADAPTER', response.data ?? {})
         }
         if (args[1] === 'install') {
           const input = option('--input') ? await inputFile() : { value: {} }
           if ('error' in input) return
           if (mutation()) return
-          const response = await api.createPlugin(siteId, {
-            pluginId,
+          const response = await api.createAdapter(siteId, {
+            adapterId,
             configuration: input.value,
           })
-          return emit(true, 'PLUGIN_INSTALLED', response.data ?? {})
+          return emit(true, 'ADAPTER_INSTALLED', response.data ?? {})
         }
         const revision = revisionOption()
         if (!revision)
@@ -501,29 +548,37 @@ async function main() {
           const input = await inputFile()
           if ('error' in input) return
           if (mutation()) return
-          const response = await api.configurePlugin(
+          const response = await api.configureAdapter(
             siteId,
-            pluginId,
+            adapterId,
             input.value,
             revision,
           )
-          return emit(true, 'PLUGIN_CONFIGURED', response.data ?? {})
+          return emit(true, 'ADAPTER_CONFIGURED', response.data ?? {})
         }
         if (['validate', 'enable', 'disable'].includes(args[1])) {
-          const configuration = option('--input')
-            ? (await inputFile()).value
-            : undefined
           if (mutation()) return
-          const response = await api.runPluginAction(
+          const input = option('--input') ? await inputFile() : undefined
+          if (input && 'error' in input) return
+          const configuration =
+            args[1] === 'validate' && !input
+              ? await installedAdapterConfiguration(
+                  api,
+                  siteId,
+                  adapterId,
+                  revision,
+                )
+              : input?.value
+          const response = await api.runAdapterAction(
             siteId,
-            pluginId,
+            adapterId,
             args[1],
             revision,
             configuration,
           )
           return emit(
             true,
-            `PLUGIN_${args[1].toUpperCase()}D`,
+            `ADAPTER_${args[1].toUpperCase()}D`,
             response.data ?? {},
           )
         }
@@ -532,7 +587,7 @@ async function main() {
           'USAGE',
           {
             command:
-              'plugin list|get|install|configure|validate|enable|disable',
+              'adapter list|get|install|configure|validate|enable|disable',
           },
           10,
         )
@@ -1090,11 +1145,11 @@ async function main() {
         'article get --site <id> --article <post-id> --json',
         'article set --site <id> --article <post-id> --input <variant.json> --revision <n> --non-interactive --json',
         'article remove --site <id> --article <post-id> --locale <tag> --revision <n> --non-interactive --json',
-        'plugin list --site <id> --json',
-        'plugin get --site <id> --plugin <plugin-id> --json',
-        'plugin install --site <id> --plugin <plugin-id> [--input <configuration.json>] --non-interactive --json',
-        'plugin configure --site <id> --plugin <plugin-id> --input <configuration.json> --revision <n> --non-interactive --json',
-        'plugin validate|enable|disable --site <id> --plugin <plugin-id> --revision <n> [--input <configuration.json>] --non-interactive --json',
+        'adapter list --site <id> --json',
+        'adapter get --site <id> --id <adapter-id> --json',
+        'adapter install --site <id> --id <adapter-id> [--input <configuration.json>] --non-interactive --json',
+        'adapter configure --site <id> --id <adapter-id> --input <configuration.json> --revision <n> --non-interactive --json',
+        'adapter validate|enable|disable --site <id> --id <adapter-id> --revision <n> [--input <configuration.json>] --non-interactive --json',
         'media upload --site <id> --file <path> --mime-type <type> [--pending] --non-interactive --json',
         'media approve --site <id> --media <media-id> --non-interactive --json',
         'desk list --site <id> --json',
@@ -1115,6 +1170,10 @@ async function main() {
 }
 
 function apiErrorData(error) {
+  if (error instanceof AdapterValidationInputError)
+    return { clientCode: error.code, mutationAttempted: false }
+  if (error instanceof AgentContextUnavailableError)
+    return { clientCode: 'AGENT_CONTEXT_UNAVAILABLE', mutationAttempted: false }
   if (error instanceof PublisherApiError) {
     // The client's own code (`REMOTE_ERROR` | `MALFORMED_RESPONSE`) travels as
     // `clientCode`; the envelope `code` stays the CLI's classification.

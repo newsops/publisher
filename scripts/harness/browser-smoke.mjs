@@ -114,7 +114,7 @@ async function inspect(
         `${publicOrigin}/data/*`,
       ],
     })
-  const fixtureUrl = `${publicOrigin}/__plugin-resilience-fixture.js`
+  const fixtureUrl = `${publicOrigin}/__adapter-resilience-fixture.js`
   if (resilienceMode === 'blocked')
     await client.send('Network.setBlockedURLs', { urls: [fixtureUrl] })
   if (googleAnalyticsMode === 'blocked')
@@ -132,16 +132,16 @@ async function inspect(
   if (resilienceMode && resilienceMode !== 'consent-off') {
     const fixtureSource =
       resilienceMode === 'failed'
-        ? `${publicOrigin}/__plugin-resilience-missing.js`
+        ? `${publicOrigin}/__adapter-resilience-missing.js`
         : fixtureUrl
     await client.send('Page.addScriptToEvaluateOnNewDocument', {
       source: `document.addEventListener('DOMContentLoaded', () => {
         const fixture = document.createElement('script')
         fixture.async = true
-        fixture.dataset.pluginResilience = ${JSON.stringify(resilienceMode)}
+        fixture.dataset.adapterResilience = ${JSON.stringify(resilienceMode)}
         fixture.src = ${JSON.stringify(fixtureSource)}
-        fixture.addEventListener('load', () => { window.__pluginResilience = 'loaded' })
-        fixture.addEventListener('error', () => { window.__pluginResilience = ${JSON.stringify(resilienceMode)} })
+        fixture.addEventListener('load', () => { window.__adapterResilience = 'loaded' })
+        fixture.addEventListener('error', () => { window.__adapterResilience = ${JSON.stringify(resilienceMode)} })
         document.head.append(fixture)
       })`,
     })
@@ -181,7 +181,7 @@ async function inspect(
       break
   }
   await new Promise((resolve) => setTimeout(resolve, 600))
-  let pluginDiagnostic = false
+  let adapterDiagnostic = false
   if (name === 'admin-desktop') {
     const diagnostic = await client.send('Runtime.evaluate', {
       expression:
@@ -189,9 +189,9 @@ async function inspect(
       awaitPromise: true,
       returnByValue: true,
     })
-    pluginDiagnostic = diagnostic.result.value === true
-    if (!pluginDiagnostic)
-      throw new Error('admin-desktop did not display plugin field validation')
+    adapterDiagnostic = diagnostic.result.value === true
+    if (!adapterDiagnostic)
+      throw new Error('admin-desktop did not display adapter field validation')
   }
   if (checkCommentOutage && name === 'article-desktop') {
     await client.send('Runtime.evaluate', {
@@ -200,7 +200,7 @@ async function inspect(
     await new Promise((resolve) => setTimeout(resolve, 600))
   }
   const result = await client.send('Runtime.evaluate', {
-    expression: `(() => { const focusable = document.querySelector('a[href], button, input, select, textarea'); focusable?.focus(); return { title: document.title, text: document.body.innerText, width: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, authorLink: Boolean(document.querySelector('a[href="/author/example-editor/"]')), settingsPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication settings')), pluginPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication plugins')), mediaPanel: Boolean(document.querySelector('[aria-label="Media library"] input[type="file"]')), postCount: document.querySelectorAll('.post-row').length, brand: document.querySelector('.eyebrow')?.textContent, keyboardFocus: Boolean(focusable && document.activeElement === focusable), commentsUnavailable: document.querySelector('[data-comments] [data-comment-status]')?.textContent === 'Comments are temporarily unavailable.', largestContentfulPaint: window.__largestContentfulPaint ?? performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? null, resilienceState: window.__pluginResilience ?? 'not-injected', resilienceScriptCount: document.querySelectorAll('script[data-plugin-resilience]').length, analyticsTagCount: document.querySelectorAll('script[data-publisher-google-analytics]').length, analyticsRuntime: Boolean(document.querySelector('script[src="/plugin-runtime/google-analytics.js"]')), description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '', links: [...document.querySelectorAll('a[href]')].map((item) => new URL(item.href, location.href).href).filter((href) => new URL(href).origin === location.origin) } })()`,
+    expression: `(() => { const focusable = document.querySelector('a[href], button, input, select, textarea'); focusable?.focus(); return { title: document.title, text: document.body.innerText, width: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, authorLink: Boolean(document.querySelector('a[href="/author/example-editor/"]')), settingsPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication settings')), adapterPanel: Boolean([...document.querySelectorAll('h2')].find((item) => item.textContent === 'Publication adapters')), mediaPanel: Boolean(document.querySelector('[aria-label="Media library"] input[type="file"]')), postCount: document.querySelectorAll('.post-row').length, brand: document.querySelector('.eyebrow')?.textContent, keyboardFocus: Boolean(focusable && document.activeElement === focusable), commentsUnavailable: document.querySelector('[data-comments] [data-comment-status]')?.textContent === 'Comments are temporarily unavailable.', largestContentfulPaint: window.__largestContentfulPaint ?? performance.getEntriesByType('largest-contentful-paint').at(-1)?.startTime ?? null, resilienceState: window.__adapterResilience ?? 'not-injected', resilienceScriptCount: document.querySelectorAll('script[data-adapter-resilience]').length, analyticsTagCount: document.querySelectorAll('script[data-publisher-google-analytics]').length, analyticsRuntime: Boolean(document.querySelector('script[src="/adapter-runtime/google-analytics.js"]')), description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '', links: [...document.querySelectorAll('a[href]')].map((item) => new URL(item.href, location.href).href).filter((href) => new URL(href).origin === location.origin) } })()`,
     returnByValue: true,
   })
   state = result.result.value
@@ -239,14 +239,14 @@ async function inspect(
   if (!authenticatedAdmin && !state.description)
     throw new Error(`${name} is missing static SEO description metadata`)
   if (resilienceMode === 'consent-off' && state.resilienceScriptCount !== 0)
-    throw new Error(`${name} loaded a plugin despite consent being off`)
+    throw new Error(`${name} loaded a adapter despite consent being off`)
   if (
     resilienceMode &&
     resilienceMode !== 'consent-off' &&
     state.resilienceState !== resilienceMode
   )
     throw new Error(
-      `${name} did not degrade after ${resilienceMode} plugin fixture: ${state.resilienceState}`,
+      `${name} did not degrade after ${resilienceMode} adapter fixture: ${state.resilienceState}`,
     )
   if (googleAnalyticsMode === 'consent-off' && state.analyticsTagCount !== 0)
     throw new Error(`${name} loaded Google Analytics before consent`)
@@ -271,9 +271,9 @@ async function inspect(
     title: state.title,
     authorLink: state.authorLink,
     settingsPanel: state.settingsPanel,
-    pluginPanel: state.pluginPanel,
+    adapterPanel: state.adapterPanel,
     mediaPanel: state.mediaPanel,
-    pluginDiagnostic,
+    adapterDiagnostic,
     postCount: state.postCount,
     brand: state.brand,
     documentStatus,
@@ -312,7 +312,7 @@ try {
       1000,
     ),
     await inspect(
-      'article-plugin-consent-off-desktop',
+      'article-adapter-consent-off-desktop',
       `${publicOrigin}/2026/09/sample-report-01.html`,
       1440,
       1000,
@@ -322,7 +322,7 @@ try {
       'consent-off',
     ),
     await inspect(
-      'article-plugin-blocked-desktop',
+      'article-adapter-blocked-desktop',
       `${publicOrigin}/2026/09/sample-report-01.html`,
       1440,
       1000,
@@ -332,7 +332,7 @@ try {
       'blocked',
     ),
     await inspect(
-      'article-plugin-failed-mobile',
+      'article-adapter-failed-mobile',
       `${publicOrigin}/2026/09/sample-report-01.html`,
       390,
       844,
@@ -440,7 +440,7 @@ try {
     for (const name of ['admin-desktop', 'admin-mobile'])
       if (
         !results.find((result) => result.name === name)?.settingsPanel ||
-        !results.find((result) => result.name === name)?.pluginPanel ||
+        !results.find((result) => result.name === name)?.adapterPanel ||
         !results.find((result) => result.name === name)?.mediaPanel ||
         !results.find((result) => result.name === name)?.postCount
       )
@@ -469,7 +469,7 @@ try {
     const body = await response.text()
     if (!response.ok || !body.startsWith('<?xml'))
       throw new Error(
-        `Static feed or sitemap is unavailable after plugin fixture checks: ${feedPath}`,
+        `Static feed or sitemap is unavailable after adapter fixture checks: ${feedPath}`,
       )
   }
   for (const result of results) delete result.links

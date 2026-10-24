@@ -141,7 +141,7 @@ describe('configurable news platform contract', () => {
       expect(published.snapshot.authors).toHaveLength(1)
       expect(published.snapshot.posts).toHaveLength(8)
       expect(published.snapshot.articles).toHaveLength(8)
-      expect(published.snapshot.plugins).toMatchObject({ schemaVersion: 1 })
+      expect(published.snapshot.adapters).toMatchObject({ schemaVersion: 2 })
       expect(published.snapshot.media).toEqual([])
       expect(published.jobStatus).toBe('queued')
     } finally {

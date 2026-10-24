@@ -158,10 +158,10 @@ All machine responses use `Cache-Control: no-store` and `X-Request-Id`.
 
 The v2 site-scoped endpoints are GET|POST /api/v2/sites/{siteId}/posts,
 `GET|PUT|DELETE /api/v2/sites/{siteId}/posts/{id}`, and
-POST /api/v2/sites/{siteId}/publish. Plugin automation uses GET|POST
-/api/v2/sites/{siteId}/plugins, GET|PATCH /api/v2/sites/{siteId}/plugins/{pluginId},
-and POST to that plugin path with an explicit validate, enable, or disable
-action. Mutations require the installation's If-Match revision. Plugin read
+POST /api/v2/sites/{siteId}/publish. Adapter automation uses GET|POST
+/api/v2/sites/{siteId}/adapters, GET|PATCH /api/v2/sites/{siteId}/adapters/{adapterId},
+and POST to that adapter path with an explicit validate, enable, or disable
+action. Mutations require the installation's If-Match revision. Adapter read
 responses expose validated non-secret configuration plus hasSecretReferences;
 they never return secret references or values. Site-scoped snapshots use the
 logical key `sites/{siteId}/snapshots/{snapshotId}.json` in the configured
@@ -217,7 +217,7 @@ no-store` and include `X-Request-Id`. Errors use this shape:
 7. `POST /api/v2/sites/{siteId}/publish` with a publisher key and unique `Idempotency-Key`.
 8. Verify the `202` response's `snapshotId`, checksum, `jobId`, and
    `jobStatus: queued`. The schema-version 4 snapshot contains publication
-   settings, active authors/tags, published/due content, public-safe plugin
+   settings, active authors/tags, published/due content, public-safe adapter
    projection, and approved logical media references.
 9. Run the repository-owned publication worker. A job becomes `published` only
    after candidate checksum verification and compare-and-swap activation.

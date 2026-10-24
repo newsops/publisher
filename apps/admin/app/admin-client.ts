@@ -2,11 +2,11 @@ const SITE_STORAGE_KEY = 'publisher.admin.site'
 
 export function getAdminSiteId(): string {
   if (typeof window === 'undefined') return 'default'
-  return window.localStorage.getItem(SITE_STORAGE_KEY) ?? 'default'
+  return window.sessionStorage.getItem(SITE_STORAGE_KEY) ?? 'default'
 }
 
 export function setAdminSiteId(siteId: string): void {
-  window.localStorage.setItem(SITE_STORAGE_KEY, siteId)
+  window.sessionStorage.setItem(SITE_STORAGE_KEY, siteId)
 }
 
 export function adminFetch(input: RequestInfo | URL, init: RequestInit = {}) {

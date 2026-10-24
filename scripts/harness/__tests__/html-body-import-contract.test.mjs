@@ -46,7 +46,7 @@ function snapshot(posts) {
     tags: [{ slug: 'General', name: 'General', active: true }],
     posts,
     articles: [],
-    plugins: { schemaVersion: 1, installations: [] },
+    adapters: { schemaVersion: 2, installations: [] },
     media: [],
   }
 }

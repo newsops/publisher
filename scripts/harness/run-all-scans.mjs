@@ -17,6 +17,7 @@ const scans = [
   'scan-route-shape.mjs',
   'scan-surface-parity.mjs',
   'scan-plugin-contract.mjs',
+  'scan-adapter-contract.mjs',
   'scan-repository-privacy.mjs',
 ]
 const failures = []
